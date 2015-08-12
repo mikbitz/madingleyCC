@@ -35,93 +35,33 @@ class UtilityFunctions
 /** \brief Generate a random order in which cohorts will be subjected to ecological processes
 
 @param cohortNumber The number of cohorts in the current grid cell
-@return A vector of randomly ordered integers corresponding to the cohorts in the grid cell
+@return A vector of randomly ordered integers corresponding to the cohorts in the grid cell - will change with every run
 */
 vector<unsigned> RandomlyOrderedCohorts(unsigned cohortNumber)
         {
-//            // A vector to hold indices of cohorts in order
-//            unsigned[] OrderedCohorts = new unsigned[cohortNumber];
-//            // A vector to hold indices of cohorts in random order
-//            unsigned[] RandomOrderCohorts = new unsigned[cohortNumber];
-//
-//            // Fill the ordered vector with incremental integer indices up to the total number of cohorts
-//            for (unsigned ii = 0; ii < cohortNumber; ii++)
-//            {
-//                OrderedCohorts[ii] = ii;
-//            }
-//
-//            // Copy the ordered vector of cohorts to the vector for the randomly ordered cohorts
-//            OrderedCohorts.CopyTo(RandomOrderCohorts, 0);
-//            // Declare and initialise an instance of Ranodm for random number generation
-//            Random random = new Random();
-//
-//            // Loop over cohorts
-//            for (int ii = 0; ii < OrderedCohorts.Length; ii++)
-//            {
-//                // Generate a random integer to swap this cohort index with
-//                int SwapIndex = random.Next(ii, OrderedCohorts.Length);
-//                // If the cohort index to swap is not the same as the active cohort index, then swap the values
-//                if (SwapIndex != ii)
-//                {
-//                    unsigned Temp = RandomOrderCohorts[ii];
-//                    RandomOrderCohorts[ii] = RandomOrderCohorts[SwapIndex];
-//                    RandomOrderCohorts[SwapIndex] = Temp;
-//                }
-//            }
-//            
-//           // Return the randomly ordered vector of cohort indices - randomly off system clock...c++11 style
-            unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+            //A vector to hold indices of cohorts in order
             vector<unsigned> RandomOrderCohorts(cohortNumber);
             for (unsigned i=0; i<cohortNumber; i++) RandomOrderCohorts[i]=i;
+            // Return the randomly ordered vector of cohort indices - randomly off system clock...c++11 style
+            unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
             shuffle(RandomOrderCohorts.begin(),RandomOrderCohorts.end(), std::default_random_engine(seed));
-            return RandomOrderCohorts;
-//          
+            return RandomOrderCohorts;          
         }
 
 /** \brief Generate a non-random order in which cohorts will be subjected to ecological processes
 
 @param cohortNumber The number of cohorts in the current grid cell
 @param currentTimeStep The current time step of the model
-@return A vector of non-randomly ordered integers corresponding to the cohorts in the grid cell
+@return A vector of non-randomly ordered integers corresponding to the cohorts in the grid cell -will be systematic in some way...
 */
 vector<unsigned> NonRandomlyOrderedCohorts(unsigned cohortNumber, unsigned currentTimeStep)
         {
-//
-//            // A vector to hold indices of cohorts in order
-//            unsigned[] OrderedCohorts = new unsigned[cohortNumber];
-//            // A vector to hold indices of cohorts in random order
-//            unsigned[] RandomOrderCohorts = new unsigned[cohortNumber];
-//
-//            // Fill the ordered vector with incremental integer indices up to the total number of cohorts
-//            for (unsigned ii = 0; ii < cohortNumber; ii++)
-//            {
-//                OrderedCohorts[ii] = ii;
-//            }
-//            
-//            // Copy the ordered vector of cohorts to the vector for the non-randomly reordered cohorts
-//            OrderedCohorts.CopyTo(RandomOrderCohorts, 0);
-//            // Declare and initialise an instance of Ranodm for random number generation, using the current time step as a deterministic seed to 
-//            // ensure a non-random order of cohorts
-//            Random random = new Random((int)currentTimeStep);
-//
-//            // Loop over cohorts
-//            for (int ii = 0; ii < OrderedCohorts.Length; ii++)
-//            {
-//                // Generate a pseudo-random integer to swap this cohort index with
-//                int SwapIndex = random.Next(ii, OrderedCohorts.Length);
-//                // If the cohort index to swap is not the same as the active cohort index, then swap the values
-//                if (SwapIndex != ii)
-//                {
-//                    unsigned Temp = RandomOrderCohorts[ii];
-//                    RandomOrderCohorts[ii] = RandomOrderCohorts[SwapIndex];
-//                    RandomOrderCohorts[SwapIndex] = Temp;
-//                }
-//            }
-//
-//            // Return the deterministically ordered vector of cohort indices
-//            return RandomOrderCohorts;
+
+            //A vector to hold indices of cohorts in order
             vector<unsigned> RandomOrderCohorts(cohortNumber);
             for (unsigned i=0; i<cohortNumber; i++) RandomOrderCohorts[i]=i;
+            //Shuffle ordered list for random number generation, using the current time step as a deterministic seed to 
+           // ensure a repeatable order of cohorts
             shuffle(RandomOrderCohorts.begin(),RandomOrderCohorts.end(), std::default_random_engine(currentTimeStep));
             return RandomOrderCohorts;
          }
