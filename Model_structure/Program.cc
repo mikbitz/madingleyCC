@@ -50,6 +50,7 @@ Initialise and run the model
 #include<vector>
 #include <chrono>
 #include <ctime>
+#include <ModelGrid.h>
 //
 //
 //namespace Madingley
@@ -60,6 +61,7 @@ Initialise and run the model
 ///@todo Complete set up of output directory
         int main()
         {   
+
 //            // Write out model details to the console
             cout<<("Madingley model C++ v. 0.\n")<<endl;
 //

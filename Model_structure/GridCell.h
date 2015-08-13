@@ -1,107 +1,37 @@
 #ifndef GRIDCELL_H
 #define GRIDCELL_H
+#include <GridCellStockHandler.h>
+#include <GridCellCohortHandler.h>
 /** \file GridCell.h
  * \brief the GridCell header file
  */
 
-
-//
-
-
-
-
-
-
-//
-
-
-
-
-//
 //
 //namespace Madingley
 //{
-/** \brief
-//    /// Stores properties of grid cells
-//    /// <todoD>Remove single valued state-variables and convert model to work with functional groups</todoD>
-//    /// <todoD>Check the get/set methods and overloads</todoD>
-//    /// <todoD>Convert GetEnviroLayer to field terminology</todoD>
-//    /// </summary>
-//     class GridCell
-//    {
-//
-/** \brief
-The handler for the cohorts in this grid cell
-*/
-//        private GridCellCohortHandler _GridCellCohorts;
-/** \brief
-Get or set the cohorts in this grid cell
-*/
-//         GridCellCohortHandler GridCellCohorts
-//        {
-//            get { return _GridCellCohorts; }
-//            set { _GridCellCohorts = value; }
-//        }
-//
-/** \brief
-The handler for the stocks in this grid cell
-*/
-//        private GridCellStockHandler _GridCellStocks;
-/** \brief
-Get or set the stocks in this grid cell
-*/
-//         GridCellStockHandler GridCellStocks
-//        {
-//            get { return _GridCellStocks; }
-//            set { _GridCellStocks = value; }
-//        }
-//
-/** \brief
-The environmental data for this grid cell
-*/
-//        private map<string, double[]> _CellEnvironment;
-/** \brief
-Get the environmental data for this grid cell
-*/
-//         map<string, double[]> CellEnvironment { get { return _CellEnvironment; } set { _CellEnvironment = value; } }
-//
+/** \brief Stores properties of grid cells
+<todoD>Remove single valued state-variables and convert model to work with functional groups</todoD>
+<todoD>Check the get/set methods and overloads</todoD>
+<todoD>Convert GetEnviroLayer to field terminology</todoD> */
+class GridCell
+    {
+    public:
+/** \brief The handler for the cohorts in this grid cell */
+        GridCellCohortHandler GridCellCohorts;
+/** \brief The handler for the stocks in this grid cell */
+        GridCellStockHandler GridCellStocks;
+/** \brief The environmental data for this grid cell */
+        map<string, vector<double> > CellEnvironment;
 //        // A sorted list of deltas
-/** \brief
-Deltas to track changes in biomasses and abundances of cohorts, stocks and environmental biomass pools during ecological processes
-*/
-//        private Dictionary<string, Dictionary<string, double>> _Deltas;
-/** \brief
-Get the delta biomasses and abundances for this grid cell
-*/
-//         Dictionary<string, Dictionary<string, double>> Deltas
-//	    {
-//		    get { return _Deltas;}
-//	    }
-//
-/** \brief
-The latitude of this grid cell
-*/
-//        private float _Latitude;
-/** \brief
-Get the latitude of this grid cell
-*/
-//         float Latitude
-//        {
-//            get { return _Latitude; }
-//        }
-//
-/** \brief
-The longitude of this grid cell
-*/
-//        private float _Longitude;
-/** \brief
-Get the longitude of this grid cell
-*/
-//         float Longitude
-//        {
-//            get { return _Longitude; }
-//        }
-//
+/** \brief Deltas to track changes in biomasses and abundances of cohorts, stocks and environmental biomass pools during ecological processes */
+          map<string, map<string, double>> Deltas;
+/** \brief Get the delta biomasses and abundances for this grid cell */
+
+/** \brief The latitude of this grid cell */
+        float Latitude;
+
+/** \brief The longitude of this grid cell */
+        float Longitude;
 /** \brief
 Instance of random number generator to take a time-dependent seed
 */
@@ -110,14 +40,15 @@ Instance of random number generator to take a time-dependent seed
 /** \brief
 Instance of the class to perform general functions
 */
-//        private UtilityFunctions Utilities;
-//
-//        // Optimal prey body size, as a ratio of predator body size
-//        private double OptimalPreyBodySizeRatio;
-//
-/** \brief
-Constructor for a grid cell; creates cell and reads in environmental data
-*/
+       UtilityFunctions Utilities;
+
+       // Optimal prey body size, as a ratio of predator body size
+        double OptimalPreyBodySizeRatio;
+
+//default constructor - just to get C++ compile working at the moment
+GridCell(){;}
+/** \brief Constructor for a grid cell; creates cell and reads in environmental data
+
 @param latitude The latitude of the grid cell 
 @param latIndex The latitudinal index of the grid cell 
 @param longitude The longitude of the grid cell 
@@ -131,15 +62,15 @@ Constructor for a grid cell; creates cell and reads in environmental data
 @param globalDiagnostics A list of global diagnostic variables for the model grid 
 @param nextCohortID The unique ID number to assign to the next cohort created 
 @param tracking Whether process-tracking is enabled 
-@param specificLocations Whether the model is being run for specific locations 
-//         GridCell(float latitude, unsigned latIndex, float longitude, unsigned lonIndex, float latCellSize, float lonCellSize, 
-//            map<string, EnviroData> dataLayers, double missingValue, FunctionalGroupDefinitions cohortFunctionalGroups, 
-//            FunctionalGroupDefinitions stockFunctionalGroups, map<string, double> globalDiagnostics,Boolean tracking,
-//            bool specificLocations)
-//        {
+@param specificLocations Whether the model is being run for specific locations */
+        GridCell(float latitude, unsigned latIndex, float longitude, unsigned lonIndex, float latCellSize, float lonCellSize, 
+           map<string, EnviroData> dataLayers, double missingValue, FunctionalGroupDefinitions cohortFunctionalGroups, 
+           FunctionalGroupDefinitions stockFunctionalGroups, map<string, double> globalDiagnostics,bool tracking,
+           bool specificLocations)
+       {
 //
-//            // Boolean to track when environmental data are missing
-//            Boolean EnviroMissingValue;
+//            // bool to track when environmental data are missing
+//            bool EnviroMissingValue;
 //
 //            // Initialise the utility functions
 //            Utilities = new UtilityFunctions();
@@ -449,71 +380,66 @@ Constructor for a grid cell; creates cell and reads in environmental data
 //            // Initialise the grid cell cohort and stock handlers
 //            _GridCellCohorts = new GridCellCohortHandler(cohortFunctionalGroups.GetNumberOfFunctionalGroups());
 //            _GridCellStocks = new GridCellStockHandler(stockFunctionalGroups.GetNumberOfFunctionalGroups());
-//
-//        }
-//
-/** \brief
-Converts any missing values to zeroes
-*/
+
+       }
+
+/** \brief Converts any missing values to zeroes
+
 @param data the data vector to convert 
 @param missingValue Missing data value to be converted to zero 
 @return The data vector with any missing data values converted to zero*/
-//         double[] ConvertMissingValuesToZero(double[] data, double missingValue)
-//        {
-//            double[] TempArray = data;
-//
-//            for (int ii = 0; ii < TempArray.Length; ii++)
-//            {
-//                TempArray[ii] = (TempArray[ii].CompareTo(missingValue) != 0) ? TempArray[ii] : 0.0;
-//            }
-//
-//            return TempArray;
-//        }
-//
-/** \brief
-Checks if any non-missing value data exists in the vector data
-*/
+        vector<double> ConvertMissingValuesToZero(vector<double> data, double missingValue)
+       {
+           vector<double> TempArray = data;
+
+           for (int ii = 0; ii < TempArray.size(); ii++)
+           {
+               TempArray[ii] = (TempArray[ii]!=missingValue) ? TempArray[ii] : 0.0;
+           }
+
+           return TempArray;
+       }
+
+/** \brief Checks if any non-missing value data exists in the vector data
+
 @param data The data vector to be checked 
 @param missingValue The missing value to which the data will be compared 
 @return True if non missing values are found, false if not*/
-//         Boolean ContainsData(double[] data, double missingValue)
-//        {
-//            Boolean ContainsData = false;
-//            for (int ii = 0; ii < data.Length; ii++)
-//            {
-//                if (data[ii].CompareTo(missingValue) != 0) ContainsData = true;
-//            }
-//            return ContainsData;
-//        }
-//
-//
-//
-/** \brief
-Checks if any non-missing value data exists in the vector data
-*/
+        bool ContainsData(vector<double> data, double missingValue)
+       {
+           bool ContainsData = false;
+           for (int ii = 0; ii < data.size(); ii++)
+           {
+               if (data[ii]!=missingValue) ContainsData = true;
+           }
+           return ContainsData;
+       }
+
+
+
+/** \brief Checks if any non-missing value data exists in the vector data 
 @param data The data vector to be checked 
 @param missingValue The missing value to which the data will be compared 
 @return True if non missing values are found, false if not*/
-//         Boolean ContainsMissingValue(double[] data, double missingValue)
-//        {
-//            Boolean ContainsMV = false;
-//            for (int ii = 0; ii < data.Length; ii++)
-//            {
-//                if (data[ii].CompareTo(missingValue) == 0) ContainsMV = true;
-//            }
-//            return ContainsMV;
-//        }
-//
-/** \brief
-Calculate monthly seasonality values of Net Primary Production - ignores missing values. If there is no NPP data (ie all zero or missing values)
+        bool ContainsMissingValue(vector<double>  data, double missingValue)
+       {
+           bool ContainsMV = false;
+           for (int ii = 0; ii < data.size(); ii++)
+           {
+               if (data[ii]==missingValue) ContainsMV = true;
+           }
+           return ContainsMV;
+       }
+
+/** \brief Calculate monthly seasonality values of Net Primary Production - ignores missing values. If there is no NPP data (ie all zero or missing values)
 then assign 1/12 for each month.
-*/
+
 @param NPP Monthly values of NPP 
 @param missingValue Missing data value to which the data will be compared against 
 @return The contribution that each month's NPP makes to annual NPP*/
-//         double[] CalculateNPPSeasonality(double[] NPP, double missingValue)
-//        {
-//
+        vector<double> CalculateNPPSeasonality(vector<double> NPP, double missingValue)
+       {
+
 //            // Check that the NPP data is of monthly temporal resolution
 //            Debug.Assert(NPP.Length == 12, "Error: currently NPP data must be of monthly temporal resolution");
 //
@@ -554,11 +480,10 @@ then assign 1/12 for each month.
 //            }
 //
 //            return NPPSeasonalityValues;
-//        }
-//
-/** \brief
-Seed initial stocks and cohorts for this grid cell
-*/
+       }
+
+/** \brief Seed initial stocks and cohorts for this grid cell
+
 @param cohortFunctionalGroups The functional group definitions for cohorts in the model 
 @param stockFunctionalGroups The functional group definitions for stocks in the model 
 @param globalDiagnostics A list of global diagnostic variables 
@@ -568,25 +493,25 @@ Seed initial stocks and cohorts for this grid cell
 @param totalCellMarineCohorts The total number of cohorts to be seeded in each marine grid cell 
 @param DrawRandomly Whether the model is set to use random draws 
 @param ZeroAbundance Set this parameter to 'true' if you want to seed the cohorts with zero abundance 
-//         void SeedGridCellCohortsAndStocks(FunctionalGroupDefinitions cohortFunctionalGroups, FunctionalGroupDefinitions stockFunctionalGroups,
-//            map<string, double> globalDiagnostics, ref Int64 nextCohortID, Boolean tracking, double totalCellTerrestrialCohorts, 
-//            double totalCellMarineCohorts, Boolean DrawRandomly, Boolean ZeroAbundance)
-//        {
+*/
+        void SeedGridCellCohortsAndStocks(FunctionalGroupDefinitions cohortFunctionalGroups, FunctionalGroupDefinitions stockFunctionalGroups,
+           map<string, double> globalDiagnostics, long long& nextCohortID, bool tracking, double totalCellTerrestrialCohorts, 
+           double totalCellMarineCohorts, bool DrawRandomly, bool ZeroAbundance)
+       {
 //            SeedGridCellCohorts(ref cohortFunctionalGroups, ref _CellEnvironment, globalDiagnostics, ref nextCohortID, tracking, 
 //                totalCellTerrestrialCohorts, totalCellMarineCohorts, DrawRandomly, ZeroAbundance);
 //            SeedGridCellStocks(ref stockFunctionalGroups, ref _CellEnvironment, globalDiagnostics);
-//        }
-//
-/** \brief
-Gets the value in this grid cell of a specified environmental variable at a specified time interval
-*/
+       }
+
+/** \brief Gets the value in this grid cell of a specified environmental variable at a specified time interval
+
 @param variableName The name of the environmental layer from which to extract the value 
 @param timeInterval The index of the time interval to return data for (i.e. 0 if it is a yearly variable
 or the month index - 0=Jan, 1=Feb etc. - for monthly variables) 
 @param variableFound Returns whether the variable was found in the cell environment 
 @return The value in this grid cell of a specified environmental variable at a specified time interval*/
-//         double GetEnviroLayer(string variableName, unsigned timeInterval, out bool variableFound)
-//        {
+        double GetEnviroLayer(string variableName, unsigned timeInterval,  bool variableFound)
+       {
 //            // If the specified variable is in the cell environment then return the requested value, otherwise set variable found boolean
 //            // to false and return a missing value
 //            if (_CellEnvironment.ContainsKey(variableName))
@@ -600,18 +525,17 @@ or the month index - 0=Jan, 1=Feb etc. - for monthly variables)
 //                Console.WriteLine("Attempt to get environmental layer value failed: {0} does not exist", variableName);
 //                return _CellEnvironment["Missing Value"][0];
 //            }
-//        }
-//
-/** \brief
-Sets the value in this grid cell of a specified environmental variable at a specified time interval
-*/
+       }
+
+/** \brief Sets the value in this grid cell of a specified environmental variable at a specified time interval
+
 @param variableName The name of the environmental layer to set the value for 
 @param timeInterval The index of the time interval to return data for (i.e. 0 if it is a yearly variable
 or the month index - 0=Jan, 1=Feb etc. - for monthly variables) 
 @param setValue Value to set 
 @return Whether the variable was found in the cell environment*/
-//         bool SetEnviroLayer(string variableName, unsigned timeInterval, double setValue)
-//        {
+        bool SetEnviroLayer(string variableName, unsigned timeInterval, double setValue)
+       {
 //            // If the specified variable exists in the cell environment then set the specified value and return true; otherwise print an error message and return false
 //            if (_CellEnvironment.ContainsKey(variableName))
 //            {
@@ -623,17 +547,16 @@ or the month index - 0=Jan, 1=Feb etc. - for monthly variables)
 //                Console.WriteLine("Attempt to set environmental layer value failed: {0} does not exist", variableName);
 //                return false;
 //            }
-//        }
-//
-/** \brief
-Sets the value in this grid cell of a delta of specified type and for a specified ecological process
-*/
+       }
+
+/** \brief Sets the value in this grid cell of a delta of specified type and for a specified ecological process
+
 @param deltaType The type of delta to set the value for: 'biomass', 'abundance', 'reproductivebiomass', 'organicpool' or 'respiratoryCO2pool 
 @param ecologicalProcess The ecological process to set the value for 
 @param setValue Value to set 
 @return Whether the delta type and ecological process were found within the cell deltas*/
-//         bool SetDelta(string deltaType, string ecologicalProcess, double setValue)
-//        {
+        bool SetDelta(string deltaType, string ecologicalProcess, double setValue)
+       {
 //            // If the specified ecological and process exist in the cell deltas, then set the value and return true; otherwise, return false
 //            if (_Deltas.ContainsKey(deltaType))
 //            {
@@ -653,11 +576,11 @@ Sets the value in this grid cell of a delta of specified type and for a specifie
 //                Console.WriteLine("Attempt to set delta failed: delta type '{0}' does not exist in the list", deltaType);
 //                return false;
 //            }
-//        }
-//
+       }
+
 /** \brief
 Seed grid cell with cohorts, as specified in the model input files
-*/
+
 @param functionalGroups The functional group definitions for cohorts in the grid cell 
 @param cellEnvironment The environment in the grid cell 
 @param globalDiagnostics A list of global diagnostic variables 
@@ -666,10 +589,10 @@ Seed grid cell with cohorts, as specified in the model input files
 @param totalCellTerrestrialCohorts The total number of cohorts to be seeded in each terrestrial grid cell 
 @param totalCellMarineCohorts The total number of cohorts to be seeded in each marine grid cell 
 @param drawRandomly Whether the model is set to use random draws 
-@param ZeroAbundance Set this parameter to 'true' if you want to seed the cohorts with zero abundance 
+@param ZeroAbundance Set this parameter to 'true' if you want to seed the cohorts with zero abundance */
 //        private void SeedGridCellCohorts(ref FunctionalGroupDefinitions functionalGroups, ref map<string, double[]>
-//            cellEnvironment, map<string, double> globalDiagnostics, ref Int64 nextCohortID, Boolean tracking, double totalCellTerrestrialCohorts, 
-//            double totalCellMarineCohorts, Boolean DrawRandomly, Boolean ZeroAbundance)
+//            cellEnvironment, map<string, double> globalDiagnostics, ref Int64 nextCohortID, bool tracking, double totalCellTerrestrialCohorts, 
+//            double totalCellMarineCohorts, bool DrawRandomly, bool ZeroAbundance)
 //        {
 //            // Set the seed for the random number generator from the system time
 //            RandomNumberGenerator.SetSeedFromSystemTime();
@@ -920,10 +843,10 @@ Seed grid cell with cohorts, as specified in the model input files
 //
 /** \brief
 Seed grid cell with stocks, as specified in the model input files
-*/
+
 @param functionalGroups A reference to the stock functional group handler 
 @param cellEnvironment The environment in the grid cell 
-@param globalDiagnostics A list of global diagnostic variables for the model grid 
+@param globalDiagnostics A list of global diagnostic variables for the model grid */
 //        private void SeedGridCellStocks(ref FunctionalGroupDefinitions functionalGroups, ref map<string, double[]> 
 //            cellEnvironment, map<string, double> globalDiagnostics)
 //        {
@@ -1008,7 +931,7 @@ Seed grid cell with stocks, as specified in the model input files
 //
 //
 //        }
-//    }
+    };
 //
 //
 //}
