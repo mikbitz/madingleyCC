@@ -19,25 +19,7 @@ class MassBinsHandler
 */
        void SetUpMassBins(string massBinsFile, string outputPath)
        {
-//            // Construct file name
-//            string FileString = "msds:csv?file=input/Model setup/" + massBinsFile + "&openMode=readOnly";
-//
-//            //Copy the Mass bin definitions file to the output directory
-//            if(System.IO.File.Exists(outputPath+ massBinsFile))
-//                System.IO.File.Copy("input/Model setup/" + massBinsFile, outputPath + massBinsFile, true);
-//
-//            // Read in the data
-//            DataSet InternalData = DataSet.Open(FileString);
-//
-//            //Copy the values for this variable into an array
-//            var TempValues = InternalData.Variables[0].GetData();
-//            NumMassBins = TempValues.Length;
-//            MassBins = new float[TempValues.Length];
-//
-//            for (int i = 0; i < TempValues.Length; i++)
-//            {
-//                MassBins[i] = Convert.ToSingle(TempValues.GetValue(i));
-//            }
+
            ifstream massFile(massBinsFile.c_str());
            string title;
            getline (massFile,title);

@@ -10,6 +10,7 @@
 /** \brief Calculates derived climate variables for which no input data exist */
      class ClimateVariablesCalculator
     {
+    public:
 /** \brief Constructor the climate variables calculator */
         ClimateVariablesCalculator()
        {

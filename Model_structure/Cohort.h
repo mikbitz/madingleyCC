@@ -162,6 +162,7 @@ Get and set the optimal prey body size for individuals in this cohort
 //        }
 //        
 //
+
 /** \brief
 Constructor for the Cohort class: assigns cohort starting properties
 

@@ -170,11 +170,11 @@ double GetBiologicalPropertyOneFunctionalGroup(string propertyName, int function
 @param propertyName The name of the property to get values for
 */
 //        /// <returns>The values of a functional group property for all functional groups</returns>
-//        public double[] GetBiologicalPropertyAllFunctionalGroups(string propertyName)
-//        {
+vector<double> GetBiologicalPropertyAllFunctionalGroups(string propertyName)
+       {
 //            return FunctionalGroupProperties[propertyName.ToLower()];
-//        }
-//
+       }
+
 /** \brief
 //        /// Retrieves the values for all traits defined in the model
 */
@@ -375,10 +375,10 @@ vector<int> GetFunctionalGroupIndex(string searchTraits, string searchTraitValue
 //
 /** \brief Returns number of functional groups */
 //        /// <returns>Number of functional groups</returns>
-//        public int GetNumberOfFunctionalGroups()
-//        {
+int GetNumberOfFunctionalGroups()
+       {
 //            return (_AllFunctionalGroupsIndex.Length);
-//        }
+       }
 //    }
 };
 #endif

@@ -13,6 +13,7 @@
 //    /// <remarks>Currently assumes that cells are evenly spaced in latitude and longitude</remarks>
 class EnviroData
     {
+    public:
 /** \brief
 Number of latitudinal cells
 */
@@ -22,22 +23,10 @@ Number of latitudinal cells
 /** \brief
 Number of longitudinal cells
 */
-//        private uint _NumLons;
-/** \brief
-Get number of longitudinal cells
-*/
-//        public uint NumLons { get { return _NumLons; } }
-//
-/** \brief
-Number of time intervals encompassed by the environmental variable
-*/
-//        private uint _NumTimes;
-/** \brief
-Get the number of time intervals encompassed by the environmental variable
-*/
-//        public uint NumTimes
-//        { get { return _NumTimes; } }
-//
+          unsigned NumLons;
+
+/** brief Number of time intervals encompassed by the environmental variable */
+        unsigned NumTimes;
 /** \brief
 Latitude of the bottom edge of the sothernmost grid cell
 */
@@ -687,8 +676,8 @@ A method to extract the value of an environmental variable from the grid cell cl
 @param missingValue Boolean to indicate whether the returned value is a missing value 
 @returns The value of the environmental variable at the grid cell closest to the specified latitude and longitude
 */
-//        public double GetValue(double lat, double lon, uint timeInterval, out Boolean missingValue)
-//        {
+double GetValue(double lat, double lon, unsigned timeInterval, bool missingValue)
+       {
 //            // Check that the requested latitude and longitude are within the scope of the environmental variable
 //            Debug.Assert(lat >= LatMin && lat <= LatMin + (NumLats * LatStep), "Requested latitude is outside dataset latitude range: " + _ReadFileString);
 //            Debug.Assert(lon >= LonMin && lon <= LonMin + (NumLons * LonStep), "Requested longitude is outside dataset longitude range: " + _ReadFileString);
@@ -748,8 +737,8 @@ A method to extract the value of an environmental variable from the grid cell cl
 //
 //            // Return the value of the environmental variable at the cell that is closest to the requested longitudes and latitudes
 //            return _DataArray[(int)timeInterval][closestLatIndex, closestLonIndex];
-//        }
-//
+       }
+
 /** \brief
 A method to extract the area weighted value of an environmental variable from the envirodata cells overlapped by the cell specified by lat and lon
 
@@ -761,8 +750,8 @@ A method to extract the area weighted value of an environmental variable from th
 @param lonCellSize The longitudinal size of cells in the model grid 
 @return The area weighted value of an environmental variable from the envirodata cells overlapped by the cell specified by lat and lon
 */
-//        public double GetValue(double lat, double lon, uint timeInterval, out Boolean missingValue, double latCellSize, double lonCellSize)
-//        {
+double GetValue(double lat, double lon, unsigned timeInterval, bool missingValue, double latCellSize, double lonCellSize)
+       {
 //            // Check that the requested latitude and longitude are within the scope of the environmental variable
 //            Debug.Assert(lat >= LatMin && lat + latCellSize <= LatMin + (NumLats * LatStep), "Requested latitude is outside dataset latitude range: " + _ReadFileString);
 //            Debug.Assert(lon >= LonMin && lon + lonCellSize <= LonMin + (NumLons * LonStep), "Requested longitude is outside dataset longitude range: " + _ReadFileString);
@@ -1077,10 +1066,10 @@ A method to extract the area weighted value of an environmental variable from th
 //
 //            //Return the weighted average
 //            return WeightedValue;
-//        }
-//
-//
-//
+       }
+
+
+
 /** \brief
 Reads in two-dimensional environmental data from a NetCDF and stores them in the array of values within this instance of EnviroData
 

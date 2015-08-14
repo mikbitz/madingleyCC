@@ -50,7 +50,7 @@ Initialise and run the model
 #include<vector>
 #include <chrono>
 #include <ctime>
-#include <ModelGrid.h>
+
 //
 //
 //namespace Madingley

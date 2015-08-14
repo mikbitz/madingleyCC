@@ -25,18 +25,19 @@ unsigned size(){return GridCellCohorts.size();}
 //        private List<Cohort> [] GridCellCohorts;
 //
 /** \brief Create a new list of cohorts for the grid cell */
-//         GridCellCohortHandler()
-//        {
+        GridCellCohortHandler()
+       {
 //            GridCellCohorts = new List<Cohort>[0];
-//        }
-//
+       }
+
 /** \brief Create a new list of cohorts of specified length corresponding to the number of functional groups 
 @param NumFunctionalGroups The number of functional groups for which there will be cohorts in this grid cell */
-//         GridCellCohortHandler(int NumFunctionalGroups)
-//        {
+//        GridCellCohortHandler(int NumFunctionalGroups)
+       void setSize(int NumFunctionalGroups)
+       {
 //            GridCellCohorts = new List<Cohort>[NumFunctionalGroups];
-//        }
-//
+       }
+
 /** \brief Update grid cell cohorts with a specified list of cohorts 
 @param ExistingCohorts A list of cohorts to update the grid cell cohorts with */
 //         GridCellCohortHandler(List<Cohort>[] ExistingCohorts)

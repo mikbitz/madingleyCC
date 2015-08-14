@@ -14,13 +14,10 @@
 //
 //namespace Madingley
 //{
-/** \brief
-//    /// Revised version of Matt Smith's terrestrial carbon model
-//    /// </summary>
-//     class RevisedTerrestrialPlantModel
-//    {
-//
-//
+/** \brief Revised version of Matt Smith's terrestrial carbon model */
+     class RevisedTerrestrialPlantModel
+   {
+   public:
 /** \brief
 The maximum poossible NPP (kg C per m2 per year)
 */
@@ -202,16 +199,16 @@ Instance of the class to perform general functions
 /** \brief
 Constructor for the plant model
 */
-//         RevisedTerrestrialPlantModel()
-//        {
+        RevisedTerrestrialPlantModel()
+       {
 //            // Initialise parameters
 //            InitialisePlantModelParameters();
 //
 //            // Initialise the utility functions
 //            Utilities = new UtilityFunctions();
 //
-//        }
-//
+       }
+
 /** \brief
 Initialise parameters for the plant model
 */
@@ -258,10 +255,9 @@ Initialise parameters for the plant model
 //            m2Tokm2Conversion = 1000000.0;
 //        }
 //
-/** \brief
-Write out the values of the parameters to an output file
-*/
-@param sw A streamwriter object to write the parameter values to 
+/** \brief Write out the values of the parameters to an output file
+
+@param sw A streamwriter object to write the parameter values to */ 
 //         void WriteOutParameterValues(StreamWriter sw)
 //        {
 //            // Initialise the parameters
@@ -337,14 +333,13 @@ Write out the values of the parameters to an output file
 //        }
 //
 //
-/** \brief
-Estimate the mass of leaves in a specified stock in the specified grid cell at equilibrium, given current environmental conditions
-*/
+/** \brief Estimate the mass of leaves in a specified stock in the specified grid cell at equilibrium, given current environmental conditions
+
 @param cellEnvironment The environment in the current grid cell 
 @param deciduous Whether the leaves in the specified stock are deciduous 
 @return The equilibrium mass of leaves in the specified stock*/
-//         double CalculateEquilibriumLeafMass(map<string, double[]> cellEnvironment, bool deciduous)
-//        {
+        double CalculateEquilibriumLeafMass(map<string, vector<double>> cellEnvironment, bool deciduous)
+       {
 //            // Calculate annual average temperature
 //            double MeanTemp = cellEnvironment["Temperature"].Average();
 //
@@ -416,11 +411,10 @@ Estimate the mass of leaves in a specified stock in the specified grid cell at e
 //            double LeafWetMatter = this.ConvertToLeafWetMass(EquilibriumLeafCarbon, cellEnvironment["Cell Area"][0]);
 //
 //            return LeafWetMatter;
-//        }
-//
-/** \brief
-Update the leaf stock during a time step given the environmental conditions in the grid cell
-*/
+       }
+
+/** \brief Update the leaf stock during a time step given the environmental conditions in the grid cell
+
 @param cellEnvironment The environment in the current grid cell 
 @param gridCellStocks The stocks in the current grid cell 
 @param actingStock The position of the acting stock in the array of grid cell stocks 
@@ -428,7 +422,7 @@ Update the leaf stock during a time step given the environmental conditions in t
 @param deciduous Whether the acting stock consists of deciduous leaves 
 @param GlobalModelTimeStepUnit The time step unit used in the model 
 @param tracker Whether to track properties of the ecological processes 
-@param currentMonth The current model month 
+@param currentMonth The current model month */
 //         void UpdateLeafStock(map<string, double[]> cellEnvironment, GridCellStockHandler gridCellStocks, int[] actingStock,
 //            unsigned currentTimeStep, bool deciduous, string GlobalModelTimeStepUnit, ProcessTracker tracker, GlobalProcessTracker globalTracker, unsigned currentMonth,
 //            string outputDetail, bool specificLocations)
@@ -547,9 +541,8 @@ Update the leaf stock during a time step given the environmental conditions in t
 //            
 //        }
 //
-/** \brief
-Calculate NPP in kg C per m2
-*/
+/** \brief Calculate NPP in kg C per m2
+
 @param temperature Current temperature, in degrees Celsius 
 @param precipitation Current precipitation, in mm 
 @return */
@@ -566,9 +559,8 @@ Calculate NPP in kg C per m2
 //
 //        }
 //
-/** \brief
-Calculate the fractional allocation of productivity to structural tissue
-*/
+/** \brief Calculate the fractional allocation of productivity to structural tissue
+
 @param NPP Net primary productivity 
 @return The fractional allocation of productivity to structural tissue*/
 //         double CalculateFracStruct(double NPP)
@@ -581,9 +573,8 @@ Calculate the fractional allocation of productivity to structural tissue
 //
 //        }
 //
-/** \brief
-Calculate the fractional allocation of productivity to evergreen plant matter
-*/
+/** \brief Calculate the fractional allocation of productivity to evergreen plant matter
+
 @param NDF The proportion of the current year subject to frost 
 @return The fractional allocation of productivity to evergreen plant matter*/
 //         double CalculateFracEvergreen(double NDF)
@@ -594,9 +585,8 @@ Calculate the fractional allocation of productivity to evergreen plant matter
 //            return imed1;
 //        }
 //
-/** \brief
-Calculate the mortality rate of evergreen leaves
-*/
+/** \brief Calculate the mortality rate of evergreen leaves
+
 @param temperature Current temperature, in degrees Celsius 
 @return The mortality rate of evergreen leaves*/
 //         double CalculateEvergreenAnnualLeafMortality(double temperature)
@@ -607,9 +597,8 @@ Calculate the mortality rate of evergreen leaves
 //            return EstimatedRate;
 //        }
 //
-/** \brief
-Calculate the mortality rate of deciduous leaves
-*/
+/** \brief Calculate the mortality rate of deciduous leaves
+
 @param temperature Current temperature, in degrees Celsius 
 @return The mortality rate of deciduous leaves*/
 //         double CalculateDeciduousAnnualLeafMortality(double temperature)
@@ -620,9 +609,8 @@ Calculate the mortality rate of deciduous leaves
 //            return EstimatedRate;
 //        }
 //
-/** \brief
-Calculate the fraction of NPP allocated to non-structural tissue that is allocated to leaves
-*/
+/** \brief Calculate the fraction of NPP allocated to non-structural tissue that is allocated to leaves
+
 @param LeafMortRate The mortality rate of leaves 
 @param FRootMort The mortality rate of fine roots 
 @return The fractional mortality of leaves*/
@@ -634,9 +622,8 @@ Calculate the fraction of NPP allocated to non-structural tissue that is allocat
 //            return LeafMortRate / (CombinedLeafMortRate + FRootMort);
 //        }
 //
-/** \brief
-Calculate the mortality rate of fine roots
-*/
+/** \brief Calculate the mortality rate of fine roots
+
 @param temperature Current temperature, in degrees Celsius 
 @return The mortality rate of fine roots*/
 //         double CalculateFineRootMortalityRate(double temperature)
@@ -647,9 +634,8 @@ Calculate the mortality rate of fine roots
 //            return EstimatedRate;
 //        }
 //
-/** \brief
-Calculate the rate of plant mortality to fire
-*/
+/** \brief Calculate the rate of plant mortality to fire
+
 @param NPP Net Primary Productivity, in kg C per m2 
 @param FractionYearFireSeason The fraction of the year subject to fires 
 @return The rate of plant mortality to fire*/
@@ -663,9 +649,8 @@ Calculate the rate of plant mortality to fire
 //            return Rate;
 //        }
 //
-/** \brief
-Calculate the mortality rate of plant structural tissue
-*/
+/** \brief Calculate the mortality rate of plant structural tissue
+
 @param AET Actual evapotranspiration, in mm 
 @return The mortality rate of plant structural tissue*/
 //         double CalculateStructuralMortality(double AET)
@@ -676,9 +661,8 @@ Calculate the mortality rate of plant structural tissue
 //            return EstimatedRate;
 //        }
 //
-/** \brief
-Calculate leaf carbon, in kg C per m2
-*/
+/** \brief Calculate leaf carbon, in kg C per m2
+
 @param NPP Net Primary Productivity, in kg C per m2 
 @param FracStruct Fractional allocation to structural tissue 
 @param LeafMortFrac Fractional mortality of leaves 
@@ -693,9 +677,8 @@ Calculate leaf carbon, in kg C per m2
 //            return LeafCFixation / LeafCMortality;
 //        }
 //
-/** \brief
-Calculate the carbon fixed by leaves, in kg C per m2
-*/
+/** \brief Calculate the carbon fixed by leaves, in kg C per m2
+
 @param NPP Net Primary Productivity, in kg C per m2 
 @param FracStruct Fractional allocation to structural tissue 
 @param LeafMortFrac Fractional mortality of leaves 
@@ -705,9 +688,8 @@ Calculate the carbon fixed by leaves, in kg C per m2
 //            return NPP * (1 - FracStruct * MaxFracStruct) * LeafMortFrac;
 //        }
 //
-/** \brief
-Convert from kg C per m2 to g of leaf wet matter in the entire grid cell
-*/
+/** \brief Convert from kg C per m2 to g of leaf wet matter in the entire grid cell
+
 @param kgCarbon Value to convert, in kg C per m2 
 @param cellArea The area of the grid cell 
 @return Value in g of wet matter in the grid cell*/
@@ -732,9 +714,8 @@ Convert from kg C per m2 to g of leaf wet matter in the entire grid cell
 //
 //        }
 //
-/** \brief
-Convert from g of plant wet matter in the entire grid cell to kg C per m2
-*/
+/** \brief Convert from g of plant wet matter in the entire grid cell to kg C per m2
+
 @param leafWetMatter The value to convert as total g wet matter in the grid cell 
 @param cellArea The area of the grid cell 
 @return Value in kg C per m2*/
@@ -766,6 +747,6 @@ Convert from g of plant wet matter in the entire grid cell to kg C per m2
 //
 //
 //
-//    }
+    };
 //}
 #endif

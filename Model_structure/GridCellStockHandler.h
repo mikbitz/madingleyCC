@@ -22,18 +22,19 @@ class GridCellStockHandler //: IList<List<Stock>>, IEnumerable<List<Stock>>
 vector<Stock>& operator[](unsigned i){return GridCellStocks[i];}
 unsigned size(){return GridCellStocks.size();}
 /** \brief Overloaded constructor for the grid cell stock handler: initialises a new vector of lists of stocks*/
-//         GridCellStockHandler()
-//        {
+        GridCellStockHandler()
+       {
 //            GridCellStocks = new List<Stock>[0];
-//        }
-//
+       }
+
 /** \brief Overloaded constructor for the grid cell stock handler: initialises a new vector of lists of stocks with number of elements equal to the number of functional groups 
 @param NumFunctionalGroups The number of stock functional groups in the model */
-//         GridCellStockHandler(int NumFunctionalGroups)
-//        {
+//        GridCellStockHandler(int NumFunctionalGroups)
+       void setSize(int NumFunctionalGroups)
+       {
 //            GridCellStocks = new List<Stock>[NumFunctionalGroups];
-//        }
-//
+       }
+
 /** \brief Overloaded constructor for the grid cell stock handler: update the grid cell stocks with the a set of existing stocks
 @param ExistingStocks */  
 //         GridCellStockHandler(List<Stock>[] ExistingStocks)

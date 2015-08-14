@@ -29,7 +29,7 @@ The mean body mass of an individual in this stock
 /** \brief
 Get and set the mean body mass of an individual in this stock
 */
-//         double IndividualBodyMass
+         double IndividualBodyMass;
 //        {
 //            get { return _IndividualBodyMass; }
 //            set { _IndividualBodyMass = value; }
@@ -48,19 +48,20 @@ Get and set the total biomass of this stock
 //            set { _TotalBiomass = value; }
 //        }
 //
+Stock(){;}
 /** \brief
 Constructor for stock class. Assigns stock starting properties
 @param functionalGroupIndex The functional group index of the stock being generated 
 @param individualMass The individual mass of the stock 
 @param initialTotalBiomass The initial total biomass of the stock */
-//         Stock(byte functionalGroupIndex, double individualMass, double initialTotalBiomass)
-//        {
-//            _FunctionalGroupIndex = functionalGroupIndex;
-//            _IndividualBodyMass = individualMass;
-//            _TotalBiomass = initialTotalBiomass;
-//        }
-//        
-//
+        Stock(unsigned char functionalGroupIndex, double individualMass, double initialTotalBiomass)
+       {
+           FunctionalGroupIndex = functionalGroupIndex;
+           IndividualBodyMass = individualMass;
+           TotalBiomass = initialTotalBiomass;
+       }
+       
+
     };
 //}
 #endif
