@@ -13,41 +13,16 @@
 class Stock
     {
     public:
-/** \brief
-The index of the functional group that the stock belongs to
-*/
+/** \brief The index of the functional group that the stock belongs to */
      unsigned char FunctionalGroupIndex;
-/** \brief
-Get and set the functional group that the stock belongs to
-*/
-//         byte FunctionalGroupIndex { get { return _FunctionalGroupIndex; } }
-//
-/** \brief
-The mean body mass of an individual in this stock
-*/
-//        private double _IndividualBodyMass;
-/** \brief
-Get and set the mean body mass of an individual in this stock
-*/
+
+/** \brief The mean body mass of an individual in this stock */
+
          double IndividualBodyMass;
-//        {
-//            get { return _IndividualBodyMass; }
-//            set { _IndividualBodyMass = value; }
-//        }
-//
-/** \brief
-The total biomass of the stock
-*/
+
+/** \brief The total biomass of the stock */
         double TotalBiomass;
-/** \brief
-Get and set the total biomass of this stock
-*/
-//         double TotalBiomass
-//        {
-//            get { return _TotalBiomass; }
-//            set { _TotalBiomass = value; }
-//        }
-//
+
 Stock(){;}
 /** \brief
 Constructor for stock class. Assigns stock starting properties

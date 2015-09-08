@@ -11,10 +11,10 @@
 //
 //namespace Madingley
 //{
-//     class GlobalProcessTracker
-//    {
-//                /// <summary>
-Whether to track processes
+    class GlobalProcessTracker
+   {
+
+/** \brief Whether to track processes
 */
 //        private Boolean _TrackProcesses;
 /** \brief
@@ -38,7 +38,7 @@ Get or set whether to track processes
 //
 /** \brief
 Constructor for process tracker: Initialises the trackers for individual processes
-*/
+
 @param numTimesteps The number of time steps in the model 
 @param lats The latitudes of active grid cells in the model 
 @param lons The longitudes of active grid cells in the model 
@@ -50,7 +50,7 @@ Constructor for process tracker: Initialises the trackers for individual process
 @param outputFileSuffix The suffix to be applied to output files from process tracking 
 @param outputPath The path to the folder to be used for process tracking outputs 
 @param trackerMassBins The mass bins to use for categorising output data in the process trackers 
-@param specificLocations Whether the model is being run for specific locations 
+@param specificLocations Whether the model is being run for specific locations */
 //         GlobalProcessTracker(unsigned numTimesteps,
 //            float[] lats, float[] lons,
 //            List<unsigned[]> cellIndices,
@@ -91,6 +91,6 @@ Constructor for process tracker: Initialises the trackers for individual process
 //
 //        }
 //
-//    }
+    };
 //}
 #endif

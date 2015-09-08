@@ -16,6 +16,7 @@
 //C++ pure virtual class acts as an interface
 class IEcologicalProcessWithinGridCell
     {
+    public:
 /** \brief Run the ecological process
 
 @param gridCellCohorts The cohorts in the current grid cell 

@@ -22,7 +22,7 @@ class IDispersalImplementation
     //DoubleProperty DeltaT;
 //
 /** \brief Run the dispersal implementation */
-     virtual void RunDispersal(vector<unsigned> cellIndex, ModelGrid gridForDispersal, Cohort cohortToDisperse, int actingCohortFunctionalGroup, int actingCohortNumber, unsigned currentMonth);
+     virtual void RunDispersal(vector<unsigned> cellIndex, ModelGrid gridForDispersal, Cohort cohortToDisperse, int actingCohortFunctionalGroup, int actingCohortNumber, unsigned currentMonth){;}
     };
 //}
 #endif

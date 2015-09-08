@@ -15,7 +15,7 @@
 /** \brief  Performs mortality */
 class Mortality : public IEcologicalProcessWithinGridCell
     {
-
+    public:
 /** \brief The available implementations of the mortality process */
         map<string, IMortalityImplementation*> Implementations;
 

@@ -50,6 +50,8 @@ Initialise and run the model
 #include<vector>
 #include <chrono>
 #include <ctime>
+#include <EcologyStock.h>
+#include <IDispersalImplementation.h>
 
 //
 //
@@ -62,42 +64,25 @@ Initialise and run the model
         int main()
         {   
 
-//            // Write out model details to the console
+           // Write out model details to the console
             cout<<("Madingley model C++ v. 0.\n")<<endl;
-//
-//            // Declare an instance of RunSimulations
+
+           // Declare an instance of RunSimulations
             RunSimulations MakeSimulations = RunSimulations();
+            //Outpu directory
             std::string OutputDir=".";
+            
             std::time_t t = system_clock::to_time_t(high_resolution_clock::now());
             cout<<"Model Run started at "<<std::ctime(&t)<<endl;
 
-//
-//            // Specify the working directory
-//            //string OutputDir = "C:/Users/derekt/Dropbox/Madingley stuff/Model outputs/MadingleyOutputs" +
-//            //string OutputDir = "C:/Users/derekt/desktop/MadingleyOutputs" +
-//            //string OutputDir = "Ensemble" +
-//            string OutputDir = "PLoS_FullTerrFGs" +
-//            //string OutputDir = "C:/Users/mikeha/Work/Research/Visual Studio 2010/Madingley/madingley outputs" +
-//                System.DateTime.Now.Year + "-"
-//                + System.DateTime.Now.Month + "-"
-//                + System.DateTime.Now.Day + "_"
-//                + System.DateTime.Now.Hour + "."
-//                + System.DateTime.Now.Minute + "."
-//                + System.DateTime.Now.Second + "/";
-//
-//            // Create the working directory if this does not already exist
-//            System.IO.Directory.CreateDirectory(OutputDir);
-//
-//            // Declare an instance of ScenarioParameterInitialisation to read in the parameters for this model run or set of runs
+
+
+           // Declare an instance of ScenarioParameterInitialisation to read in the parameters for this model run or set of runs
             ScenarioParameterInitialisation Scenarios = ScenarioParameterInitialisation("Scenarios.csv", OutputDir);
-//
-//            // Run the desired simulation or batch of simulations
+
+           // Run the desired simulation or batch of simulations
             MakeSimulations.RunAllSimulations("EcosystemModelInitialisation.csv", Scenarios, OutputDir);
-//
-//            //Console.ReadKey();
-//        }
-//
-//        
+       
             return 0;
     }
 //}

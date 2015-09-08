@@ -12,6 +12,7 @@
 /** \brief Performs reproduction */
      class Reproduction : public IEcologicalProcessWithinGridCell
     {
+    public:
 /** \brief The available implementations of the reproduction process */
         map<string, IReproductionImplementation*> Implementations;  
 /** \brief Constructor for Reproduction: fills the list of available implementations of reproduction */

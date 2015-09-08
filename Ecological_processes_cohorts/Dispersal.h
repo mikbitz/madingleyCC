@@ -19,7 +19,7 @@ using namespace std;
 //namespace Madingley
 //{
 /** \brief Performs dispersal */
-class Dispersal : IEcologicalProcessAcrossGridCells
+class Dispersal : public IEcologicalProcessAcrossGridCells
     {
 /** \brief The available implementations of the dispersal process */
           map<string, IDispersalImplementation*> Implementations;

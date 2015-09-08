@@ -16,11 +16,14 @@
 class GridCellStockHandler //: IList<List<Stock>>, IEnumerable<List<Stock>>
     {
 /** \brief A vector (with elements correpsonding to functional groups) of lists of stocks in the current grid cell*/
+    public:
         vector< vector<Stock> > GridCellStocks;
 
-    public:
+
 vector<Stock>& operator[](unsigned i){return GridCellStocks[i];}
+Stock& operator[](vector<int> s){return GridCellStocks[s[0]][s[1]];}
 unsigned size(){return GridCellStocks.size();}
+
 /** \brief Overloaded constructor for the grid cell stock handler: initialises a new vector of lists of stocks*/
         GridCellStockHandler()
        {

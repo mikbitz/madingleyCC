@@ -17,6 +17,7 @@
 /** \brief A formulation of the process of dispersal */
 class AdvectiveDispersal : public IDispersalImplementation
     {
+    public:
 /** \brief The horizontal diffusivity parameter (m^2/s) */
            const double HorizontalDiffusivity = 100;      
 /** \brief The length of the time-step for advective dispersal, in hours*/
@@ -36,7 +37,7 @@ class AdvectiveDispersal : public IDispersalImplementation
 /** \brief An instance of the simple random number generator class */
            std::default_random_engine RandomNumberGenerator;
 
-    public:
+
 /** \brief Constructor for dispersal: assigns all parameter values */
          AdvectiveDispersal(string globalModelTimeStepUnit, bool DrawRandomly)
         {
