@@ -88,6 +88,7 @@ fire into a Dynamic Global Vegetation Model". Global Ecology and Biogeography, 1
                            PET = MidMonthDailyPET[jj] + ((MidMonthDailyPET[NextMonth] - MidMonthDailyPET[jj]) / (double)15) * (double)(kk - 15);
                            PPT = MidMonthDailyPPT[jj] + ((MidMonthDailyPPT[NextMonth] - MidMonthDailyPPT[jj]) / (double)15) * (double)(kk - 15);
                        }
+                       if (AvailableWaterCapacity ==0)DailyAET[kk]=0; else
                        DailyAET[kk] = PET * (SoilWaterPast / AvailableWaterCapacity); // this is the potential evapotranspiration rates scaled by how dry the soil is. The further the soil water is from field capacity the less the evapotranspiration rate is.
                        DailySWC[kk] = min(max((SoilWaterPast + PPT - DailyAET[kk]), 0.), AvailableWaterCapacity); //Soil water content is then updated
                        SoilWaterPast = DailySWC[kk]; // update the previous soil water content
@@ -106,11 +107,13 @@ fire into a Dynamic Global Vegetation Model". Global Ecology and Biogeography, 1
                            }
                            ActualEvapotranspiration[jj] += DailyAET[kk]; // Add up the actual evapotranspiration
                            SoilWater[jj] += DailySWC[kk]; // Add up the soil water contents (we'll take an average)
-                           double SoilMoistureContent = DailySWC[kk] / AvailableWaterCapacity;
+                           double SoilMoistureContent = 0;
+                           if (AvailableWaterCapacity>0){
+                               SoilMoistureContent = DailySWC[kk] / AvailableWaterCapacity;
                            if (TMP > 0 && SoilMoistureContent < SoilMoistureFireThreshold)
                            {
                                LengthOfFireSeason += (exp((-acos(-1.)) * pow(((DailySWC[kk] / AvailableWaterCapacity) / 0.3), 2))); // work out the length of the fire season
-                           }
+                           }}
                        }
                    }
                }
@@ -146,7 +149,7 @@ according to the the CRU CL 2.0 gridded climate dataset (For details of this dat
 @param monthlyTemperature A vector containing average temperatures for each month 
 @param missingValue The missing value used in the the environmental datasets 
 @return The fraction of the year in which temperature drops below zero at some point in the day*/
-        double GetNDF(vector<double> monthlyFrostDays, vector<double> monthlyTemperature, double missingValue)
+        double GetNDF(vector<double>& monthlyFrostDays, vector<double>& monthlyTemperature, double missingValue)
        {
            double DataToReturn = 0.0;
 

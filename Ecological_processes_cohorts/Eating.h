@@ -34,7 +34,10 @@
            RevisedPredation *RevisedPredationImplementation = new RevisedPredation(cellArea, globalModelTimeStepUnit);
            Implementations["revised predation"]= RevisedPredationImplementation;
         }
-
+    ~Eating() {
+        delete Implementations["revised herbivory"];
+        delete Implementations["revised predation"];
+    }
 /** \briefInitializes an implementation of eating 
 @param gridCellCohorts The cohorts in the current grid cell 
 @param gridCellStocks The stocks in the current grid cell 
@@ -42,8 +45,8 @@
 @param madingleyStockDefinitions The definitions for stock functional groups in the model 
 @param implementationKey The name of the implementation of eating to initialize 
 \remarks Eating needs to be initialized every time step */
-        void InitializeEcologicalProcess(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, 
-           FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions, 
+        void InitializeEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, 
+           FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, 
            string implementationKey)
        {
            // Initialize the implementation of the eating process
@@ -65,15 +68,15 @@
 @param specificLocations Whether the model is being run for specific locations 
 @param outputDetail The level of output detail being used for the current model run 
 @param currentMonth The current model month  */
-void RunEcologicalProcess(GridCellCohortHandler gridCellCohorts, 
-            GridCellStockHandler gridCellStocks, vector<int> actingCohort, 
-            map<string, vector<double> > cellEnvironment, 
-            map<string, map<string, double> > deltas, 
-            FunctionalGroupDefinitions madingleyCohortDefinitions, 
-            FunctionalGroupDefinitions madingleyStockDefinitions, 
-            unsigned currentTimestep, ProcessTracker trackProcesses, 
+void RunEcologicalProcess(GridCellCohortHandler& gridCellCohorts, 
+            GridCellStockHandler& gridCellStocks, vector<int>& actingCohort, 
+            map<string, vector<double> >& cellEnvironment, 
+            map<string, map<string, double> >& deltas, 
+            FunctionalGroupDefinitions& madingleyCohortDefinitions, 
+            FunctionalGroupDefinitions& madingleyStockDefinitions, 
+            unsigned currentTimestep, ProcessTracker& trackProcesses, 
             ThreadLockedParallelVariables& partial, bool specificLocations,
-            string outputDetail, unsigned currentMonth, MadingleyModelInitialisation initialisation)
+            string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation)
         {          
            // Get the nutrition source (herbivory, carnivory or omnivory) of the acting cohort
            string NutritionSource = madingleyCohortDefinitions.GetTraitNames("Nutrition source", gridCellCohorts[actingCohort].FunctionalGroupIndex);

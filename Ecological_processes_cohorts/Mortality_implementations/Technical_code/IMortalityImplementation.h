@@ -27,7 +27,7 @@ class IMortalityImplementation
 @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
 @param currentTimestep The current model time step 
 @return The number of individuals lost to a cohort through mortality*/
-       virtual double CalculateMortalityRate(GridCellCohortHandler gridCellCohorts, vector<int> actingCohort, double bodyMassIncludingChangeThisTimeStep, map<string, map<string, double>> deltas, unsigned currentTimestep);
+       virtual double CalculateMortalityRate(GridCellCohortHandler& gridCellCohorts, vector<int>& actingCohort, double bodyMassIncludingChangeThisTimeStep, map<string, map<string, double>>& deltas, unsigned currentTimestep){;}
     };
 //}
 #endif

@@ -36,7 +36,7 @@ StarvationMortality(string globalModelTimeStepUnit)
 @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
 @param currentTimestep The current model time step 
 @return The proportion of individuals in the cohort that die from starvation mortality*/
-        double CalculateMortalityRate(GridCellCohortHandler gridCellCohorts, vector<int> actingCohort, double bodyMassIncludingChangeThisTimeStep, map<string, map<string, double> > deltas, unsigned currentTimestep)
+        double CalculateMortalityRate(GridCellCohortHandler& gridCellCohorts, vector<int>& actingCohort, double bodyMassIncludingChangeThisTimeStep, map<string, map<string, double> >& deltas, unsigned currentTimestep)
        {
            // Calculate the starvation rate of the cohort given individual body masses compared to the maximum body
            // mass ever achieved
@@ -55,7 +55,7 @@ the body mass including change this time step, so no change in body mass should 
 @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
 @param bodyMassIncludingChangeThisTimeStep Body mass including change from other ecological functions this time step; should not exceed adult mass 
 @return The starvation mortality rate in mortality formulation time step units*/
-double CalculateStarvationRate(GridCellCohortHandler gridCellCohorts, vector<int> actingCohort, double bodyMassIncludingChangeThisTimeStep, map<string, map<string, double> > deltas)
+double CalculateStarvationRate(GridCellCohortHandler& gridCellCohorts, vector<int>& actingCohort, double bodyMassIncludingChangeThisTimeStep, map<string, map<string, double> >& deltas)
        {
            if (bodyMassIncludingChangeThisTimeStep < gridCellCohorts[actingCohort].MaximumAchievedBodyMass)
            {

@@ -5,13 +5,7 @@ using namespace std;
 /** \file FunctionalGroupDefinitions.h
  * \brief the FunctionalGroupDefinitions header file
  */
-//using Microsoft.Research.Science.Data;
-//using Microsoft.Research.Science.Data.CSV;
-//using Microsoft.Research.Science.Data.Imperative;
-//
-//
-//namespace Madingley
-//{
+
 //    /// <summary>
 //    /// Reads in and performs look-ups on functional group definitions
 //    /// </summary>
@@ -21,137 +15,101 @@ class FunctionalGroupDefinitions
     {
         public:
 /** \brief
-//        /// An internal version of the dataset to query if necessary
-*/
-//        private DataSet InternalData;
+
 //        //A lookup device: sorted dictionary keyed by Functional Trait and valued by a sorted dictionary itself keyed by Unique Functional Trait Values and 
 //        //valued by an integer array of functional group indices corresponding to each functional trait value
-/** \brief
+
 //        /// A dictionary to allow functional group indices to be looked up based on trait values
 */
-//        private SortedDictionary<string, SortedDictionary<string, int[]>> IndexLookupFromTrait = new SortedDictionary<string, SortedDictionary<string, int[]>>();
+        map<string, map<string, vector<int>>> IndexLookupFromTrait;
 //
 /** \brief
 //        /// A sorted list of all of the properties of functional groups and their values
 */
-//        private SortedList<string,double[]> _FunctionalGroupProperties;
-/** \brief
-//        /// Get and set the sorted list of all of the properties of functional groups and their values
-*/
-//        public SortedList<string,double[]> FunctionalGroupProperties
-//        {
-//            get { return _FunctionalGroupProperties; }
-//            set { _FunctionalGroupProperties = value; }
-//        }
-//
+        map<string,vector<double> > FunctionalGroupProperties;
 /** \brief
 //        /// Dictionary to allow traits of functional groups to be looked up based on the functional group index
 */
-//        private SortedDictionary<string, string[]> TraitLookupFromIndex = new SortedDictionary<string, string[]>();
+        map<string, vector<string> > TraitLookupFromIndex;
 //
 /** \brief
 //        /// A list of the indices of all functional groups in the model
 */
-//        private int[] _AllFunctionalGroupsIndex;
-/** \brief
-//        /// Get the list of the indices of all functional groups in the model
-*/
-//        public int[] AllFunctionalGroupsIndex { get { return _AllFunctionalGroupsIndex; } }
-//        
-//
+        vector<int> AllFunctionalGroupsIndex;
+
+FunctionalGroupDefinitions(){;}
 /** \brief
 //        /// Constructor for the functional group definitions: reads in the specified functional group definition file, 
 //        /// constructs lookup tables, mass ranges and initial cohort numbers in each functional group
 @param fileName The name of the functional group definition file to be read in
 @param outputPath The path to the output folder, in which to copy the functional group definitions file
 */
-//        public FunctionalGroupDefinitions(string fileName, string outputPath)
-//        {
-//            // Construct the URI for the functional group definition file
-//            string FileString = "msds:csv?file=input/Model setup/" + fileName + "&openMode=readOnly";
-//
-//            // Copy the Function group definitions file to the output directory
-//            System.IO.File.Copy("input/Model setup/" + fileName, outputPath + fileName, true);
-//
-//            // Read in the data
-//            InternalData = DataSet.Open(FileString);
-//
-//            // Initialise the lists
-//            _AllFunctionalGroupsIndex = new int[InternalData.Dimensions[0].Length];
-//            _FunctionalGroupProperties = new SortedList<string, double[]>();
-//
-//            // Loop over columns in the functional group definitions file
-//            foreach (Variable v in InternalData.Variables)
-//            {
-//                // Get the column header
-//                string TraitName = v.Name.Split('_')[1].ToLower();
-//                // Get the values in this column
-//                var TempValues = v.GetData();
-//
-//                // For functional group definitions
-//                if (System.Text.RegularExpressions.Regex.IsMatch(v.Name, "DEFINITION_"))
-//                {
-//                    // Declare a sorted dictionary to hold the index values for each unique trait value
-//                    SortedDictionary<string, int[]> TraitIndexValuesList = new SortedDictionary<string, int[]>();
-//                    // Create a string array with the values of this trait
-//                    string[] TempString = new string[TempValues.Length];
-//                    for (int nn = 0; nn < TempValues.Length; nn++)
-//                    {
-//                        TempString[nn] = TempValues.GetValue(nn).ToString().ToLower();
-//
-//                        // Add the functional group index to the list of all indices
-//                        _AllFunctionalGroupsIndex[nn] = nn;
-//                    }
-//                    // Add the trait values to the trait-value lookup list
-//                    TraitLookupFromIndex.Add(TraitName, TempString);
-//
-//                    // Get the unique values for this trait
-//                    var DistinctValues = TempString.Distinct().ToArray();
-//                    //Loop over the unique values for this trait and list all the functional group indices with the value
-//                    foreach (string DistinctTraitValue in DistinctValues.ToArray())
-//                    {
-//                        List<int> FunctionalGroupIndex = new List<int>();
-//                        //Loop over the string array associated with this trait and add the index values of matching string to a list
-//                        for (int kk = 0; kk < TempString.Length; kk++)
-//                        {
-//                            if (TempString[kk].Equals(DistinctTraitValue))
-//                            {
-//                                FunctionalGroupIndex.Add(kk);
-//                            }
-//                        }
-//                        //Add the unique trait value and the functional group indices to the temporary list
-//                        TraitIndexValuesList.Add(DistinctTraitValue, FunctionalGroupIndex.ToArray());
-//                    }
-//                    // Add the unique trait values and corresponding functional group indices to the functional group index lookup
-//                    IndexLookupFromTrait.Add(TraitName, TraitIndexValuesList);
-//                }
-//                // For functional group properties
-//                else if (System.Text.RegularExpressions.Regex.IsMatch(v.Name, "PROPERTY_"))
-//                {
-//                    // Get the values for this property
-//                    double[] TempDouble = new double[TempValues.Length];
-//                    for (int nn = 0; nn < TempValues.Length; nn++)
-//                    {
-//                        TempDouble[nn] = Convert.ToDouble(TempValues.GetValue(nn));
-//                    }
-//                    // Add the values to the list of functional group properties
-//                    _FunctionalGroupProperties.Add(TraitName, TempDouble);
-//                }
-//                else if (System.Text.RegularExpressions.Regex.IsMatch(v.Name, "NOTES_"))
-//                {
-//                    // Ignore
-//                }
-//                // Otherwise, throw an error
-//                else
-//                {
-//                    Debug.Fail("All functional group data must be prefixed by DEFINITTION OR PROPERTY");
-//                }
-//
-//
-//            }
-//
-//        }
-//
+FunctionalGroupDefinitions(string fileName, string outputPath)
+       {
+        cout<<"Reading those functional group definitions"<<endl;
+        fileName="input/Model setup/"+fileName;
+        ifstream infile(fileName.c_str());
+        if(infile.is_open()){
+            
+            string l;
+            vector<string>header,category;
+            getline(infile,l);
+            //trim off newline character
+            l.pop_back();
+            istringstream s(l);
+            //split out the comma-separated header
+            while(s.good()){
+                string tmp;
+                getline(s,tmp,',');
+                transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
+                //split out the header category (definition.property or note)
+                istringstream splt(tmp);
+                string dp,op;
+                getline(splt,dp,'_');
+                category.push_back(dp);
+                getline(splt,op,'_');
+                header.push_back(op);
+            }
+            int count=0;
+            //retrieve the lines defining each functional group
+            while (infile.good()){
+                AllFunctionalGroupsIndex.push_back(count);
+                count++;
+                string l,data;
+                getline(infile,l);
+                if (infile.good())l.pop_back();
+                if (l.length()>1){
+                    istringstream s(l);
+                    //step through the columns for this functional group
+                    for (unsigned i=0;i<header.size();i++){
+                        getline(s,data,',');
+                        transform(data.begin(), data.end(), data.begin(), ::tolower);
+
+                        if(category[i]=="definition"){
+                            //for each trait, store the value for a given functional group
+                            //indexed by functional group number
+                            TraitLookupFromIndex[header[i]].push_back(data);
+                            //for a given trait, store the functional group number
+                            //which has a given value for that trait
+                            IndexLookupFromTrait[header[i]][data].push_back(i);
+                        }
+                        //Otherwise get the value for the given property
+                        //for this functional group
+                        if (category[i]=="property"){
+                          FunctionalGroupProperties[header[i]].push_back(atof(data.c_str()));
+                        }
+                    }
+                }
+            }
+
+            
+        }else{
+            cout<<"Something wrong with functional group definitions file "<<fileName<<endl;  
+        }
+        infile.close();
+
+       }
+
 /** \brief
 //        /// Return the value of a biological parameter for a given parameter and functional group
 
@@ -161,7 +119,9 @@ class FunctionalGroupDefinitions
 //        /// <returns>The value of the biological parameter for the specified functional group</returns>
 double GetBiologicalPropertyOneFunctionalGroup(string propertyName, int functionalGroup)
         {
-//            return FunctionalGroupProperties[propertyName.ToLower()][functionalGroup];
+          transform(propertyName.begin(), propertyName.end(), propertyName.begin(), ::tolower);
+
+            return FunctionalGroupProperties[propertyName][functionalGroup];
        }
 //
 /** \brief
@@ -172,46 +132,51 @@ double GetBiologicalPropertyOneFunctionalGroup(string propertyName, int function
 //        /// <returns>The values of a functional group property for all functional groups</returns>
 vector<double> GetBiologicalPropertyAllFunctionalGroups(string propertyName)
        {
-//            return FunctionalGroupProperties[propertyName.ToLower()];
+          transform(propertyName.begin(), propertyName.end(), propertyName.begin(), ::tolower);
+          return FunctionalGroupProperties[propertyName];
        }
 
 /** \brief
-//        /// Retrieves the values for all traits defined in the model
+Retrieves the values for all traits defined in the model
+
+@returns String array of traits defined for the model
 */
-//        /// <returns>String array of traits defined for the model</returns>
-//        public string[] GetTraits()
-//        {
-//            List<string> Traits = new List<string>();
-//
-//            foreach (var key in TraitLookupFromIndex.Keys)
-//            {
-//                Traits.Add(key);
-//            }
-//
-//            return Traits.ToArray();
-//        }
-//
+       vector<string> GetTraits()
+       {
+           vector<string> Traits ;
+
+           for(auto var : TraitLookupFromIndex)
+           {
+               Traits.push_back(var.first);
+           }
+
+           return Traits;
+       }
+
 /** \brief
-//        /// Retrieves the trait values for all traits defined in the model
+Retrieves the trait values for all traits defined in the model
 
 @param Trait The trait for which trait values are to be found
+
+@returns String array of trait values for the specifiec trait
 */
-//        /// <returns>String array of trait values for the specifiec trait</returns>
-//        public string[] GetUniqueTraitValues(string Trait)
-//        {
-//            List<string> TraitValues = new List<string>();
-//            SortedDictionary<string, int[]> temp = IndexLookupFromTrait[Trait.ToLower()];
-//
-//            foreach (var key in temp.Keys)
-//            {
-//                if(!TraitValues.Contains(key)) TraitValues.Add(key);
-//            }
-//
-//            return TraitValues.ToArray();
-//        }
-//
-//
-//
+vector<string> GetUniqueTraitValues(string Trait)
+       {
+           vector<string> TraitValues;
+                     transform(Trait.begin(), Trait.end(), Trait.begin(), ::tolower);
+
+           map<string, vector<int> > temp = IndexLookupFromTrait[Trait];
+
+           for (auto var : temp)
+           {
+               //if(!TraitValues.Contains(var.first)) TraitValues.push_back(var.first);
+           }
+
+           return TraitValues;
+       }
+
+
+
 /** \brief
 //        /// Returns a string of Trait Names associated with the specified search trait and functional group index value
 
@@ -221,7 +186,9 @@ vector<double> GetBiologicalPropertyAllFunctionalGroups(string propertyName)
 //        /// <returns>The value of the specified trait for the specified functional group</returns>
 string GetTraitNames(string searchTrait, int functionalGroupIndex)
         {
-//             return TraitLookupFromIndex[searchTrait.ToLower()].GetValue(functionalGroupIndex).ToString();   
+             transform(searchTrait.begin(), searchTrait.end(), searchTrait.begin(), ::tolower);
+
+             return TraitLookupFromIndex[searchTrait][functionalGroupIndex];   
         }
 //
 //
@@ -232,8 +199,8 @@ string GetTraitNames(string searchTrait, int functionalGroupIndex)
 @param functionalGroupIndex The functional group index to return trait values for
 */
 //        /// <returns>A vector of values of the specified traits for a specified functional group</returns>
-//        public string[] GetTraitNames(string[] searchTraits, int functionalGroupIndex)
-//        {
+vector<string> GetTraitNames(vector<string> searchTraits, int functionalGroupIndex)
+        {
 //            string[] TraitNames = new string[searchTraits.Length];
 //
 //            for (int nn = 0; nn < searchTraits.Length; nn++)
@@ -242,7 +209,7 @@ string GetTraitNames(string searchTrait, int functionalGroupIndex)
 //            }
 //
 //            return TraitNames;
-//        }
+        }
 //
 //
 //
@@ -340,44 +307,45 @@ vector<int> GetFunctionalGroupIndex(vector<string> searchTraits, vector<string> 
 */
 vector<int> GetFunctionalGroupIndex(string searchTraits, string searchTraitValues, bool intersection)
        {
-//            
-//            //List to hold the index vectors for each trait trait value pair
-//            int[] IndexList;
-//
-//            //Sorted dictionary to hold the trait value index list sorted dictionary from the lookup table
-//            SortedDictionary<string, int[]> TraitIndexList;
-//
-//            //Check if the trait name is in the lookup table and if so pull out the <trait value, index vector> sorted dictionary for it
-//            if (IndexLookupFromTrait.TryGetValue(searchTraits.ToLower(), out TraitIndexList))
-//            {
-//                //Check if the trait value string is found in the lookup table and if found pull out the index vector for it
-//                //and add it to the List of these for processing - intersection of union
-//                if (TraitIndexList.TryGetValue(searchTraitValues.ToLower(), out IndexList))
-//                {
-//                    ;
-//                }
-//                //If trait value string not found then show error message
-//                else
-//                {
-//                    IndexList = null;
-//                    Debug.Print("Trait Value to search for not found in lookup tables");
-//                }
-//            }
-//            //If trait name string not found then show error message
-//            else
-//            {
-//                IndexList = null;
-//                Debug.Print("Trait to search for not found in lookup tables");
-//            }
-//
-//            return IndexList;
+ 
+            //List to hold the index vectors for each trait trait value pair
+            vector<int> IndexList;
+            transform(searchTraits.begin(), searchTraits.end(), searchTraits.begin(), ::tolower);
+            transform(searchTraitValues.begin(), searchTraitValues.end(), searchTraitValues.begin(), ::tolower);
+            //Sorted dictionary to hold the trait value index list sorted dictionary from the lookup table
+            map<string, vector<int>> TraitIndexList;
+
+            //Check if the trait name is in the lookup table and if so pull out the <trait value, index vector> sorted dictionary for it
+            if (IndexLookupFromTrait.count(searchTraits)!=0)
+            {
+                //Check if the trait value string is found in the lookup table and if found pull out the index vector for it
+                //and add it to the List of these for processing - intersection of union
+                if (IndexLookupFromTrait[searchTraits].count(searchTraitValues)!=0)
+                {
+                    return IndexLookupFromTrait[searchTraits][searchTraitValues];
+                }
+                //If trait value string not found then show error message
+                else
+                {
+                    cout<<"Trait Value to search for not found in lookup tables"<<endl;
+                    exit(1);
+                }
+            }
+            //If trait name string not found then show error message
+            else
+            {
+                cout<<"Trait to search for not found in lookup tables"<<endl;
+                exit(1);
+            }
+
+            return IndexList;
         }
 //
 /** \brief Returns number of functional groups */
 //        /// <returns>Number of functional groups</returns>
 int GetNumberOfFunctionalGroups()
        {
-//            return (_AllFunctionalGroupsIndex.Length);
+            return (AllFunctionalGroupsIndex.size());
        }
 //    }
 };

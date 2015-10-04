@@ -37,7 +37,7 @@ class IEatingImplementation
 @param gridCellStocks The stocks in the current grid cell 
 @param madingleyCohortDefinitions The definitions for cohorts in the model 
 @param madingleyStockDefinitions The definitions for stocks in the model  */ 
-        void InitializeEatingPerTimeStep(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions);
+        virtual void InitializeEatingPerTimeStep(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions){;}
 //        
 /** \brief Calculate the potential biomass that could be gained through eating for marine cells
 @param gridCellCohorts The cohorts in the current grid cell 
@@ -46,9 +46,9 @@ class IEatingImplementation
 @param cellEnvironment The environment in the current grid cell 
 @param madingleyCohortDefinitions The definitions for cohorts in the model 
 @param madingleyStockDefinitions The definitions for stocks in the model  */
-       virtual void GetEatingPotentialMarine(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, vector<int> actingCohort, 
-           map<string, vector<double>> cellEnvironment, FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions 
-           madingleyStockDefinitions);
+       virtual void GetEatingPotentialMarine(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort, 
+           map<string, vector<double>>& cellEnvironment, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& 
+           madingleyStockDefinitions){;}
 
 /** \brief Calculate the potential biomass that could be gained through eating for terrestrial cells
 @param gridCellCohorts The cohorts in the current grid cell 
@@ -57,9 +57,9 @@ class IEatingImplementation
 @param cellEnvironment The environment in the current grid cell 
 @param madingleyCohortDefinitions The definitions for cohorts in the model 
 @param madingleyStockDefinitions The definitions for stocks in the model  */
-       virtual void GetEatingPotentialTerrestrial(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, vector<int> actingCohort,
-           map<string, vector<double> > cellEnvironment, FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions
-           madingleyStockDefinitions);
+       virtual void GetEatingPotentialTerrestrial(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort,
+           map<string, vector<double> >& cellEnvironment, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions&
+           madingleyStockDefinitions){;}
 
 
 /** \brief Calculate the actual biomass eaten from each cohort or sotck, apply changes from eating to the cohorts or stocks eaten, and update deltas for the acting cohort
@@ -74,14 +74,15 @@ class IEatingImplementation
 @param currentTimestep The current model time step 
 @param specificLocations Whether the model is being run for specific locations 
 @param outputDetail The level of output detail being used in this model run  */ 
-       virtual void RunEating(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, 
-           vector<int> actingCohort, map<string, vector< double > > cellEnvironment, 
-           map<string, map<string, double>> deltas, 
-           FunctionalGroupDefinitions madingleyCohortDefinitions, 
-           FunctionalGroupDefinitions madingleyStockDefinitions, 
-           ProcessTracker trackProcesses, unsigned currentTimestep,
-           bool specificLocations, string outputDetail, MadingleyModelInitialisation initialisation);
+       virtual void RunEating(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, 
+           vector<int>& actingCohort, map<string, vector< double > >& cellEnvironment, 
+           map<string, map<string, double>>& deltas, 
+           FunctionalGroupDefinitions& madingleyCohortDefinitions, 
+           FunctionalGroupDefinitions& madingleyStockDefinitions, 
+           ProcessTracker& trackProcesses, unsigned currentTimestep,
+           bool specificLocations, string outputDetail, MadingleyModelInitialisation& initialisation){;}
 
     };
 //}
+ 
 #endif

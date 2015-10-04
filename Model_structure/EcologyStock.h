@@ -12,6 +12,7 @@
 /** \brief A class to specify, initialise and run ecological processes pertaining to stocks */
    class EcologyStock
    {
+   public:
 /** \brief An instance of the Autotroph Processor for this model */
        AutotrophProcessor MarineNPPtoAutotrophStock;
 
@@ -22,8 +23,8 @@
        HumanAutotrophMatterAppropriation HANPP;
 
 
-        void InitializeEcology()
-       {
+        //void InitializeEcology()
+       //{
            //Initialize the autotrophprocessor
            //MarineNPPtoAutotrophStock = new AutotrophProcessor();
 
@@ -33,7 +34,7 @@
            // Initialise the human NPP appropriation class
           // HANPP = new HumanAutotrophMatterAppropriation();
 
-       }
+       //}
 
 
 /** \brief Run ecological processes that operate on stocks within a single grid cell 
@@ -48,9 +49,10 @@
 @param trackProcesses Whether to track properties of ecological processes 
 @param tracker An instance of the ecological process tracker 
 @param currentMonth The current model month */
-void RunWithinCellEcology(GridCellStockHandler gridCellStocks, vector<int> actingStock, map<string, vector<double>> cellEnvironment, 
-           map<string,string> environmentalDataUnits, string humanNPPExtraction, FunctionalGroupDefinitions madingleyStockDefinitions, 
-           unsigned currentTimeStep, string globalModelTimeStepUnit, bool trackProcesses, ProcessTracker tracker, GlobalProcessTracker globalTracker, unsigned currentMonth, 
+       
+void RunWithinCellEcology(GridCellStockHandler& gridCellStocks, vector<int>& actingStock, map<string, vector<double>>& cellEnvironment, 
+           map<string,string>& environmentalDataUnits, string humanNPPExtraction, FunctionalGroupDefinitions& madingleyStockDefinitions, 
+           unsigned currentTimeStep, string globalModelTimeStepUnit, bool trackProcesses, ProcessTracker& tracker, GlobalProcessTracker& globalTracker, unsigned currentMonth, 
            string outputDetail, bool specificLocations)
        {
            if (madingleyStockDefinitions.GetTraitNames("Realm", actingStock[0]) == "marine")

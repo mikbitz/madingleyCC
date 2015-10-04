@@ -21,8 +21,9 @@ We can also output diagnostics here (temporariliy) as the whole grid needs to be
 /** \brief
 Apply all updates from the ecological processes to the properties of the acting cohort and to the environment
 */
-        void UpdateAllCrossGridCellEcology(ModelGrid madingleyModelGrid, unsigned& dispersalCounter)
+        void UpdateAllCrossGridCellEcology(ModelGrid& madingleyModelGrid, unsigned& dispersalCounter)
        {
+            dispersalCounter=0;
            // Loop through the delta array that holds the locations of the cohorts that are flagged as needing to be moved
            for (unsigned ii = 0; ii < madingleyModelGrid.DeltaFunctionalGroupDispersalArray.size() ; ii++)
            {

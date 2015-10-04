@@ -13,9 +13,6 @@
 
 using namespace std;
 
-//
-//namespace Madingley
-//{
 /**
 \class RunSimulations
 \brief Runs simulations of the Madingley model
@@ -42,7 +39,7 @@ Runs the specified number of simulations for each of the specified scenarios
 //           
 //
 //            // List to hold the names of the scenarios to run
-//            List<string> ScenarioNames = new List<string>();
+            vector<string> ScenarioNames;
 //            // String variable to hold the index suffix to apply to output files for a given simulation
             string OutputFilesSuffix;
 //
@@ -164,7 +161,7 @@ void RunSimulation(ScenarioParameterInitialisation scenarios, int scenarioIndex,
         {
            // Declare an instance of the class that runs a Madingley model simulation
             MadingleyModel MadingleyEcosystemModel(initialiseMadingley, scenarios, scenarioIndex, outputFileSuffix, 
-               initialiseMadingley.GlobalModelTimeStepUnit());
+               initialiseMadingley.GlobalModelTimeStepUnit);
             
             // Declare and start a timer
             StopWatch s;

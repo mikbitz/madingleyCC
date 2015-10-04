@@ -2,6 +2,7 @@
 #define ECOLOGYCOHORT_H
 #include <ApplyEcology.h>
 #include <IEcologicalProcessWithinGridCells.h>
+#include <IEatingImplementation.h>
 #include <Eating.h>
 #include <Reproduction.h>
 #include <Mortality.h>
@@ -69,7 +70,14 @@ map<string, IEcologicalProcessWithinGridCell*> ReproductionFormulations;
 //            ApplyEcologicalProcessResults = new ApplyEcology();
 
 
-       }
+    }
+
+    ~EcologyCohort() {
+        delete EatingFormulations["Basic eating"];
+        delete MetabolismFormulations["Basic metabolism"];
+        delete MortalityFormulations["Basic mortality"];
+        delete ReproductionFormulations["Basic reproduction"];
+    }
 
 /** \brief
 Run ecological processes that operate on cohorts within a single grid cell
@@ -87,10 +95,10 @@ Run ecological processes that operate on cohorts within a single grid cell
 @param specificLocations Whether the model is being run for specific locations 
 @param outputDetail The level of output detail being used for this model run 
 @param currentMonth The current model month */
-        void RunWithinCellEcology(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, vector<int> actingCohort, 
-           map<string, vector<double>> cellEnvironment, map<string, map<string, double>> deltas, FunctionalGroupDefinitions 
-           madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions, unsigned currentTimestep, ProcessTracker trackProcesses, 
-           ThreadLockedParallelVariables& partial, bool specificLocations,string outputDetail, unsigned currentMonth, MadingleyModelInitialisation initialisation)
+        void RunWithinCellEcology(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort, 
+           map<string, vector<double>>& cellEnvironment, map<string, map<string, double>>& deltas, FunctionalGroupDefinitions& 
+           madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, unsigned currentTimestep, ProcessTracker& trackProcesses, 
+           ThreadLockedParallelVariables& partial, bool specificLocations,string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation)
        {
 
            // RUN EATING
@@ -129,9 +137,9 @@ Update the properties of the acting cohort and of the environmental biomass pool
 @param madingleyStockDefinitions The definitions for stock functional groups in the model 
 @param currentTimestep The current model time step 
 @param tracker A process tracker */
-void UpdateEcology(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, vector<int> actingCohort, 
-           map<string, vector<double>> cellEnvironment, map<string, map<string, double>> deltas, FunctionalGroupDefinitions 
-           madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions, unsigned currentTimestep, ProcessTracker tracker)
+void UpdateEcology(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort, 
+           map<string, vector<double>>& cellEnvironment, map<string, map<string, double>>& deltas, FunctionalGroupDefinitions& 
+           madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, unsigned currentTimestep, ProcessTracker& tracker)
        {
            // Apply the results of within-cell ecological processes
            ApplyEcologicalProcessResults.UpdateAllEcology(gridCellCohorts, actingCohort, cellEnvironment, deltas, currentTimestep, tracker);

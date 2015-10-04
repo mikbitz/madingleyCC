@@ -64,8 +64,8 @@ GridCell(){;}
 @param tracking Whether process-tracking is enabled 
 @param specificLocations Whether the model is being run for specific locations */
         GridCell(float latitude, unsigned latIndex, float longitude, unsigned lonIndex, float latCellSize, float lonCellSize, 
-           map<string, EnviroData> dataLayers, double missingValue, FunctionalGroupDefinitions cohortFunctionalGroups, 
-           FunctionalGroupDefinitions stockFunctionalGroups, map<string, double> globalDiagnostics,bool tracking,
+           map<string, EnviroData>& dataLayers, double missingValue, FunctionalGroupDefinitions& cohortFunctionalGroups, 
+           FunctionalGroupDefinitions& stockFunctionalGroups, map<string, double>& globalDiagnostics,bool tracking,
            bool specificLocations)
        {
 
@@ -152,7 +152,7 @@ GridCell(){;}
            // Loop over variables in the list of environmental data
            for (auto Layer : dataLayers)
            {
-               // Initiliase the temporary vector of values to be equal to the number of time intervals in the environmental variable
+               // Initialise the temporary vector of values to be equal to the number of time intervals in the environmental variable
                vector<double> tempVector(Layer.second.NumTimes);
                //Loop over the time intervals in the environmental variable
                for (int hh = 0; hh < Layer.second.NumTimes; hh++)
@@ -166,20 +166,19 @@ GridCell(){;}
                // Add the values of the environmental variables to the cell environment, with the name of the variable as the key
                CellEnvironment[Layer.first]=tempVector;
            }
-
-           if (specificLocations)
-           {
+          // if (specificLocations)
+          // {
 //                double[, ,] temp;
 //                double[, ,] dtr;
 //                double[, ,] precip;
 //                double[, ,] frost;
 //                double[, ,] oceanairt;
-               vector<double> dtr1(12);
-               vector<double> temp1(12);
-               vector<double> precip1(12);
-               vector<double> frost1(12);
-               vector<double> oceanairt1(12);
-//MB here we need to change the data read-in to something that doesn't use FetchClimate
+               //vector<double> dtr1(12);
+               //vector<double> temp1(12);
+               //vector<double> precip1(12);
+               //vector<double> frost1(12);
+               //vector<double> oceanairt1(12);
+//MB here we need to change the data read-in to something that doesn't use FetchClimate, if specificLocations
                //
 //                //Declare a dataset to perform the fetch
 //                var ds = DataSet.Open("msds:memory2");
@@ -213,15 +212,15 @@ GridCell(){;}
 //
 
 
-               CellEnvironment["LandDTR"]= dtr1;
-               CellEnvironment["Temperature"]= temp1;
-               CellEnvironment["Precipitation"]= precip1;
-               CellEnvironment["FrostDays"]= frost1;
-               CellEnvironment["OceanTemp"]= oceanairt1;
+               //CellEnvironment["LandDTR"]= dtr1;
+               //CellEnvironment["Temperature"]= temp1;
+               //CellEnvironment["Precipitation"]= precip1;
+               //CellEnvironment["FrostDays"]= frost1;
+               //CellEnvironment["OceanTemp"]= oceanairt1;
 
 
 
-           }
+          // }
 
            if (CellEnvironment.count("LandSeaMask")!=0)
            {
@@ -276,7 +275,7 @@ GridCell(){;}
                cout<<"No land sea mask defined - a mask is required to initialise appropriate ecology"<<endl;
                exit(1);
            }
-
+           
            //Calculate and add the standard deviation of monthly temperature as a measure of seasonality
            //Also calculate and add the annual mean temperature for this cell
 
@@ -301,7 +300,7 @@ GridCell(){;}
            if (CellEnvironment.count("OceanNPP")!=0) CellEnvironment.erase("OceanNPP");
            if (CellEnvironment.count("OceanDTR")!=0) CellEnvironment.erase("OceanDTR");
            if (CellEnvironment.count("SST")!=0) CellEnvironment.erase("SST");
-
+           
            // CREATE NPP SEASONALITY LAYER
            CellEnvironment["Seasonality"]=CalculateNPPSeasonality(CellEnvironment["NPP"],CellEnvironment["Missing Value"][0]);
 
@@ -351,6 +350,7 @@ GridCell(){;}
                }
            }
            CellEnvironment["Breeding Season"]= BreedingSeason;
+           
 //
 //
 //            // Initialise the grid cell cohort and stock handlers
@@ -413,7 +413,7 @@ then assign 1/12 for each month.
 @param NPP Monthly values of NPP 
 @param missingValue Missing data value to which the data will be compared against 
 @return The contribution that each month's NPP makes to annual NPP*/
-        vector<double> CalculateNPPSeasonality(vector<double> NPP, double missingValue)
+        vector<double> CalculateNPPSeasonality(vector<double>& NPP, double missingValue)
        {
 
            // Check that the NPP data is of monthly temporal resolution
@@ -470,8 +470,8 @@ then assign 1/12 for each month.
 @param DrawRandomly Whether the model is set to use random draws 
 @param ZeroAbundance Set this parameter to 'true' if you want to seed the cohorts with zero abundance 
 */
-        void SeedGridCellCohortsAndStocks(FunctionalGroupDefinitions cohortFunctionalGroups, FunctionalGroupDefinitions stockFunctionalGroups,
-           map<string, double> globalDiagnostics, long long& nextCohortID, bool tracking, double totalCellTerrestrialCohorts, 
+        void SeedGridCellCohortsAndStocks(FunctionalGroupDefinitions& cohortFunctionalGroups, FunctionalGroupDefinitions& stockFunctionalGroups,
+           map<string, double>& globalDiagnostics, long long& nextCohortID, bool tracking, double totalCellTerrestrialCohorts, 
            double totalCellMarineCohorts, bool DrawRandomly, bool ZeroAbundance)
        {
            SeedGridCellCohorts(cohortFunctionalGroups, CellEnvironment, globalDiagnostics, nextCohortID, tracking, 
@@ -567,8 +567,8 @@ Seed grid cell with cohorts, as specified in the model input files
 @param drawRandomly Whether the model is set to use random draws 
 @param ZeroAbundance Set this parameter to 'true' if you want to seed the cohorts with zero abundance */
 void SeedGridCellCohorts(FunctionalGroupDefinitions& functionalGroups, map<string, vector<double>>&
-           cellEnvironment, map<string, double> globalDiagnostics, long long& nextCohortID, bool tracking, double totalCellTerrestrialCohorts, 
-           double totalCellMarineCohorts, bool DrawRandomly, bool ZeroAbundance)
+           cellEnvironment, map<string, double>& globalDiagnostics, long long& nextCohortID, bool tracking, double& totalCellTerrestrialCohorts, 
+           double& totalCellMarineCohorts, bool DrawRandomly, bool ZeroAbundance)
        {
            // Set the seed for the random number generator from the system time
                  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -591,13 +591,14 @@ void SeedGridCellCohorts(FunctionalGroupDefinitions& functionalGroups, map<strin
            vector<double> MassMaxima = functionalGroups.GetBiologicalPropertyAllFunctionalGroups("maximum mass");
 
            vector<double> ProportionTimeActive = functionalGroups.GetBiologicalPropertyAllFunctionalGroups("proportion suitable time active");
-
+           
            //Variable for altering the juvenile to adult mass ratio for marine cells when handling certain functional groups eg baleen whales
            double Scaling = 0.0;
            
            // Check which realm the cell is in
            if (cellEnvironment["Realm"][0] == 1.0)
            {
+
                // Get the indices of all terrestrial functional groups 
                FunctionalGroupsToUse = functionalGroups.GetFunctionalGroupIndex("realm", "terrestrial", true);
                NumCohortsThisCell = totalCellTerrestrialCohorts;
@@ -605,11 +606,13 @@ void SeedGridCellCohorts(FunctionalGroupDefinitions& functionalGroups, map<strin
            else
            {
                // Get the indices of all marine functional groups
+
                FunctionalGroupsToUse = functionalGroups.GetFunctionalGroupIndex("realm", "marine", true);
                NumCohortsThisCell = totalCellMarineCohorts;
+
            }
            assert(cellEnvironment["Realm"][0] > 0.0 && "Missing realm for grid cell");
-
+           
            if (NumCohortsThisCell > 0);
            {
                //Loop over all functional groups in the model
@@ -804,7 +807,7 @@ void SeedGridCellCohorts(FunctionalGroupDefinitions& functionalGroups, map<strin
                            }
                            */
 
-                           // Incrememt the variable tracking the total number of cohorts in the model
+                           // Increment the variable tracking the total number of cohorts in the model
                            globalDiagnostics["NumberOfCohortsInModel"]++;
 
 
@@ -836,7 +839,7 @@ Seed grid cell with stocks, as specified in the model input files
 @param cellEnvironment The environment in the grid cell 
 @param globalDiagnostics A list of global diagnostic variables for the model grid */
 void SeedGridCellStocks( FunctionalGroupDefinitions& functionalGroups,  map<string, vector<double>> &
-           cellEnvironment, map<string, double> globalDiagnostics)
+           cellEnvironment, map<string, double>& globalDiagnostics)
        {
            // Set the seed for the random number generator from the system time
                unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();

@@ -43,10 +43,10 @@ Generate new cohorts from reproductive potential mass
 @param currentTimestep The current model time step 
 @param tracker An instance of ProcessTracker to hold diagnostics for reproduction 
 @param partial Thread-locked variables */
-        void RunReproduction(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks,
-           vector<int> actingCohort, map<string, vector<double> > cellEnvironment, map<string, map<string, double>>
-           deltas, FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions,
-           unsigned currentTimestep, ProcessTracker tracker, ThreadLockedParallelVariables partial)
+        void RunReproduction(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
+           vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&
+           deltas, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
+           unsigned currentTimestep, ProcessTracker& tracker, ThreadLockedParallelVariables& partial)
        {
            // Check that the abundance in the cohort to produce is greater than or equal to zero
            Debug.Assert(OffspringCohortAbundance >= 0.0, "Offspring abundance < 0");

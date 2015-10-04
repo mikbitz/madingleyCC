@@ -66,7 +66,7 @@ Run diffusive dispersal
 @param actingCohortFunctionalGroup The functional group index of the acting cohort 
 @param actingCohortNumber The position of the cohort within the functional group in the array of grid cell cohorts 
 @param currentMonth The current model month */
-         void RunDispersal(vector<unsigned> cellIndices, ModelGrid gridForDispersal, Cohort cohortToDisperse, 
+         void RunDispersal(vector<unsigned>& cellIndices, ModelGrid& gridForDispersal, Cohort& cohortToDisperse, 
             int actingCohortFunctionalGroup, int actingCohortNumber, unsigned currentMonth)
         {
            // Calculate dispersal speed for the cohort         
@@ -119,7 +119,7 @@ The fourth element is the probability of dispersing in the diagonal direction
 The fifth element is the u velocity modified by the random diffusion component
 The sixth element is the v velocity modified by the random diffusion component
 Note that the second, third, and fourth elements are always positive; thus, they do not indicate 'direction' in terms of dispersal.*/
-vector <double> CalculateDispersalProbability(ModelGrid madingleyGrid, unsigned latIndex, unsigned lonIndex, double dispersalSpeed)
+vector <double> CalculateDispersalProbability(ModelGrid& madingleyGrid, unsigned latIndex, unsigned lonIndex, double dispersalSpeed)
         {
            // Check that the u speed and v speed are not greater than the cell length. If they are, then rescale them; this limits the max velocity
            // so that cohorts cannot be advected more than one grid cell per time step
@@ -149,10 +149,10 @@ vector <double> CalculateDispersalProbability(ModelGrid madingleyGrid, unsigned 
 
            // Convert areas to a probability
            double DispersalProbability = (AreaOutsideU + AreaOutsideV + AreaOutsideBoth) / CellArea;
-
+           
            // Check that the whole cell hasn't moved out. This could happen if dispersal speed was high enough
 
-           assert(DispersalProbability >= 1 && "Dispersal probability in diffusion should always be <= 1");
+           assert(DispersalProbability <= 1 && "Dispersal probability in diffusion should always be <= 1");
 
 
            vector<double> NewArray = { DispersalProbability, AreaOutsideU / CellArea, AreaOutsideV / CellArea, AreaOutsideBoth / CellArea, uSpeed, vSpeed };
@@ -180,7 +180,7 @@ double CheckForDispersal(double dispersalProbability)
 //
 //        // Determine to which cell the cohort disperses
 //        // Note that if the direction is not dispersable, then it doesn't happen
-vector<unsigned> CellToDisperseTo(ModelGrid madingleyGrid, unsigned latIndex, unsigned lonIndex, vector<double> dispersalArray, double RandomValue, double uSpeedIncDiffusion, double vSpeedIncDiffusion)
+vector<unsigned> CellToDisperseTo(ModelGrid& madingleyGrid, unsigned latIndex, unsigned lonIndex, vector<double>& dispersalArray, double RandomValue, double uSpeedIncDiffusion, double vSpeedIncDiffusion)
         {
            vector<unsigned> DestinationCell;
 

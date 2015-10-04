@@ -27,8 +27,8 @@ Apply all updates from the ecological processes to the properties of the acting 
 @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
 @param currentTimestep The current model time step 
 @param tracker A process tracker */
-void UpdateAllEcology(GridCellCohortHandler gridCellCohorts, vector<int> actingCohort, map<string, vector<double>> cellEnvironment, map<string, map<string, double>> 
-           deltas, unsigned currentTimestep, ProcessTracker tracker)
+void UpdateAllEcology(GridCellCohortHandler& gridCellCohorts, vector<int>& actingCohort, map<string, vector<double>>& cellEnvironment, map<string, map<string, double>>& 
+           deltas, unsigned currentTimestep, ProcessTracker& tracker)
        {
           // Apply cohort abundance changes
            UpdateAbundance(gridCellCohorts, actingCohort, deltas); 
@@ -44,7 +44,7 @@ Update the abundance of the acting cohort according to the delta abundances from
 @param gridCellCohorts The cohorts in the current grid cell 
 @param actingCohort The location of the acting cohort in the jagged array of grid cell cohorts 
 @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell */
-void UpdateAbundance(GridCellCohortHandler gridCellCohorts, vector<int> actingCohort, map<string,map<string, double>> deltas)
+void UpdateAbundance(GridCellCohortHandler& gridCellCohorts, vector<int>& actingCohort, map<string,map<string, double>>& deltas)
        {
            // Extract the abundance deltas from the sorted list of all deltas
            map<string, double> deltaAbundance = deltas["abundance"];
@@ -81,8 +81,8 @@ Update the individual and reproductive body masses of the acting cohort accordin
 @param currentTimestep The current model time step 
 @param tracker A process tracker 
 @param cellEnvironment The cell environment */
-void UpdateBiomass(GridCellCohortHandler gridCellCohorts, vector<int> actingCohort, map<string,map<string, double>> deltas, 
-           unsigned currentTimestep, ProcessTracker tracker, map<string,vector<double>> cellEnvironment)
+void UpdateBiomass(GridCellCohortHandler& gridCellCohorts, vector<int>& actingCohort, map<string,map<string, double>>& deltas, 
+           unsigned currentTimestep, ProcessTracker& tracker, map<string,vector<double>>& cellEnvironment)
        {
            // Extract the biomass deltas from the sorted list of all deltas
            map<string, double> deltaBiomass = deltas["biomass"];
@@ -106,7 +106,7 @@ void UpdateBiomass(GridCellCohortHandler gridCellCohorts, vector<int> actingCoho
                // Update net biomass change
                NetBiomass += d.second;
            }
-
+           //cout<<"oower "<<NetBiomass<<endl;
            double BiomassCheck=0.0;
            bool NetToBeApplied = true;
            // If cohort abundance is greater than zero, then check that the calculated net biomass will not make individual body mass become negative
@@ -192,7 +192,7 @@ Update the organic and respiratory biomass pools according to the relevant delta
 
 @param cellEnvironment The environment of the current gird cell 
 @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell */
-void UpdatePools(map<string, vector<double>> cellEnvironment, map<string,map<string,double>> deltas)
+void UpdatePools(map<string, vector<double>>& cellEnvironment, map<string,map<string,double>>& deltas)
        {
 //            // Extract the organic pool deltas from the sorted list of all deltas
 //            map<string, double> DeltaOrganicPool = deltas["organicpool"];

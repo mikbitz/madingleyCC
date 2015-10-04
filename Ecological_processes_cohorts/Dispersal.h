@@ -29,7 +29,7 @@ class Dispersal : public IEcologicalProcessAcrossGridCells
 //
 /** \brief Constructor for Dispersal: fills the list of available implementations of dispersal */
     public:
-    Dispersal(bool DrawRandomly, string globalModelTimeStepUnit, MadingleyModelInitialisation modelInitialisation)
+    Dispersal(bool DrawRandomly, string globalModelTimeStepUnit, MadingleyModelInitialisation& modelInitialisation)
         {
 //Class member does not need initialising
             // Initialise the list of dispersal implementations
@@ -48,11 +48,16 @@ class Dispersal : public IEcologicalProcessAcrossGridCells
            Implementations["basic responsive dispersal"]= ResponsiveDispersalImplementation;
 
            // Get the weight threshold below which organisms are dispersed planktonically
-           PlanktonThreshold = modelInitialisation.PlanktonDispersalThreshold();
-        }
+           PlanktonThreshold = modelInitialisation.PlanktonDispersalThreshold;
+    }
 
+    ~Dispersal() {
+        delete Implementations["basic advective dispersal"];
+        delete Implementations["basic diffusive dispersal"];
+        delete Implementations["basic responsive dispersal"];
+    }
 /** \brief Run dispersal */
-         void RunCrossGridCellEcologicalProcess(vector<unsigned> cellIndex, ModelGrid gridForDispersal, bool dispersalOnly, FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions, unsigned currentMonth)
+         void RunCrossGridCellEcologicalProcess(vector<unsigned>& cellIndex, ModelGrid& gridForDispersal, bool dispersalOnly, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, unsigned currentMonth)
         {
 /** \brief A cohort handler to temporarily hold the cohorts in each grid cell */
         GridCellCohortHandler WorkingGridCellCohorts;

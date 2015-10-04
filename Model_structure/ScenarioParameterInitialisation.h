@@ -1,116 +1,77 @@
 #ifndef SCENARIOPARAMETERINITIALISATION_H
 #define SCENARIOPARAMETERINITIALISATION_H
 #include <string>
-#include <Properties.h>
+#include <map>
+#include <vector>
+#include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <assert.h>
+
 using namespace std;
 /**
-\file ScenarioParameterInitialisation.h
-\brief The ScenarioParameterInitialisation header file
-*/
+ * \file ScenarioParameterInitialisation.h
+ * \brief The ScenarioParameterInitialisation header file
+ */
 
-
-
-//
-//using Microsoft.Research.Science.Data;
-//
-//namespace Madingley
-//{
 /**
-\class  ScenarioParameterInitialisation
-\brief Reads the file specifying which scenarios will be run, and stores this information
-*/
+ * \class  ScenarioParameterInitialisation
+ * \brief Reads the file specifying which scenarios will be run, and stores this information
+ */
 class ScenarioParameterInitialisation{
 public:
     /** The number of scenarios to be run*/
-    IntProperty scenarioNumber; 
-//
-//        /// <summary>
-//        /// String parameters for the different scenarios to run
-//        /// </summary>
-//        private SortedList<string, string[]> _scenarioParameters;
-//        /// <summary>
-//        /// Get the string parameters for the different scenarios to run
-//        /// </summary>
-//        public SortedList<string, string[]> scenarioParameters
-//        { get { return _scenarioParameters; } }
-//
-//        /// <summary>
-//        /// The number of simulations to run for each of the scenarios
-//        /// </summary>
-//        private List<int> _scenarioSimulationsNumber;
-//        /// <summary>
-//        /// Get the number of simulations to run for each of the scenarios
-//        /// </summary>
-//        public List<int> scenarioSimulationsNumber
-//        {
-//            get { return _scenarioSimulationsNumber; }
-//            set { _scenarioSimulationsNumber = value; }
-//        }
+    int scenarioNumber; 
+    /** \brief String parameters for the different scenarios to run */
+    map<string, vector<string> > scenarioParameters;
+    /** \brief The number of simulations to run for each of the scenarios */
+    vector<int> scenarioSimulationsNumber;
+    
 public:        
-/** \brief
-Constructor for ScenarioParameterInitialisation: reads in scenario parameters from a specified file
+    /** \brief
+     * Constructor for ScenarioParameterInitialisation: reads in scenario parameters from a specified file
+     * 
+     * <param name="scenarioParameterFile">The name of the scenario parameters file, which must be in the 'Model setup' directory</param>
+     * <param name="outputPath">The directory to write output files to</param>
+     */
+    ScenarioParameterInitialisation(string scenarioParameterFile, string outputPath)
+    {
+        cout<<"Reading scenario parameters file..."<<endl;
+        ifstream infile(scenarioParameterFile.c_str());
+        if(infile.is_open()){
+            
+            string l,header[2];
+            getline(infile,l);
+            //trim off newline character
+            l.pop_back();
+            istringstream s(l);
+            for (unsigned i=0;i<2;i++){
+                getline(s,header[i],',');
+                transform(header[i].begin(), header[i].end(), header[i].begin(), ::tolower);
+            }
+            if (! (((header[0]=="number of simulations")  && (header[1]=="human npp extraction")) ||
+                   ((header[1]=="number of simulations")  && (header[0]=="human npp extraction")))) {
+                            cout<<"Bad header in scenario file "<<scenarioParameterFile<<endl;exit(1);}  
 
-<param name="scenarioParameterFile">The name of the scenario parameters file, which must be in the 'Model setup' directory</param>
-<param name="outputPath">The directory to write output files to</param>
-*/
-ScenarioParameterInitialisation(string scenarioParameterFile, string outputPath)
-        {
-//            Console.WriteLine("Reading scenario parameters file...\n");
-//
-//            // Construct file name
-//            string FileString = "msds:csv?file=input/Model setup/" + scenarioParameterFile + "&openMode=readOnly";
-//
-//            //Copy the scenarioParameterFile to the output directory
-//            System.IO.File.Copy("input/Model setup/" + scenarioParameterFile, outputPath + scenarioParameterFile, true);
-//
-//            // Read in the data
-//            DataSet InternalData = DataSet.Open(FileString);
-//
-//            // Get the number of scenarios to be run based on the number of lines in the first variable in the input file
-//            _scenarioNumber = InternalData.Variables[0].GetData().Length;
-//
-//            // Intialise sorted lists for parameter combinations and simulations numbers
-//            _scenarioParameters = new SortedList<string, string[]>();
-//            _scenarioSimulationsNumber = new List<int>();
-//
-//            // Temporary vector to hold parameter information
-//            string[] TempExtractionParameters = new string[_scenarioNumber];
-//
-//            // Loop over parameters in the scenarios file
-//            foreach (Variable v in InternalData.Variables)
-//            {
-//                //Get the name of the variable currently referenced in the dataset
-//                string HeaderName = v.Name;
-//                //Copy the values for this variable into an array
-//                var TempValues = v.GetData();
-//
-//                // Switch based on the header name for the scenario parameter
-//                switch (HeaderName.ToLower())
-//                {
-//                    case "human npp extraction":
-//                        // Loop over scenarios and extract the parameter values for each scenario
-//                        for (int i = 0; i < _scenarioNumber; i++)
-//                        {
-//                            TempExtractionParameters[i] = TempValues.GetValue(i).ToString();
-//                        }
-//                        break;
-//                    case "number of simulations":
-//                        // Loop over scenarios and extract the number of simulations to run for each scenario
-//                        for (int i = 0; i < _scenarioNumber; i++)
-//                        {
-//                            _scenarioSimulationsNumber.Add(Convert.ToInt32(TempValues.GetValue(i)));
-//                        }
-//                        break;
-//                }
-//            }
-//
-//            // Add the extracted parameter values to the sorted list of parameters
-//            _scenarioParameters.Add("Human NPP Extraction", TempExtractionParameters);
-//
-//
-//
-//        }
-//
+            while (infile.good()){
+                string l,data;
+                getline(infile,l);
+                if (infile.good())l.pop_back();
+                if (l.length()>1){
+                    istringstream s(l);
+                    for (unsigned i=0;i<2;i++){
+                        getline(s,data,',');
+                        if (header[i]=="human npp extraction")scenarioParameters["Human NPP Extraction"].push_back(data);
+                        if (header[i]=="number of simulations")scenarioSimulationsNumber.push_back(atoi(data.c_str()));
+                    }
+                }
+                scenarioNumber++;       
+            }
+            
+        }else{
+            cout<<"Something wrong with scenario parameter file "<<scenarioParameterFile<<endl;  
+        }
+        infile.close();
     }
 };
 #endif

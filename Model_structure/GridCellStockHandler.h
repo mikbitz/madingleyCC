@@ -35,7 +35,7 @@ unsigned size(){return GridCellStocks.size();}
 //        GridCellStockHandler(int NumFunctionalGroups)
        void setSize(int NumFunctionalGroups)
        {
-//            GridCellStocks = new List<Stock>[NumFunctionalGroups];
+            GridCellStocks.resize(NumFunctionalGroups);
        }
 
 /** \brief Overloaded constructor for the grid cell stock handler: update the grid cell stocks with the a set of existing stocks

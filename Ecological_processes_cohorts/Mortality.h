@@ -37,7 +37,11 @@ class Mortality : public IEcologicalProcessWithinGridCell
            Implementations["basic starvation mortality"]=StarvationMortalityImplementation;           
       
        }
-
+    ~Mortality() {
+        delete Implementations["basic background mortality"];
+        delete Implementations["basic senescence mortality"];
+        delete Implementations["basic starvation mortality"];
+    }
 /** \brief Initialize an implementation of mortality. This is only in here to satisfy the requirements of IEcologicalProcessAcrossGridCells
 
 @param gridCellCohorts The cohorts in the current grid cell 
@@ -45,8 +49,8 @@ class Mortality : public IEcologicalProcessWithinGridCell
 @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
 @param madingleyStockDefinitions The definitions for stock functional groups in the model 
 @param implementationKey The name of the implementation of mortality to initialize */
-        void InitializeEcologicalProcess(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks,
-           FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions, 
+        void InitializeEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
+           FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, 
            string implementationKey)
        {
 
@@ -66,11 +70,11 @@ class Mortality : public IEcologicalProcessWithinGridCell
 @param specificLocations Whether the model is being run for specific locations 
 @param outputDetail The level output detail being used for the current model run 
 @param currentMonth The current model month */
-        void RunEcologicalProcess(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, 
-           vector<int> actingCohort, map<string, vector<double> > cellEnvironment, map<string,map<string,double>> deltas , 
-           FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions,
-           unsigned currentTimeStep, ProcessTracker processTracker, ThreadLockedParallelVariables& partial,
-           bool specificLocations, string outputDetail, unsigned currentMonth, MadingleyModelInitialisation initialisation)
+        void RunEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, 
+           vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string,map<string,double>>& deltas , 
+           FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
+           unsigned currentTimeStep, ProcessTracker& processTracker, ThreadLockedParallelVariables& partial,
+           bool specificLocations, string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation)
        {
            
        // Variables to hold the mortality rates

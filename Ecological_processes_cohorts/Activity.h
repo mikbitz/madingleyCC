@@ -80,8 +80,8 @@ class Activity
 @param madingleyCohortDefinitions Functional group definitions and code to interrogate the cohorts in current grid cell 
 @param currentTimestep Current timestep index 
 @param currentMonth Current month */
-void AssignProportionTimeActive(Cohort actingCohort, map<string, vector<double> > cellEnvironment,
-            FunctionalGroupDefinitions madingleyCohortDefinitions,unsigned currentTimestep, unsigned currentMonth)
+void AssignProportionTimeActive(Cohort& actingCohort, map<string, vector<double> >& cellEnvironment,
+            FunctionalGroupDefinitions& madingleyCohortDefinitions,unsigned currentTimestep, unsigned currentMonth)
         {
             double Realm = cellEnvironment["Realm"][0];
 //
@@ -123,7 +123,7 @@ Source: Deutsch et al (2008), Impacts of climate warming on terrestrial ecotothe
 @param currentMonth Currnent month in the model 
 @param endotherm Boolean indicating if cohort is endotherm or ectotherm (true if endotherm) 
 @return The proportion of the timestep for which this cohort could be active*/
-double CalculateProportionTimeSuitableTerrestrial(map<string, vector<double> > cellEnvironment, unsigned currentMonth, bool endotherm)
+double CalculateProportionTimeSuitableTerrestrial(map<string, vector<double> >& cellEnvironment, unsigned currentMonth, bool endotherm)
         {
 
 

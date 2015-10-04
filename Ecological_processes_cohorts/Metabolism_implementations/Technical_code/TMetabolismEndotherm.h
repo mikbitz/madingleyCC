@@ -59,9 +59,9 @@ MetabolismEndotherm(string globalModelTimeStepUnit)
 @param madingleyStockDefinitions The definitions for the stock functional groups in the model 
 @param currentTimestep The current model time step 
 @param currentMonth The current model month */
-        void RunMetabolism(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, 
-           vector<int> actingCohort, map<string, vector<double> > cellEnvironment, map<string, map<string, double>> 
-           deltas, FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions, 
+        void RunMetabolism(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, 
+           vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>& 
+           deltas, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, 
            unsigned currentTimestep, unsigned currentMonth)
        {
            // Calculate metabolic loss for an individual and add the value to the delta biomass for metabolism

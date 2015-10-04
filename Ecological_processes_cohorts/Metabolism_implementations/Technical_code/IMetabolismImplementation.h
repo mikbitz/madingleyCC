@@ -29,10 +29,10 @@ class IMetabolismImplementation
 @param madingleyStockDefinitions The definitions for stock functional groups in the model 
 @param currentTimestep The current model time step 
 @param currentMonth The current month in the model */
-      virtual void RunMetabolism(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, vector<int> actingCohort, 
-           map<string, vector<double> > cellEnvironment, map<string, map<string, double>> deltas, 
-           FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions, 
-           unsigned currentTimestep, unsigned currentMonth);
+      virtual void RunMetabolism(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort, 
+           map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>& deltas, 
+           FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, 
+           unsigned currentTimestep, unsigned currentMonth){;}
     };
 //}
 #endif

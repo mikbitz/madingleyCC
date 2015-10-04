@@ -22,8 +22,11 @@
            // Add the basic reproduction implementation to the list of implementations
            ReproductionBasic* ReproductionImplementation = new ReproductionBasic(globalModelTimeStepUnit, drawRandomly);
            Implementations["reproduction basic"]= ReproductionImplementation;
-       }
-
+    }
+    ~Reproduction()
+    {
+        delete Implementations["reproduction basic"];
+    }
 /** \brief Initialize an implementation of reproduction. This is only in here to satisfy the requirements of IEcologicalProcessWithinGridCells
 
 @param gridCellCohorts The cohorts in the current grid cell 
@@ -32,7 +35,7 @@
 @param madingleyStockDefinitions The definitions for stock functional groups in the model 
 @param implementationKey The name of the reproduction implementation to initialize 
 */
-        void InitializeEcologicalProcess(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions, string implementationKey)
+        void InitializeEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, string implementationKey)
        {
 
        }
@@ -52,11 +55,11 @@
 @param outputDetail The level of output detail being used for this model run 
 @param currentMonth The current model month 
 */
-        void RunEcologicalProcess(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, 
-           vector<int> actingCohort, map<string, vector<double> > cellEnvironment, map<string,map<string,double>> deltas , 
-           FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions,
-           unsigned currentTimeStep, ProcessTracker processTracker, ThreadLockedParallelVariables& partial,
-           bool specificLocations, string outputDetail, unsigned currentMonth, MadingleyModelInitialisation initialisation)
+        void RunEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, 
+           vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string,map<string,double>>& deltas , 
+           FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
+           unsigned currentTimeStep, ProcessTracker& processTracker, ThreadLockedParallelVariables& partial,
+           bool specificLocations, string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation)
        {
 
                    // Holds the reproductive strategy of a cohort

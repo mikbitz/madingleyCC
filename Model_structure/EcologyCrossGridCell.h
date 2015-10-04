@@ -24,7 +24,7 @@ class EcologyCrossGridCell
 /** \brief
 Initalise the ecological processes
 */
-void InitializeCrossGridCellEcology(string globalModelTimeStepUnit, bool drawRandomly, MadingleyModelInitialisation modelInitialisation)
+void InitializeCrossGridCellEcology(string globalModelTimeStepUnit, bool drawRandomly, MadingleyModelInitialisation& modelInitialisation)
         {
            // Initialise dispersal formulations
            //_DispersalFormulations = new SortedList<string, IEcologicalProcessAcrossGridCells>();
@@ -35,13 +35,16 @@ void InitializeCrossGridCellEcology(string globalModelTimeStepUnit, bool drawRan
 
            // Initialise apply ecology
            //ApplyCrossGridCellEcologicalProcessResults = new ApplyCrossGridCellEcology();
-        }
+    }
 
+    ~EcologyCrossGridCell() {
+        delete DispersalFormulations["Basic dispersal"];
+    }
 /** \brief
 Run ecological processes that operate across grid cells, for a particular grid cell. These should always occur after the within grid cell processes
 */
 
-void RunCrossGridCellEcology(vector<unsigned> cellIndex, ModelGrid gridForDispersal, bool dispersalOnly, FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions, uint currentMonth)
+void RunCrossGridCellEcology(vector<unsigned>& cellIndex, ModelGrid& gridForDispersal, bool dispersalOnly, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, uint currentMonth)
        {
            // RUN DISPERSAL
            DispersalFormulations["Basic dispersal"]->RunCrossGridCellEcologicalProcess(cellIndex, gridForDispersal, dispersalOnly, madingleyCohortDefinitions, madingleyStockDefinitions, currentMonth);       
@@ -51,7 +54,7 @@ void RunCrossGridCellEcology(vector<unsigned> cellIndex, ModelGrid gridForDisper
 Update the properties of all cohorts across all grid cells
 */
 
-void UpdateCrossGridCellEcology(ModelGrid madingleyModelGrid, unsigned& dispersalCounter)
+void UpdateCrossGridCellEcology(ModelGrid& madingleyModelGrid, unsigned& dispersalCounter)
        {
            // Apply the results of cross-cell ecological processes
            ApplyCrossGridCellEcologicalProcessResults.UpdateAllCrossGridCellEcology(madingleyModelGrid, dispersalCounter);

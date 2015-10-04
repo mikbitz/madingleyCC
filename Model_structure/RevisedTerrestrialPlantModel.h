@@ -235,7 +235,7 @@ Constructor for the plant model
 @param cellEnvironment The environment in the current grid cell 
 @param deciduous Whether the leaves in the specified stock are deciduous 
 @return The equilibrium mass of leaves in the specified stock*/
-        double CalculateEquilibriumLeafMass(map<string, vector<double>> cellEnvironment, bool deciduous)
+        double CalculateEquilibriumLeafMass(map<string, vector<double>>& cellEnvironment, bool deciduous)
        {
            // Calculate annual average temperature
            double MeanTemp = 0;
@@ -323,8 +323,8 @@ Constructor for the plant model
 @param GlobalModelTimeStepUnit The time step unit used in the model 
 @param tracker Whether to track properties of the ecological processes 
 @param currentMonth The current model month */
-        void UpdateLeafStock(map<string, vector<double>> cellEnvironment, GridCellStockHandler gridCellStocks, vector<int> actingStock,
-           unsigned currentTimeStep, bool deciduous, string GlobalModelTimeStepUnit, ProcessTracker tracker, GlobalProcessTracker globalTracker, unsigned currentMonth,
+        void UpdateLeafStock(map<string, vector<double>>& cellEnvironment, GridCellStockHandler& gridCellStocks, vector<int>& actingStock,
+           unsigned currentTimeStep, bool deciduous, string GlobalModelTimeStepUnit, ProcessTracker& tracker, GlobalProcessTracker& globalTracker, unsigned currentMonth,
            string outputDetail, bool specificLocations)
        {
 

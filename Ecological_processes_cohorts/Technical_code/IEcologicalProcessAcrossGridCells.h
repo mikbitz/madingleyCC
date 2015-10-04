@@ -20,9 +20,10 @@ class IEcologicalProcessAcrossGridCells
 @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
 @param madingleyStockDefinitions The functional group definitions for stocks in the model 
 @param currentMonth The current model month */
-virtual void RunCrossGridCellEcologicalProcess(vector<unsigned> cellIndex, ModelGrid gridForDispersal, bool dispersalOnly, 
-           FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions, 
+virtual void RunCrossGridCellEcologicalProcess(vector<unsigned>& cellIndex, ModelGrid& gridForDispersal, bool dispersalOnly, 
+           FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, 
            unsigned currentMonth){;}
+virtual ~IEcologicalProcessAcrossGridCells(){;}
    };
 //}
 #endif

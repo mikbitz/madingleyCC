@@ -6,8 +6,7 @@ using namespace std;
 #include <GridCell.h>
 #include <map>
 #include <limits>
-//namespace Madingley
-//{
+
 /** \brief
 //    /// A class containing the model grid (composed of individual grid cells) along with grid attributes.
 //    /// The model grid is referenced by [Lat index, Lon index]\
@@ -127,9 +126,10 @@ Constructor for model grid: assigns grid properties and initialises the grid cel
 
 
 ModelGrid(float minLat, float minLon,float maxLat,float maxLon,float latCellSize,float lonCellSize, int cellRarefaction, 
-            map<string,EnviroData> enviroStack, FunctionalGroupDefinitions cohortFunctionalGroups, FunctionalGroupDefinitions
-            stockFunctionalGroups, map<string, double> globalDiagnostics, bool tracking, bool DrawRandomly, bool specificLocations)
+            map<string,EnviroData>& enviroStack, FunctionalGroupDefinitions& cohortFunctionalGroups, FunctionalGroupDefinitions&
+            stockFunctionalGroups, map<string, double>& globalDiagnostics, bool tracking, bool DrawRandomly, bool specificLocations)
         {
+ /*  
            // Add one to the counter of the number of grids. If there is more than one model grid, exit the program with a debug crash.
            NumGrids = NumGrids + 1;
            assert(NumGrids < 2 && "You have initialised more than one grid on which to apply models. At present, this is not supported");
@@ -162,6 +162,7 @@ ModelGrid(float minLat, float minLon,float maxLat,float maxLon,float latCellSize
            
            NumLatCells = (long)((MaxLatitude - MinLatitude) / LatCellSize);
            NumLonCells = (long)((MaxLongitude - MinLongitude) / LonCellSize);
+          
            Lats.resize(NumLatCells);
            Lons.resize(NumLonCells);
 
@@ -174,8 +175,7 @@ ModelGrid(float minLat, float minLon,float maxLat,float maxLon,float latCellSize
            {
                Lons[jj] = MinLongitude + jj * LonCellSize;
            }
-           
-
+          
            // Instantiate a grid of grid cells
            InternalGrid.resize(NumLatCells);for (auto g : InternalGrid)g.resize(NumLonCells);
 
@@ -192,9 +192,8 @@ ModelGrid(float minLat, float minLon,float maxLat,float maxLon,float latCellSize
 
            // An array of lists of directions corresponding to cells which organisms can disperse to
            CellsForDispersalDirection.resize(NumLatCells);for (auto d : CellsForDispersalDirection)d.resize(NumLonCells);
-
            cout<<"Initialising grid cell environment:"<<endl;
-
+          
 
            // Loop through to set up model grid
            for (int ii = 0; ii < NumLatCells; ii+=GridCellRarefaction)
@@ -227,7 +226,7 @@ ModelGrid(float minLat, float minLon,float maxLat,float maxLon,float latCellSize
            {
                 CellHeightsKm[ii] = Utilities.CalculateLengthOfDegreeLatitude(Lats[ii] + LatCellSize / 2) * LatCellSize;
                 CellWidthsKm[ii] = Utilities.CalculateLengthOfDegreeLongitude(Lats[ii] + LatCellSize / 2) * LonCellSize;
-           }
+           }*/
        }
 
 /** \brief Overloaded constructor for model grid to construct the grid for specific locations
@@ -246,9 +245,9 @@ ModelGrid(float minLat, float minLon,float maxLat,float maxLon,float latCellSize
 @param nextCohortID The unique ID to assign to the next cohort created 
 @param tracking Whether process tracking is enabled 
 */
-        ModelGrid(float minLat, float minLon, float maxLat, float maxLon, float latCellSize, float lonCellSize, vector<vector<unsigned>> cellList, 
-           map<string, EnviroData> enviroStack, FunctionalGroupDefinitions cohortFunctionalGroups,
-           FunctionalGroupDefinitions stockFunctionalGroups, map<string, double> globalDiagnostics, bool tracking, 
+        ModelGrid(float minLat, float minLon, float maxLat, float maxLon, float latCellSize, float lonCellSize, vector<vector<unsigned>>& cellList, 
+           map<string, EnviroData>& enviroStack, FunctionalGroupDefinitions& cohortFunctionalGroups,
+           FunctionalGroupDefinitions& stockFunctionalGroups, map<string, double>& globalDiagnostics, bool tracking, 
            bool specificLocations, bool runInParallel)
        { 
            // Add one to the counter of the number of grids. If there is more than one model grid, exit the program with a debug crash.
@@ -287,33 +286,34 @@ ModelGrid(float minLat, float minLon,float maxLat,float maxLon,float latCellSize
 
 
            // Instantiate a grid of grid cells
-           InternalGrid.resize(NumLatCells);for (auto g : InternalGrid)g.resize(NumLonCells);
+           InternalGrid.resize(NumLatCells);for (auto &g : InternalGrid)g.resize(NumLonCells);
 
            // Instantiate the arrays of lists of cohorts to disperse
-           DeltaFunctionalGroupDispersalArray.resize(NumLatCells);for (auto d : DeltaFunctionalGroupDispersalArray)d.resize(NumLonCells);
-           DeltaCohortNumberDispersalArray.resize(NumLatCells);for (auto d : DeltaCohortNumberDispersalArray)d.resize(NumLonCells);
+           DeltaFunctionalGroupDispersalArray.resize(NumLatCells);for (auto &d : DeltaFunctionalGroupDispersalArray)d.resize(NumLonCells);
+
+           DeltaCohortNumberDispersalArray.resize(NumLatCells);for (auto &d : DeltaCohortNumberDispersalArray)d.resize(NumLonCells);
 
            // Instantiate the array of lists of grid cells to disperse those cohorts to
-           DeltaCellToDisperseToArray.resize(NumLatCells);for (auto d : DeltaCellToDisperseToArray)d.resize(NumLonCells);
+           DeltaCellToDisperseToArray.resize(NumLatCells);for (auto &d : DeltaCellToDisperseToArray)d.resize(NumLonCells);
 
            // An array of lists of cells to which organisms in each cell can disperse to; includes all cells which contribute to the 
            // perimeter list, plus diagonal cells if they are in the same realm
-           CellsForDispersal.resize(NumLatCells);for (auto d : CellsForDispersal)d.resize(NumLonCells);
+           CellsForDispersal.resize(NumLatCells);for (auto &d : CellsForDispersal)d.resize(NumLonCells);
 
            // An array of lists of directions corresponding to cells which organisms can disperse to
-           CellsForDispersalDirection.resize(NumLatCells);for (auto d : CellsForDispersalDirection)d.resize(NumLonCells);
+           CellsForDispersalDirection.resize(NumLatCells);for (auto &d : CellsForDispersalDirection)d.resize(NumLonCells);
 
            cout<<"Initialising grid cell environment:"<<endl;
 
            int Count = 0;
 
            int NCells = cellList.size();
-
            if (!runInParallel)
            {
                // Loop over cells to set up the model grid
                for (int ii = 0; ii < cellList.size(); ii++)
                {
+                   
                    // Create the grid cell at the specified position
                    InternalGrid[cellList[ii][0]][ cellList[ii][1]]=GridCell(Lats[cellList[ii][0]], cellList[ii][0],
                        Lons[cellList[ii][1]], cellList[ii][1], latCellSize, lonCellSize, enviroStack, GlobalMissingValue,
@@ -323,7 +323,7 @@ ModelGrid(float minLat, float minLon,float maxLat,float maxLon,float latCellSize
                        //CellsForDispersal[cellList[ii][0], cellList[ii][1]] = new vector<vector<unsigned>>();
                        //CellsForDispersalDirection[cellList[ii][0], cellList[ii][1]] = new vector<unsigned>();
                        Count++;
-                       cout<<"\rInitialised "<<Count<<" of"<< NCells;
+                       //cout<<"\rInitialised "<<Count<<" of"<< NCells<<endl;
                    }
                    else
                    {
@@ -357,6 +357,7 @@ ModelGrid(float minLat, float minLon,float maxLat,float maxLon,float latCellSize
 //            }
 //
 //
+           
            if (!specificLocations)
            {
                InterpolateMissingValues();
@@ -377,7 +378,7 @@ ModelGrid(float minLat, float minLon,float maxLat,float maxLon,float latCellSize
                }
            }
 
-           cout<<"\n"<<endl;
+           cout<<"\n"<<endl;cout.flush();
 
        }
 
@@ -600,8 +601,8 @@ Seed the stocks and cohorts for all active cells in the model grid
 @param dispersalOnly Whether to run dispersal only (i.e. to turn off all other ecological processes 
 @param processTrackers An instance of the ecological process tracker 
 */
-        void SeedGridCellStocksAndCohorts(vector<vector<unsigned>> cellIndices, FunctionalGroupDefinitions cohortFunctionalGroupDefinitions, 
-           FunctionalGroupDefinitions stockFunctionalGroupDefinitions, map<string,double> globalDiagnostics, long long& nextCohortID,
+        void SeedGridCellStocksAndCohorts(vector<vector<unsigned>>& cellIndices, FunctionalGroupDefinitions& cohortFunctionalGroupDefinitions, 
+           FunctionalGroupDefinitions& stockFunctionalGroupDefinitions, map<string,double>& globalDiagnostics, long long& nextCohortID,
            bool tracking, bool DrawRandomly, bool dispersalOnly, string dispersalOnlyType)
        {
            int ii = 1;
@@ -664,7 +665,8 @@ Seed the stocks and cohorts for all active cells in the model grid
                            stockFunctionalGroupDefinitions, globalDiagnostics, nextCohortID, tracking, TotalTerrestrialCellCohorts, TotalMarineCellCohorts,
                            DrawRandomly, true);
                        }
-                       cout<<"\rGrid Cell: "<<ii++<<" of "<<cellIndices.size()<<endl;                   }
+                       //cout<<"\rGrid Cell: "<<ii++<<" of "<<cellIndices.size()<<endl;
+                   }
                    else if (dispersalOnlyType == "advection")
                    {
                        //Advective dispersal
@@ -700,7 +702,8 @@ Seed the stocks and cohorts for all active cells in the model grid
    stockFunctionalGroupDefinitions, globalDiagnostics, nextCohortID, tracking, TotalTerrestrialCellCohorts, TotalMarineCellCohorts,
    DrawRandomly, false);
                        }
-                          cout<<"\rGrid Cell: "<<ii++<<" of "<<cellIndices.size()<<endl;                   }
+                          //cout<<"\rGrid Cell: "<<ii++<<" of "<<cellIndices.size()<<endl;
+                   }
                    else if (dispersalOnlyType == "responsive")
                    {
                        // Responsive dispersal
@@ -709,7 +712,8 @@ Seed the stocks and cohorts for all active cells in the model grid
                        stockFunctionalGroupDefinitions, globalDiagnostics, nextCohortID, tracking, TotalTerrestrialCellCohorts, TotalMarineCellCohorts,
                        DrawRandomly, true);
 
-                          cout<<"\rGrid Cell: "<<ii++<<" of "<<cellIndices.size()<<endl;                   }
+                          //cout<<"\rGrid Cell: "<<ii++<<" of "<<cellIndices.size()<<endl;
+                   }
                    else
                    {
                        cout<<"Dispersal only type not recognized from initialisation file"<<endl;
@@ -722,9 +726,10 @@ Seed the stocks and cohorts for all active cells in the model grid
                    InternalGrid[cellIndexPair[0]][ cellIndexPair[1]].SeedGridCellCohortsAndStocks(cohortFunctionalGroupDefinitions,
                        stockFunctionalGroupDefinitions, globalDiagnostics, nextCohortID, tracking, TotalTerrestrialCellCohorts, TotalMarineCellCohorts,
                        DrawRandomly, false);
-                   cout<<"\rGrid Cell: "<<ii++<<" of "<<cellIndices.size()<<endl;
+                   //cout<<"\rGrid Cell: "<<ii++<<" of "<<cellIndices.size()<<endl;
                }
            }
+           cout<<"Total cohorts initialised: "<<globalDiagnostics["NumberOfCohortsInModel"]<<endl;
            cout<<""<<endl;
            cout<<""<<endl;
        }
@@ -736,7 +741,7 @@ Returns the stocks within the specified grid cell
 @param lonIndex Longitude index 
 @returns The stock handler for the specified grid cell
 */
-        GridCellStockHandler GetGridCellStocks(unsigned latIndex, unsigned lonIndex)
+        GridCellStockHandler& GetGridCellStocks(unsigned latIndex, unsigned lonIndex)
        {
            return InternalGrid[latIndex][ lonIndex].GridCellStocks;
        }
@@ -898,7 +903,7 @@ or the month index - 0=Jan, 1=Feb etc. - for monthly variables)
 @param lonCellIndex The longitudinal cell index 
 @return True if the value is set successfully, false otherwise
 */
-        bool SetEnviroLayer(string variableName, unsigned timeInterval, double setValue, unsigned latCellIndex, unsigned lonCellIndex)
+ bool SetEnviroLayer(string variableName, unsigned timeInterval, double setValue, unsigned latCellIndex, unsigned lonCellIndex)
        {
            return InternalGrid[latCellIndex][ lonCellIndex].SetEnviroLayer(variableName,timeInterval, setValue);
        }
@@ -995,7 +1000,7 @@ Gets a state variable for specified functional groups of specified entity types 
                                {
                                    for (auto item : TempCohorts[f])
                                    {
-                                       if (item.IndividualBodyMass() <= modelInitialisation.PlanktonDispersalThreshold())
+                                       if (item.IndividualBodyMass() <= modelInitialisation.PlanktonDispersalThreshold)
                                        returnValue += ((item.IndividualBodyMass() + item.IndividualReproductivePotentialMass) * item.CohortAbundance);
                                    }
                                }
@@ -1019,7 +1024,7 @@ Gets a state variable for specified functional groups of specified entity types 
                                {
                                    for (auto item : TempCohorts[f])
                                    {
-                                       if (item.IndividualBodyMass() <= modelInitialisation.PlanktonDispersalThreshold())
+                                       if (item.IndividualBodyMass() <= modelInitialisation.PlanktonDispersalThreshold)
                                        returnValue += item.CohortAbundance;
                                    }
                                }
@@ -1120,7 +1125,7 @@ Gets a state variable density for specified functional groups of specified entit
                                {
                                    for (auto item : TempCohorts[f])
                                    {
-                                       if (item.IndividualBodyMass() <= modelInitialisation.PlanktonDispersalThreshold())
+                                       if (item.IndividualBodyMass() <= modelInitialisation.PlanktonDispersalThreshold)
                                            returnValue += ((item.IndividualBodyMass() + item.IndividualReproductivePotentialMass) * item.CohortAbundance);
                                    }
                                }
@@ -1144,7 +1149,7 @@ Gets a state variable density for specified functional groups of specified entit
                                {
                                    for (auto item : TempCohorts[f])
                                    {
-                                       if (item.IndividualBodyMass() <= modelInitialisation.PlanktonDispersalThreshold())
+                                       if (item.IndividualBodyMass() <= modelInitialisation.PlanktonDispersalThreshold)
                                            returnValue += item.CohortAbundance;
                                    }
                                }
@@ -1226,7 +1231,7 @@ Get the mean density of a state variable for specific cells
 //MB NB ***!!! array bounds checking not yet in place
 vector<vector< double> > GetStateVariableGrid(string variableName, string traitValue, vector<int> functionalGroups, vector<vector<unsigned>> cellIndices, string stateVariableType, MadingleyModelInitialisation initialisation)
        {
-           vector<vector< double> > TempStateVariable(NumLatCells);for(auto t: TempStateVariable)t.resize(NumLonCells);
+           vector<vector< double> > TempStateVariable(NumLatCells);for(auto &t: TempStateVariable)t.resize(NumLonCells);
            map<string,int> vn;
            vn["biomass" ]=0;
            vn["abundance"]=1;
@@ -1270,7 +1275,7 @@ vector<vector< double> > GetStateVariableGrid(string variableName, string traitV
 //                                        {
                                            for (Cohort item : InternalGrid[cellIndices[ii][0]][ cellIndices[ii][1]].GridCellCohorts[functionalGroups[nn]])
                                            {
-                                               if (item.IndividualBodyMass() <= initialisation.PlanktonDispersalThreshold())
+                                               if (item.IndividualBodyMass() <= initialisation.PlanktonDispersalThreshold)
                                                    TempStateVariable[cellIndices[ii][0]][ cellIndices[ii][1]] += ((item.IndividualBodyMass() + item.IndividualReproductivePotentialMass) * item.CohortAbundance);
                                            }
 //                                        }
@@ -1339,7 +1344,7 @@ vector<vector< double> > GetStateVariableGrid(string variableName, string traitV
 //                                        {
                                            for (Cohort item : InternalGrid[cellIndices[ii][0]][ cellIndices[ii][1]].GridCellCohorts[functionalGroups[nn]])
                                            {
-                                               if (item.IndividualBodyMass() <= initialisation.PlanktonDispersalThreshold())
+                                               if (item.IndividualBodyMass() <= initialisation.PlanktonDispersalThreshold)
                                                    TempStateVariable[cellIndices[ii][0]][ cellIndices[ii][1]] += item.CohortAbundance;
                                            }
 //                                        }
@@ -1375,7 +1380,7 @@ Return an array of values for a single state variable over specific cells, given
 */
         vector<vector< double> > GetStateVariableGridDensityPerSqKm(string variableName, string traitValue, vector<int> functionalGroups, vector<vector<unsigned>> cellIndices, string stateVariableType, MadingleyModelInitialisation initialisation)
        {
-           vector<vector< double> > TempStateVariable(NumLatCells);for (auto t : TempStateVariable )t.resize(NumLonCells);
+           vector<vector< double> > TempStateVariable(NumLatCells);for (auto &t : TempStateVariable )t.resize(NumLonCells);
            double CellArea;
 
            TempStateVariable = GetStateVariableGrid(variableName, traitValue, functionalGroups, cellIndices, stateVariableType, initialisation);
@@ -1402,7 +1407,7 @@ Return an array of log(values + 1) for a state variable for particular functiona
         vector<vector< double> > GetStateVariableGridLog(string variableName, string traitValue, vector<int> functionalGroups, vector<vector<unsigned>> cellIndices, string stateVariableType, MadingleyModelInitialisation initialisation)
        {
 
-           vector<vector< double> > TempStateVariable(NumLatCells);for (auto t : TempStateVariable )t.resize(NumLonCells);
+           vector<vector< double> > TempStateVariable(NumLatCells);for (auto &t : TempStateVariable )t.resize(NumLonCells);
 
            TempStateVariable = GetStateVariableGrid(variableName, traitValue, functionalGroups, cellIndices, stateVariableType, initialisation);
            
@@ -1427,7 +1432,7 @@ Return an array of log(values + 1) for a state variable for particular functiona
         vector<vector< double> > GetStateVariableGridLogDensityPerSqKm(string variableName, string traitValue, vector<int> functionalGroups, vector<vector<unsigned>> cellIndices, string stateVariableType, MadingleyModelInitialisation initialisation)
        {
 
-           vector<vector< double> > TempStateVariable(NumLatCells);for (auto t : TempStateVariable )t.resize(NumLonCells);
+           vector<vector< double> > TempStateVariable(NumLatCells);for (auto &t : TempStateVariable )t.resize(NumLonCells);
            double CellArea;
 
            TempStateVariable = GetStateVariableGrid(variableName, traitValue, functionalGroups, cellIndices, stateVariableType, initialisation);
@@ -1531,7 +1536,7 @@ A method to return the values for all environmental data layers for a particular
 @param cellLonIndex Longitude index of grid cell 
 @return A sorted list containing environmental data layer names and values
 */
-map<string, vector<double> > GetCellEnvironment(unsigned cellLatIndex, unsigned cellLonIndex)
+map<string, vector<double> >& GetCellEnvironment(unsigned cellLatIndex, unsigned cellLonIndex)
         {
            return InternalGrid[cellLatIndex][ cellLonIndex].CellEnvironment;
         }
@@ -1543,7 +1548,7 @@ A method to return delta values for the specified delta type in a particular gri
 @param cellLonIndex Longitude index of grid cell 
 @return A sorted list containing deltas
 */
-        map<string, double> GetCellDeltas(string deltaType, unsigned cellLatIndex, unsigned cellLonIndex)
+        map<string, double>& GetCellDeltas(string deltaType, unsigned cellLatIndex, unsigned cellLonIndex)
        {
            return InternalGrid[cellLatIndex][ cellLonIndex].Deltas[deltaType];
        }
@@ -1554,7 +1559,7 @@ A method to return all delta values in a particular grid cell
 @param cellLonIndex Longitude index of grid cell 
 @return A sorted list of sorted lists containing deltas
 */
-        map<string, map<string, double>> GetCellDeltas(unsigned cellLatIndex, unsigned cellLonIndex)
+        map<string, map<string, double>>& GetCellDeltas(unsigned cellLatIndex, unsigned cellLonIndex)
        {
            return InternalGrid[cellLatIndex][ cellLonIndex].Deltas;
        }
@@ -2245,7 +2250,7 @@ vector<unsigned> CheckDispersalNorth(unsigned fromCellLatIndex, unsigned fromCel
         {
            vector<unsigned> NorthCell =  { 9999999, 9999999 };
 
-           for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex, fromCellLonIndex].size(); ii++)
+           for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex] [fromCellLonIndex].size(); ii++)
            {
                if (CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex][ii] == 1)
                {
@@ -2268,7 +2273,7 @@ vector<unsigned> CheckDispersalEast(unsigned fromCellLatIndex, unsigned fromCell
         {
            vector<unsigned> EastCell =  {9999999,9999999};
 
-           for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex, fromCellLonIndex].size(); ii++)
+           for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex].size(); ii++)
            {
                if (CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex][ii] == 3)
                {
@@ -2289,8 +2294,7 @@ Get the longitudinal and latitudinal indices of the cell that lies to the south 
 vector<unsigned>  CheckDispersalSouth(unsigned fromCellLatIndex, unsigned fromCellLonIndex)
         {
            vector<unsigned> SouthCell =  { 9999999, 9999999 };
-
-           for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex, fromCellLonIndex].size(); ii++)
+           for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex].size(); ii++)
            {
                if (CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex][ii] == 5)
                {
@@ -2311,7 +2315,7 @@ vector<unsigned> CheckDispersalWest(unsigned fromCellLatIndex, unsigned fromCell
         {
            vector<unsigned> WestCell =  { 9999999, 9999999 };
 
-           for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex, fromCellLonIndex].size(); ii++)
+           for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex].size(); ii++)
            {
                if (CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex][ii] == 7)
                {
@@ -2333,7 +2337,7 @@ vector<unsigned>  CheckDispersalNorthEast(unsigned fromCellLatIndex, unsigned fr
         {
            vector<unsigned> NECell =  { 9999999, 9999999 };
 
-           for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex, fromCellLonIndex].size(); ii++)
+           for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex].size(); ii++)
            {
                if (CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex][ii] == 2)
                {
@@ -2355,7 +2359,7 @@ vector<unsigned> CheckDispersalSouthEast(unsigned fromCellLatIndex, unsigned fro
         {
            vector<unsigned> SECell =  { 9999999, 9999999 };
 
-           for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex, fromCellLonIndex].size(); ii++)
+           for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex] [fromCellLonIndex].size(); ii++)
            {
                if (CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex][ii] == 4)
                {
@@ -2377,7 +2381,7 @@ vector<unsigned> CheckDispersalSouthWest(unsigned fromCellLatIndex, unsigned fro
         {
            vector<unsigned> SWCell =  { 9999999, 9999999 };
 
-           for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex, fromCellLonIndex].size(); ii++)
+           for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex ][fromCellLonIndex].size(); ii++)
            {
                if (CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex][ii] == 6)
                {

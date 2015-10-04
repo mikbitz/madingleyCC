@@ -61,7 +61,7 @@ MetabolismEctotherm(string globalModelTimeStepUnit)
         {
 //            
 //            // Initialise ecological parameters for metabolism
-//            InitialiseMetabolismParameters();
+            InitialiseMetabolismParameters();
 
            // Calculate the scalar to convert from the time step units used by this implementation of metabolism to the global  model time step units
            DeltaT = Utilities.ConvertTimeUnits(globalModelTimeStepUnit, TimeUnitImplementation());
@@ -79,9 +79,9 @@ MetabolismEctotherm(string globalModelTimeStepUnit)
 @param madingleyStockDefinitions The definitions for the stock functional groups in the model 
 @param currentTimestep The current model time step 
 @param currentMonth The current model month */
-        void RunMetabolism(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, 
-           vector<int> actingCohort, map<string, vector<double> > cellEnvironment, map<string, map<string, double>> 
-           deltas, FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions, 
+        void RunMetabolism(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, 
+           vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>& 
+           deltas, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, 
            unsigned currentTimestep, unsigned currentMonth)
        {
 
@@ -144,8 +144,10 @@ double CalculateIndividualMetabolicRate(double individualBodyMass, double temper
                exp(-(ActivationEnergy / (BoltzmannConstant * temperature)));
 
            // Return metabolic loss in grams
+
            return ((proportionTimeActive * FieldMetabolicLosskJ) + ((1 - proportionTimeActive) * (BasalMetabolicLosskJ))) * EnergyScalar;
-           return FieldMetabolicLosskJ * EnergyScalar;
+
+           //return FieldMetabolicLosskJ * EnergyScalar;//commented out in original
        }
     };
 //}

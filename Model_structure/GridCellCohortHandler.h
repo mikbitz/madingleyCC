@@ -35,7 +35,7 @@ unsigned size(){return GridCellCohorts.size();}
 //        GridCellCohortHandler(int NumFunctionalGroups)
        void setSize(int NumFunctionalGroups)
        {
-//            GridCellCohorts = new List<Cohort>[NumFunctionalGroups];
+            GridCellCohorts.resize(NumFunctionalGroups);
        }
 
 /** \brief Update grid cell cohorts with a specified list of cohorts 
@@ -175,18 +175,18 @@ unsigned size(){return GridCellCohorts.size();}
 //        }
 //
 /** \brief Gets the number of cohorts in this grid cell */
-//         int GetNumberOfCohorts()
-//        {
-//
-//            int sum = 0;
-//            for (int ii = 0; ii < GridCellCohorts.Count(); ii++)
-//            {
-//                sum += GridCellCohorts[ii].Count();
-//            }
-//
-//            return sum;
-//        }
-//
+         int GetNumberOfCohorts()
+        {
+
+            int sum = 0;
+            for (int ii = 0; ii < GridCellCohorts.size(); ii++)
+            {
+                sum += GridCellCohorts[ii].size();
+            }
+
+            return sum;
+        }
+
     };
 //
 /** \brief IEnumerator for the grid cell cohorts */

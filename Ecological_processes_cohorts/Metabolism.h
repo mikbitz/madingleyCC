@@ -5,6 +5,7 @@
 #include <TMetabolismHeterotroph.h>
 #include <TMetabolismEndotherm.h>
 #include <TMetabolismEctotherm.h>
+#include <ThreadLocked.h>
 /** \file Metabolism.h
  * \brief the Metabolism header file
  */
@@ -30,15 +31,18 @@ class Metabolism : public IEcologicalProcessWithinGridCell
            MetabolismEctotherm* MetabolismEctothermImplementation = new MetabolismEctotherm(globalModelTimeStepUnit);
            Implementations["basic ectotherm"]=MetabolismEctothermImplementation;
        }
-
+    ~Metabolism() {
+        delete Implementations["basic endotherm"];
+        delete Implementations["basic ectotherm"];
+    }
 /** \brief Initializes an implementation of metabolism
 @param gridCellCohorts The cohorts in the current grid cell 
 @param gridCellStocks The stocks in the current grid cell 
 @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
 @param madingleyStockDefinitions The definitions for stock  functional groups in the model 
 @param implementationKey The name of the implementation of metabolism to initialize  */
-        void InitializeEcologicalProcess(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks,
-           FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions,
+        void InitializeEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
+           FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
            string implementationKey)
        {
 
@@ -58,11 +62,11 @@ class Metabolism : public IEcologicalProcessWithinGridCell
 @param specificLocations Whether the model is being run for specific locations 
 @param outputDetail The level of output detail being used for the current model run 
 @param currentMonth The current model month  */
-        void RunEcologicalProcess(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, 
-           vector<int> actingCohort, map<string, vector<double> > cellEnvironment, map<string, map<string, double>> deltas, 
-           FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions, 
-           unsigned currentTimestep, ProcessTracker trackProcesses, ThreadLockedParallelVariables& partial,
-           bool specificLocations, string outputDetail, unsigned currentMonth, MadingleyModelInitialisation initialisation)
+        void RunEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, 
+           vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>& deltas, 
+           FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, 
+           unsigned currentTimestep, ProcessTracker& trackProcesses, ThreadLockedParallelVariables& partial,
+           bool specificLocations, string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation)
        {
            double Realm = cellEnvironment["Realm"][0];
            if (madingleyCohortDefinitions.GetTraitNames("Heterotroph/Autotroph", gridCellCohorts[actingCohort].FunctionalGroupIndex) == "heterotroph")

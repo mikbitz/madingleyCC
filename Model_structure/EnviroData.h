@@ -17,8 +17,7 @@ class EnviroData
 /** \brief
 Number of latitudinal cells
 */
-//        private uint _NumLats;
-         UnsignedProperty NumLats;
+         unsigned NumLats;
 //
 /** \brief
 Number of longitudinal cells
@@ -75,7 +74,7 @@ Get longitudinal distance between adjacent cells
 /** \brief
 List of arrays of values of the environmental variable
 */
-//        private List<double[,]> _DataArray;
+vector<vector<vector<double>>> DataArray;//time by lon by lat
 /** \brief
 Get list of arrays of values of the environmental variable
 */
@@ -153,9 +152,15 @@ Overloaded constructor to fetch climate information from the cloud using FetchCl
 @param cellSize Size of each grid cell 
 @param FetchClimateDataSource Data source from which to fetch environmental data 
 */
-//        public EnviroData(string dataName, string dataResolution, double latMin, double lonMin, double latMax, double lonMax, double cellSize, 
-//            EnvironmentalDataSource FetchClimateDataSource)
-//        {
+EnviroData(string dataName, string dataResolution, double latMin, double lonMin, double latMax, double lonMax, double cellSize)//not using fetchclimate!, EnvironmentalDataSource FetchClimateDataSource)
+        {
+    //dummy data for initial testing
+    int NumLonCells=1;int NumLatCells=1;double value=293;
+    if (dataName=="frost")value=0;
+    vector<vector< double> > TempStateVariable(NumLatCells);for (auto &t : TempStateVariable )t.resize(NumLonCells);
+    for (unsigned i=0;i<NumLatCells;i++)for (unsigned j=0;j<NumLonCells;j++)TempStateVariable[i][j]=value;
+    for (int i=0;i<12;i++)DataArray.push_back(TempStateVariable);
+    NumTimes=12;
 //            Console.WriteLine("Fetching environmental data for: " + dataName + " with resolution " + dataResolution);
 //
 //            // Initialise the utility functions
@@ -263,8 +268,9 @@ Overloaded constructor to fetch climate information from the cloud using FetchCl
 //            //Out.Dispose();
 //            ds.Dispose();
 //
-//        }
-//
+        }
+
+EnviroData(){;}
 /** \brief
 Constructor for EnviroData
 
@@ -277,8 +283,18 @@ Constructor for EnviroData
 <todo>CHECK IF DIMENSIONS HAVE TO BE THE SAME FOR ALL VARIABLES IN A NETCDF AND HOW TO EXTRACT DIMENSIONS FOR A SINGLE VARIABLE IF NECESSARY</todo>
 <todo>Write code to check for equal cell sizes in NetCDFs</todo>
 */
-//        public EnviroData(string fileName, string dataName, string dataType, string dataResolution, string units)
-//        {
+EnviroData(string fileName, string dataName, string dataType, string dataResolution, string units)
+       {
+    //dummy data for initial testing
+    int NumLonCells=1;int NumLatCells=1;double value=0;
+    if(dataName=="SST")value=293;
+    if(dataName=="AWC")value=0.1;
+    if(dataName=="NPP")value=0.1;
+    if(dataName=="land_sea_mask")value=0;
+    vector<vector< double> > TempStateVariable(NumLatCells);for (auto &t : TempStateVariable )t.resize(NumLonCells);
+    for (unsigned i=0;i<NumLatCells;i++)for (unsigned j=0;j<NumLonCells;j++)TempStateVariable[i][j]=value;
+    for (int i=0;i<12;i++)DataArray.push_back(TempStateVariable);
+    NumTimes=12;
 //            // Initialise the utility functions
 //            Utilities = new UtilityFunctions();
 //
@@ -665,8 +681,8 @@ Constructor for EnviroData
 //
 //            //Close the environmental data file
 //            internalData.Dispose();
-//        }
-//
+        }
+
 /** \brief
 A method to extract the value of an environmental variable from the grid cell closest to a specified latitude and longitude
 
@@ -678,6 +694,8 @@ A method to extract the value of an environmental variable from the grid cell cl
 */
 double GetValue(double lat, double lon, unsigned timeInterval, bool missingValue)
        {
+    //dummy value for initial testing
+    return DataArray[0][0][0];
 //            // Check that the requested latitude and longitude are within the scope of the environmental variable
 //            Debug.Assert(lat >= LatMin && lat <= LatMin + (NumLats * LatStep), "Requested latitude is outside dataset latitude range: " + _ReadFileString);
 //            Debug.Assert(lon >= LonMin && lon <= LonMin + (NumLons * LonStep), "Requested longitude is outside dataset longitude range: " + _ReadFileString);
@@ -752,6 +770,7 @@ A method to extract the area weighted value of an environmental variable from th
 */
 double GetValue(double lat, double lon, unsigned timeInterval, bool missingValue, double latCellSize, double lonCellSize)
        {
+        return DataArray[0][0][0];
 //            // Check that the requested latitude and longitude are within the scope of the environmental variable
 //            Debug.Assert(lat >= LatMin && lat + latCellSize <= LatMin + (NumLats * LatStep), "Requested latitude is outside dataset latitude range: " + _ReadFileString);
 //            Debug.Assert(lon >= LonMin && lon + lonCellSize <= LonMin + (NumLons * LonStep), "Requested longitude is outside dataset longitude range: " + _ReadFileString);

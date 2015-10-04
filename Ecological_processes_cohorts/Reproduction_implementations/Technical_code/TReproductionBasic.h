@@ -66,10 +66,10 @@ ReproductionBasic(string globalModelTimeStepUnit, bool DrawRandomly)
 @param partial Thread-locked variables 
 @param iteroparous Whether the acting cohort is iteroparous, as opposed to semelparous 
 @param currentMonth The current model month */
-        void RunReproductionEvents(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, 
-           vector<int> actingCohort, map<string, vector<double> > cellEnvironment, map<string, map<string, double> > 
-           deltas, FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions, 
-           unsigned currentTimestep, ProcessTracker tracker, ThreadLockedParallelVariables& partial, bool iteroparous, unsigned currentMonth)
+        void RunReproductionEvents(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, 
+           vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double> >& 
+           deltas, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, 
+           unsigned currentTimestep, ProcessTracker& tracker, ThreadLockedParallelVariables& partial, bool iteroparous, unsigned currentMonth)
        {
            // Adult non-reproductive biomass lost by semelparous organisms
                    double AdultMassLost;
@@ -186,10 +186,10 @@ ReproductionBasic(string globalModelTimeStepUnit, bool DrawRandomly)
 @param madingleyStockDefinitions The definitions of stock functional groups in the model 
 @param currentTimestep The current model time step 
 @param tracker An instance of ProcessTracker to hold diagnostics for reproduction */
-        void RunReproductiveMassAssignment(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, 
-           vector<int> actingCohort, map<string, vector<double> > cellEnvironment, map<string, map<string, double> > deltas, 
-           FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions, 
-           unsigned currentTimestep, ProcessTracker tracker)
+        void RunReproductiveMassAssignment(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, 
+           vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double> >& deltas, 
+           FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, 
+           unsigned currentTimestep, ProcessTracker& tracker)
        {
            // Biomass per individual in each cohort to be assigned to reproductive potential
            double BiomassToAssignToReproductivePotential;
@@ -246,7 +246,7 @@ ReproductionBasic(string globalModelTimeStepUnit, bool DrawRandomly)
 @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
 @param madingleyCohortDefinitions The definitions of cohort functional groups in the model 
 @return A vector containing the juvenile and adult masses of the cohort to be produced*/
-vector<double> GetOffspringCohortProperties(GridCellCohortHandler gridCellCohorts, vector<int> actingCohort, FunctionalGroupDefinitions madingleyCohortDefinitions)
+vector<double> GetOffspringCohortProperties(GridCellCohortHandler& gridCellCohorts, vector<int>& actingCohort, FunctionalGroupDefinitions& madingleyCohortDefinitions)
        {
                    // A two-element vector holding adult and juvenile body masses in elements zero and one respectively
         vector<double> CohortJuvenileAdultMasses(2);

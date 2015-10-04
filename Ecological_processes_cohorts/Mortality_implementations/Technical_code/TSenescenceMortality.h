@@ -31,7 +31,7 @@ SenescenceMortality(string globalModelTimeStepUnit)
 @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
 @param currentTimestep The current model time step 
 @return The rate of individuals in the cohort that die from senescence mortality*/
-double CalculateMortalityRate(GridCellCohortHandler gridCellCohorts, vector<int> actingCohort, double bodyMassIncludingChangeThisTimeStep, map<string, map<string, double> > deltas, unsigned currentTimestep)
+double CalculateMortalityRate(GridCellCohortHandler& gridCellCohorts, vector<int>& actingCohort, double bodyMassIncludingChangeThisTimeStep, map<string, map<string, double> >& deltas, unsigned currentTimestep)
        {
            // Calculate the age (in model time steps) that the cohort reached maturity
            double TimeToMaturity = gridCellCohorts[actingCohort].MaturityTimeStep() - gridCellCohorts[actingCohort].BirthTimeStep;

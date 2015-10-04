@@ -173,7 +173,7 @@ class RevisedPredation : public IEatingImplementation
 @param madingleyStockDefinitions The definitions for stocks in the model 
 \remarks This only works if: a) predation is initialised in every grid cell; and b) if parallelisation is done by latitudinal strips
 It is critical to run this every time step */
-void InitializeEatingPerTimeStep(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions)
+void InitializeEatingPerTimeStep(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions)
        {
            //Get the functional group indices of all heterotroph cohorts (i.e. potential prey)
            FunctionalGroupIndicesToEat = madingleyCohortDefinitions.GetFunctionalGroupIndex("Heterotroph/Autotroph", "heterotroph", false);
@@ -222,7 +222,7 @@ void InitializeEatingPerTimeStep(GridCellCohortHandler gridCellCohorts, GridCell
 @param cellEnvironment The environment in the current grid cell 
 @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
 @param madingleyStockDefinitions The functional group definitions for stocks  in the model  */ 
-void GetEatingPotentialMarine(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, vector<int> actingCohort, map<string, vector<double> > cellEnvironment, FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions  madingleyStockDefinitions)
+void GetEatingPotentialMarine(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions&  madingleyStockDefinitions)
        {
 
            BinnedPreyDensities.resize(gridCellCohorts.size());
@@ -356,7 +356,7 @@ void GetEatingPotentialMarine(GridCellCohortHandler gridCellCohorts, GridCellSto
 @param gridCellCohorts Cohorts in this grid cell 
 @param actingCohort The predator cohort 
 @param functionalGroupIndicesToEat The functional groups which this predator eats  */ 
-void PopulateBinnedPreyAbundance(GridCellCohortHandler gridCellCohorts, vector<int> actingCohort, vector<int> functionalGroupIndicesToEat, double logOptimalPreyBodySizeRatio )
+void PopulateBinnedPreyAbundance(GridCellCohortHandler& gridCellCohorts, vector<int>& actingCohort, vector<int>& functionalGroupIndicesToEat, double logOptimalPreyBodySizeRatio )
         {
            int BinNumber = 0;
 
@@ -401,8 +401,8 @@ double GetBinNumberFractional(double preyMass, double predatorMass, double preda
 @param cellEnvironment The environment in the current grid cell 
 @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
 @param madingleyStockDefinitions The functional group definitions for stocks  in the model  */ 
-void GetEatingPotentialTerrestrial(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, vector<int> actingCohort,
-           map<string, vector<double> > cellEnvironment, FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions
+void GetEatingPotentialTerrestrial(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort,
+           map<string, vector<double> >& cellEnvironment, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions&
            madingleyStockDefinitions)
        {
 
@@ -498,8 +498,8 @@ void GetEatingPotentialTerrestrial(GridCellCohortHandler gridCellCohorts, GridCe
 @param currentTimestep The current model time step 
 @param specificLocations Whether the model is being run for specific locations 
 @param outputDetail The level of output detail used in this model run  */ 
-void RunEating(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks, vector<int> actingCohort, map<string, vector<double> > cellEnvironment, map<string, map<string, double>> deltas, FunctionalGroupDefinitions madingleyCohortDefinitions,
-           FunctionalGroupDefinitions madingleyStockDefinitions, ProcessTracker trackProcesses, unsigned currentTimestep, bool specificLocations, string outputDetail, MadingleyModelInitialisation initialisation)
+void RunEating(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>& deltas, FunctionalGroupDefinitions& madingleyCohortDefinitions,
+           FunctionalGroupDefinitions& madingleyStockDefinitions, ProcessTracker& trackProcesses, unsigned currentTimestep, bool specificLocations, string outputDetail, MadingleyModelInitialisation& initialisation)
        {
 //            if (trackProcesses.TrackProcesses)
 //            {

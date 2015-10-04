@@ -67,7 +67,7 @@ public:
 @param actingCohortNumber The position of the acting cohort within the functional group in the array of grid cell cohorts 
 @param currentMonth The current model month 
 */
-        void RunDispersal(vector<unsigned> cellIndices, ModelGrid gridForDispersal, Cohort cohortToDisperse, 
+        void RunDispersal(vector<unsigned>& cellIndices, ModelGrid& gridForDispersal, Cohort& cohortToDisperse, 
            int actingCohortFunctionalGroup, int actingCohortNumber, unsigned currentMonth)
        {
            // Starvation driven dispersal takes precedence over density driven dispersal (i.e. a cohort can't do both). Also, the delta 
@@ -83,7 +83,7 @@ public:
                CheckDensityDrivenDispersal(gridForDispersal, cellIndices[0], cellIndices[1], cohortToDisperse, actingCohortFunctionalGroup, actingCohortNumber);
            }
         }
-bool CheckStarvationDispersal(ModelGrid gridForDispersal, unsigned latIndex, unsigned lonIndex, Cohort cohortToDisperse, int functionalGroup, int cohortNumber)
+bool CheckStarvationDispersal(ModelGrid& gridForDispersal, unsigned latIndex, unsigned lonIndex, Cohort& cohortToDisperse, int functionalGroup, int cohortNumber)
         {
            // A boolean to check whether a cohort has dispersed
            bool CohortHasDispersed = false;
@@ -163,7 +163,7 @@ bool CheckStarvationDispersal(ModelGrid gridForDispersal, unsigned latIndex, uns
            return CohortHasDispersed;
         }
 
-void CheckDensityDrivenDispersal(ModelGrid gridForDispersal, unsigned latIndex, unsigned lonIndex, Cohort cohortToDisperse, int functionalGroup, int cohortNumber)
+void CheckDensityDrivenDispersal(ModelGrid& gridForDispersal, unsigned latIndex, unsigned lonIndex, Cohort& cohortToDisperse, int functionalGroup, int cohortNumber)
         {
            // Check the population density
            double NumberOfIndividuals = cohortToDisperse.CohortAbundance;
@@ -224,7 +224,7 @@ The fourth element is the probability of dispersing in the diagonal direction
 The fifth element is the u velocity
 The sixth element is the v velocity
 Note that the second, third, and fourth elements are always positive; thus, they do not indicate 'direction' in terms of dispersal.*/
-vector<double> CalculateDispersalProbability(ModelGrid madingleyGrid, unsigned latIndex, unsigned lonIndex, double dispersalSpeed)
+vector<double> CalculateDispersalProbability(ModelGrid& madingleyGrid, unsigned latIndex, unsigned lonIndex, double dispersalSpeed)
         {
            double LatCellLength = madingleyGrid.CellHeightsKm[latIndex];
            double LonCellLength = madingleyGrid.CellWidthsKm[latIndex];
@@ -286,7 +286,7 @@ vector<double> CalculateDispersalProbability(ModelGrid madingleyGrid, unsigned l
 //        // Determine to which cell the cohort disperses
 //        // Here we make the assumption that if the cell in the direction chosen is unsuitable, that the dispersal does not happen 
 //        // (i.e. that the cohorts 'bumps up' against unsuitable habitat
-vector<unsigned> CellToDisperseTo(ModelGrid madingleyGrid, unsigned latIndex, unsigned lonIndex, vector<double> dispersalArray, double RandomValue, double uSpeedIncDiffusion, double vSpeedIncDiffusion)
+vector<unsigned> CellToDisperseTo(ModelGrid& madingleyGrid, unsigned latIndex, unsigned lonIndex, vector<double>& dispersalArray, double RandomValue, double uSpeedIncDiffusion, double vSpeedIncDiffusion)
         {
            vector<unsigned> DestinationCell;
 

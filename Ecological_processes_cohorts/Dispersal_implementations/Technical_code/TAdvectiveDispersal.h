@@ -77,7 +77,7 @@ class AdvectiveDispersal : public IDispersalImplementation
 @param actingCohortNumber The position of the acting cohort wihtin the functional group in the array of grid cell cohorts 
 @param currentMonth The current model month 
 */
-         void RunDispersal(vector<unsigned> cellIndex, ModelGrid& gridForDispersal, Cohort cohortToDisperse, int actingCohortFunctionalGroup, 
+         void RunDispersal(vector<unsigned>& cellIndex, ModelGrid& gridForDispersal, Cohort& cohortToDisperse, int actingCohortFunctionalGroup, 
             int actingCohortNumber, unsigned currentMonth)
         {
            // An array to hold the dispersal information
@@ -87,7 +87,7 @@ class AdvectiveDispersal : public IDispersalImplementation
            double CohortDispersed = 0;
 
            // An array to hold the present cohort location for the intermediate steps that occur before the final dispersal this time step
-           vector<unsigned> PresentLocation(2);// = { cellIndex[0], cellIndex[1] };
+           vector<unsigned> PresentLocation = { cellIndex[0], cellIndex[1] };
 
            // Loop through a number of times proportional to the rescaled dispersal
            for (int mm = 0; mm < AdvectionTimeStepsPerModelTimeStep; mm++)
@@ -151,7 +151,7 @@ The fourth element is the probability of dispersing in the diagonal direction
 The fifth element is the distance travelled in the u direction (u velocity modified by the random diffusion component)
 The sixth element is the distance travelled in the v direction (v velocity modified by the random diffusion component)
 Note that the second, third, and fourth elements are always positive; thus, they do not indicate 'direction' in terms of dispersal.*/
-vector<double> CalculateDispersalProbability(ModelGrid madingleyGrid, unsigned latIndex, unsigned lonIndex, unsigned currentMonth)
+vector<double> CalculateDispersalProbability(ModelGrid& madingleyGrid, unsigned latIndex, unsigned lonIndex, unsigned currentMonth)
        {
         // Advective speed in u (longitudinal) direction
         double uAdvectiveSpeed;
@@ -222,8 +222,8 @@ vector<double> CalculateDispersalProbability(ModelGrid madingleyGrid, unsigned l
            LatCellLength = madingleyGrid.CellHeightsKm[latIndex];
            LonCellLength = madingleyGrid.CellWidthsKm[latIndex];
 
-           assert(abs(uDistanceTravelled) >= LonCellLength &&"u velocity greater than cell width");
-           assert(abs(vDistanceTravelled) >= LatCellLength && "v velocity greater than cell width");
+           assert(abs(uDistanceTravelled) <= LonCellLength &&"u velocity greater than cell width");
+           assert(abs(vDistanceTravelled) <= LatCellLength && "v velocity greater than cell width");
 
            // We assume that the whole grid cell moves at the given velocity and calculate the area that is then outside the original grid cell location. 
            // This then becomes the probability of dispersal
@@ -245,7 +245,7 @@ vector<double> CalculateDispersalProbability(ModelGrid madingleyGrid, unsigned l
 
            // Check that the whole cell hasn't moved out. Could this happen for the fastest currents in a month? Definitely, 
            // if current speeds were not constrained
-           assert(DispersalProbability >= 1 && "Dispersal probability in advection should always be <= 1");
+           assert(DispersalProbability <= 1 && "Dispersal probability in advection should always be <= 1");
            
 
            vector<double> NewArray = { DispersalProbability, AreaOutsideU / CellArea, AreaOutsideV / CellArea, AreaOutsideBoth / CellArea, uDistanceTravelled, vDistanceTravelled };
@@ -295,7 +295,7 @@ double CheckForDispersal(double dispersalProbability)
        }
 //           
 //        // Determine to which cell the cohort disperses
-vector<unsigned> CellToDisperseTo(ModelGrid madingleyGrid, unsigned latIndex, unsigned lonIndex, vector<double> dispersalArray, double RandomValue, double uSpeedIncDiffusion, double vSpeedIncDiffusion)
+vector<unsigned> CellToDisperseTo(ModelGrid& madingleyGrid, unsigned latIndex, unsigned lonIndex, vector<double>& dispersalArray, double RandomValue, double uSpeedIncDiffusion, double vSpeedIncDiffusion)
         {
             vector<unsigned> DestinationCell;
 
