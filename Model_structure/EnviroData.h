@@ -1,9 +1,6 @@
 #ifndef ENVIRODATA_H
 #define ENVIRODATA_H
-#include <Properties.h>
-//
-//namespace Madingley
-//{
+
 //    /// <summary>
 //    /// Imports environmental data from ASCII and NetCDF files
 //    /// </summary>
@@ -14,6 +11,9 @@
 class EnviroData
     {
     public:
+            //----------------------------------------------------------------------------------------------
+    //Variables
+    //----------------------------------------------------------------------------------------------
 /** \brief
 Number of latitudinal cells
 */
@@ -140,6 +140,9 @@ Instance of the class to perform general functions
 */
 //        private UtilityFunctions Utilities;
 //
+    //----------------------------------------------------------------------------------------------
+    //Methods
+    //----------------------------------------------------------------------------------------------
 /** \brief
 Overloaded constructor to fetch climate information from the cloud using FetchClimate
 

@@ -14,137 +14,112 @@
 //
 //namespace Madingley
 //{
+
 /** \brief A class to specify, initalise and run ecological processes pertaining to cohorts */
-    class EcologyCohort
-   {
-   public:
-/** \brief
-A vector of stopwatch objects for timing the ecological processes
-*/
-        vector<StopWatch> s2;
-              
-/** \brief A sorted list of formulations of metabolism */
-map<string, IEcologicalProcessWithinGridCell*> MetabolismFormulations;
-/** \brief
-A sorted list of formulations of eating
-*/
- map<string, IEcologicalProcessWithinGridCell*> EatingFormulations;
+class EcologyCohort {
+public:
+    //----------------------------------------------------------------------------------------------
+    //Variables
+    //----------------------------------------------------------------------------------------------
+    /** \brief  A vector of stopwatch objects for timing the ecological processes*/
+    vector<StopWatch> s2;
+    /** \brief A sorted list of formulations of metabolism */
+    map<string, IEcologicalProcessWithinGridCell*> MetabolismFormulations;
+    /** \brief A sorted list of formulations of eating */
+    map<string, IEcologicalProcessWithinGridCell*> EatingFormulations;
+    /** \brief A sorted list of formulations of mortality */
+    map<string, IEcologicalProcessWithinGridCell*> MortalityFormulations;
+    /** \brief A sorted list of formulations of reproduction */
+    map<string, IEcologicalProcessWithinGridCell*> ReproductionFormulations;
+    /** \brief An instance of apply ecology */
+    ApplyEcology ApplyEcologicalProcessResults;
+    //----------------------------------------------------------------------------------------------
+    //Methods
+    //----------------------------------------------------------------------------------------------
 
-/** \brief A sorted list of formulations of mortality */
- map<string, IEcologicalProcessWithinGridCell*> MortalityFormulations;
-     
-/** \brief A sorted list of formulations of reproduction */
-map<string, IEcologicalProcessWithinGridCell*> ReproductionFormulations;
-
-/** \brief An instance of apply ecology */
-        ApplyEcology ApplyEcologicalProcessResults;
-
-/** \brief Initalise the ecological processes */
-        void InitializeEcology(double cellArea, string globalModelTimeStepUnit, bool drawRandomly)
-       {
-           // Initialise eating formulations
-           //EatingFormulations = new map<string, IEcologicalProcessWithinGridCell>();
-           // Declare and attach eating formulations
-           Eating *EatingFormulation=new Eating(cellArea, globalModelTimeStepUnit);
-           EatingFormulations["Basic eating"]= EatingFormulation;
-
-           // Initialise metabolism formulations
-           //MetabolismFormulations = new map<string, IEcologicalProcessWithinGridCell>();
-           // Declare and attach metabolism formulations
-           Metabolism *MetabolismFormulation=new Metabolism(globalModelTimeStepUnit);
-           MetabolismFormulations["Basic metabolism"]= MetabolismFormulation;
-
-           // Initialise mortality formulations
-           //MortalityFormulations = new map<string, IEcologicalProcessWithinGridCell>();
-           // Declare and attach mortality formulations
-           Mortality *MortalityFormulation=new Mortality(globalModelTimeStepUnit);
-           MortalityFormulations["Basic mortality"]= MortalityFormulation;
-
-           // Initialise reproduction formulations
-           //ReproductionFormulations = new map<string, IEcologicalProcessWithinGridCell>();
-           // Declare and attach mortality formulations
-           Reproduction *ReproductionFormulation=new Reproduction(globalModelTimeStepUnit, drawRandomly);
-           ReproductionFormulations["Basic reproduction"]= ReproductionFormulation;
-
-//            // Initialise apply ecology
-//            ApplyEcologicalProcessResults = new ApplyEcology();
-
-
+    //----------------------------------------------------------------------------------------------
+    /** \brief Initalise the ecological processes */
+    void InitializeEcology(double cellArea, string globalModelTimeStepUnit, bool drawRandomly) {
+        // Declare and attach eating formulations
+        Eating *EatingFormulation = new Eating(cellArea, globalModelTimeStepUnit);
+        EatingFormulations["Basic eating"] = EatingFormulation;
+        // Declare and attach metabolism formulations
+        Metabolism *MetabolismFormulation = new Metabolism(globalModelTimeStepUnit);
+        MetabolismFormulations["Basic metabolism"] = MetabolismFormulation;
+        // Declare and attach mortality formulations
+        Mortality *MortalityFormulation = new Mortality(globalModelTimeStepUnit);
+        MortalityFormulations["Basic mortality"] = MortalityFormulation;
+        // Declare and attach mortality formulations
+        Reproduction *ReproductionFormulation = new Reproduction(globalModelTimeStepUnit, drawRandomly);
+        ReproductionFormulations["Basic reproduction"] = ReproductionFormulation;
     }
-
+    //----------------------------------------------------------------------------------------------
     ~EcologyCohort() {
         delete EatingFormulations["Basic eating"];
         delete MetabolismFormulations["Basic metabolism"];
         delete MortalityFormulations["Basic mortality"];
         delete ReproductionFormulations["Basic reproduction"];
     }
+    //----------------------------------------------------------------------------------------------
+    /** \brief Run ecological processes that operate on cohorts within a single grid cell
+    @param gridCellCohorts The cohorts in the current grid cell 
+    @param gridCellStocks The stocks in the current grid cell 
+    @param actingCohort The acting cohort 
+    @param cellEnvironment The environment in the current grid cell 
+    @param deltas A sorted list of deltas to track changes in abundances and biomasses during the ecological processes 
+    @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
+    @param madingleyStockDefinitions The definitions for stock functional groups in the model 
+    @param currentTimestep The current model time step 
+    @param trackProcesses An instance of the process tracker 
+    @param partial Thread-locked local variables 
+    @param specificLocations Whether the model is being run for specific locations 
+    @param outputDetail The level of output detail being used for this model run 
+    @param currentMonth The current model month */
+    void RunWithinCellEcology(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort,
+            map<string, vector<double>>&cellEnvironment, map<string, map<string, double>>&deltas, FunctionalGroupDefinitions&
+            madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, unsigned currentTimestep, ProcessTracker& trackProcesses,
+            ThreadLockedParallelVariables& partial, bool specificLocations, string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
 
-/** \brief
-Run ecological processes that operate on cohorts within a single grid cell
+        // RUN EATING
+        EatingFormulations["Basic eating"]->RunEcologicalProcess(gridCellCohorts, gridCellStocks, actingCohort, cellEnvironment,
+                deltas, madingleyCohortDefinitions, madingleyStockDefinitions, currentTimestep, trackProcesses, partial,
+                specificLocations, outputDetail, currentMonth, initialisation);
 
-@param gridCellCohorts The cohorts in the current grid cell 
-@param gridCellStocks The stocks in the current grid cell 
-@param actingCohort The acting cohort 
-@param cellEnvironment The environment in the current grid cell 
-@param deltas A sorted list of deltas to track changes in abundances and biomasses during the ecological processes 
-@param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
-@param madingleyStockDefinitions The definitions for stock functional groups in the model 
-@param currentTimestep The current model time step 
-@param trackProcesses An instance of the process tracker 
-@param partial Thread-locked local variables 
-@param specificLocations Whether the model is being run for specific locations 
-@param outputDetail The level of output detail being used for this model run 
-@param currentMonth The current model month */
-        void RunWithinCellEcology(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort, 
-           map<string, vector<double>>& cellEnvironment, map<string, map<string, double>>& deltas, FunctionalGroupDefinitions& 
-           madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, unsigned currentTimestep, ProcessTracker& trackProcesses, 
-           ThreadLockedParallelVariables& partial, bool specificLocations,string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation)
-       {
 
-           // RUN EATING
-           EatingFormulations["Basic eating"]->RunEcologicalProcess(gridCellCohorts, gridCellStocks, actingCohort, cellEnvironment,
-               deltas, madingleyCohortDefinitions, madingleyStockDefinitions, currentTimestep, trackProcesses, partial,
-               specificLocations, outputDetail, currentMonth, initialisation);
+        // RUN METABOLISM - THIS TIME TAKE THE METABOLIC LOSS TAKING INTO ACCOUNT WHAT HAS BEEN INGESTED THROUGH EATING
+        MetabolismFormulations["Basic metabolism"]->RunEcologicalProcess(gridCellCohorts, gridCellStocks, actingCohort,
+                cellEnvironment, deltas, madingleyCohortDefinitions, madingleyStockDefinitions, currentTimestep, trackProcesses, partial,
+                specificLocations, outputDetail, currentMonth, initialisation);
 
-           
-           // RUN METABOLISM - THIS TIME TAKE THE METABOLIC LOSS TAKING INTO ACCOUNT WHAT HAS BEEN INGESTED THROUGH EATING
-           MetabolismFormulations["Basic metabolism"]->RunEcologicalProcess(gridCellCohorts, gridCellStocks, actingCohort,
-               cellEnvironment, deltas, madingleyCohortDefinitions, madingleyStockDefinitions, currentTimestep, trackProcesses, partial,
-               specificLocations, outputDetail, currentMonth, initialisation);
-             
-          
-           // RUN REPRODUCTION - TAKING INTO ACCOUNT NET BIOMASS CHANGES RESULTING FROM EATING AND METABOLISING
-           ReproductionFormulations["Basic reproduction"]->RunEcologicalProcess(gridCellCohorts, gridCellStocks, actingCohort,
-               cellEnvironment, deltas, madingleyCohortDefinitions, madingleyStockDefinitions, currentTimestep, trackProcesses, partial,
-               specificLocations, outputDetail, currentMonth, initialisation);
-           
-             
-           // RUN MORTALITY - TAKING INTO ACCOUNT NET BIOMASS CHANGES RESULTING FROM EATING, METABOLISM AND REPRODUCTION
-           MortalityFormulations["Basic mortality"]->RunEcologicalProcess(gridCellCohorts, gridCellStocks, actingCohort,
-               cellEnvironment, deltas, madingleyCohortDefinitions, madingleyStockDefinitions, currentTimestep, trackProcesses, partial,
-               specificLocations, outputDetail, currentMonth, initialisation);
-       }
 
-/** \brief
-Update the properties of the acting cohort and of the environmental biomass pools after running the ecological processes for a cohort
+        // RUN REPRODUCTION - TAKING INTO ACCOUNT NET BIOMASS CHANGES RESULTING FROM EATING AND METABOLISING
+        ReproductionFormulations["Basic reproduction"]->RunEcologicalProcess(gridCellCohorts, gridCellStocks, actingCohort,
+                cellEnvironment, deltas, madingleyCohortDefinitions, madingleyStockDefinitions, currentTimestep, trackProcesses, partial,
+                specificLocations, outputDetail, currentMonth, initialisation);
 
-@param gridCellCohorts The cohorts in the current grid cell 
-@param gridCellStocks The stocks in the current grid cell 
-@param actingCohort The acting cohort 
-@param cellEnvironment The environment of the current grid cell 
-@param deltas The sorted list of deltas for the current grid cell 
-@param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
-@param madingleyStockDefinitions The definitions for stock functional groups in the model 
-@param currentTimestep The current model time step 
-@param tracker A process tracker */
-void UpdateEcology(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort, 
-           map<string, vector<double>>& cellEnvironment, map<string, map<string, double>>& deltas, FunctionalGroupDefinitions& 
-           madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, unsigned currentTimestep, ProcessTracker& tracker)
-       {
-           // Apply the results of within-cell ecological processes
-           ApplyEcologicalProcessResults.UpdateAllEcology(gridCellCohorts, actingCohort, cellEnvironment, deltas, currentTimestep, tracker);
 
-       }
-   };
-//}
+        // RUN MORTALITY - TAKING INTO ACCOUNT NET BIOMASS CHANGES RESULTING FROM EATING, METABOLISM AND REPRODUCTION
+        MortalityFormulations["Basic mortality"]->RunEcologicalProcess(gridCellCohorts, gridCellStocks, actingCohort,
+                cellEnvironment, deltas, madingleyCohortDefinitions, madingleyStockDefinitions, currentTimestep, trackProcesses, partial,
+                specificLocations, outputDetail, currentMonth, initialisation);
+    }
+    //----------------------------------------------------------------------------------------------
+    /** \brief Update the properties of the acting cohort and of the environmental biomass pools after running the ecological processes for a cohort
+    @param gridCellCohorts The cohorts in the current grid cell 
+    @param gridCellStocks The stocks in the current grid cell 
+    @param actingCohort The acting cohort 
+    @param cellEnvironment The environment of the current grid cell 
+    @param deltas The sorted list of deltas for the current grid cell 
+    @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
+    @param madingleyStockDefinitions The definitions for stock functional groups in the model 
+    @param currentTimestep The current model time step 
+    @param tracker A process tracker */
+    void UpdateEcology(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort,
+            map<string, vector<double>>&cellEnvironment, map<string, map<string, double>>&deltas, FunctionalGroupDefinitions&
+            madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, unsigned currentTimestep, ProcessTracker& tracker) {
+        // Apply the results of within-cell ecological processes
+        ApplyEcologicalProcessResults.UpdateAllEcology(gridCellCohorts, actingCohort, cellEnvironment, deltas, currentTimestep, tracker);
+    }
+    //----------------------------------------------------------------------------------------------
+};
 #endif

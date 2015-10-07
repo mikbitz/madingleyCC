@@ -5,20 +5,6 @@
  */
 
 
-
-
-
-
-//
-
-//
-
-
-//
-
-//
-//namespace Madingley
-//{
 /** \brief
 //    /// A class to perform all operations involved in outputting the results to console, screen or file
 //    /// </summary>
@@ -995,5 +981,5 @@ Write to the output file values of the output variables at the end of the model 
 //        }
 //
 //    }
-//}
+
 #endif

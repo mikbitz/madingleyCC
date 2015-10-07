@@ -4,39 +4,41 @@
  * \brief the Stock header file
  */
 
-
-//
-//namespace Madingley
-//{
 /** \brief
 //    /// Hold individual stocks */
-class Stock
-    {
-    public:
-/** \brief The index of the functional group that the stock belongs to */
-     unsigned char FunctionalGroupIndex;
+class Stock {
+public:
+    //----------------------------------------------------------------------------------------------
+    //Variables
+    //----------------------------------------------------------------------------------------------
 
-/** \brief The mean body mass of an individual in this stock */
+    /** \brief The index of the functional group that the stock belongs to */
+    unsigned char FunctionalGroupIndex;
 
-         double IndividualBodyMass;
+    /** \brief The mean body mass of an individual in this stock */
 
-/** \brief The total biomass of the stock */
-        double TotalBiomass;
+    double IndividualBodyMass;
 
-Stock(){;}
-/** \brief
-Constructor for stock class. Assigns stock starting properties
-@param functionalGroupIndex The functional group index of the stock being generated 
-@param individualMass The individual mass of the stock 
-@param initialTotalBiomass The initial total biomass of the stock */
-        Stock(unsigned char functionalGroupIndex, double individualMass, double initialTotalBiomass)
-       {
-           FunctionalGroupIndex = functionalGroupIndex;
-           IndividualBodyMass = individualMass;
-           TotalBiomass = initialTotalBiomass;
-       }
-       
+    /** \brief The total biomass of the stock */
+    double TotalBiomass;
+    //----------------------------------------------------------------------------------------------
+    //Methods
+    //----------------------------------------------------------------------------------------------
+    /** \brief default constructor - used only at definition in continain classes*/
+    Stock() {
+        ;
+    }
+    //----------------------------------------------------------------------------------------------
+    /** \brief Constructor for stock class. Assigns stock starting properties
+    @param functionalGroupIndex The functional group index of the stock being generated 
+    @param individualMass The individual mass of the stock 
+    @param initialTotalBiomass The initial total biomass of the stock */
+    Stock(unsigned char functionalGroupIndex, double individualMass, double initialTotalBiomass) {
+        FunctionalGroupIndex = functionalGroupIndex;
+        IndividualBodyMass = individualMass;
+        TotalBiomass = initialTotalBiomass;
+    }
+    //----------------------------------------------------------------------------------------------
 
-    };
-//}
+};
 #endif
