@@ -1,16 +1,14 @@
 #ifndef UTILITYFUNCTIONS_H
 #define UTILITYFUNCTIONS_H
 #include <math.h>
-#include<algorithm>
+#include <algorithm>
 #include <vector>
 #include <map>
 #include <random>       // std::default_random_engine
 #include <chrono>       // std::chrono::system_clock
 #include<assert.h>
-//namespace Madingley
-//{
-
 /** \brief Generic functions */
+using namespace std;
 class UtilityFunctions {
 public:
     //----------------------------------------------------------------------------------------------

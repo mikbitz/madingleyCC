@@ -94,7 +94,7 @@ public:
     //----------------------------------------------------------------------------------------------
     //Methods
     //----------------------------------------------------------------------------------------------
- 
+     MadingleyModelInitialisation(){;}
     //----------------------------------------------------------------------------------------------
     /** \brief Reads the initialization file to get information for the set of simulations to be run
      @param initialisationFile The name of the initialization file with information on the simulations to be run

@@ -26,8 +26,6 @@ class DiffusiveDispersal : public IDispersalImplementation {
 
     /** \brief Include Utility class */
     UtilityFunctions Utilities;
-    /** \brief An instance of the simple random number generator class */
-    std::default_random_engine RandomNumberGenerator;
     
 
 public:
@@ -59,7 +57,7 @@ public:
     @param actingCohortFunctionalGroup The functional group index of the acting cohort 
     @param actingCohortNumber The position of the cohort within the functional group in the array of grid cell cohorts 
     @param currentMonth The current model month */
-    void RunDispersal(vector<unsigned>& cellIndices, ModelGrid& gridForDispersal, Cohort& cohortToDisperse,
+    bool RunDispersal(vector<std::reference_wrapper<Cohort>>& disperseMonkeys, vector<unsigned>& cellIndices, ModelGrid& gridForDispersal, Cohort& cohortToDisperse,
             int actingCohortFunctionalGroup, int actingCohortNumber, unsigned currentMonth) {
         // Calculate dispersal speed for the cohort         
         double DispersalSpeed = CalculateDispersalSpeed(cohortToDisperse.IndividualBodyMass);
@@ -67,26 +65,13 @@ public:
         // A double to indicate whether or not the cohort has dispersed, and if it has dispersed, where to
         double CohortDispersed = 0;
 
-        // Get the probability of dispersal
-        vector<double> DispersalArray = CalculateDispersalProbability(gridForDispersal, cellIndices[0], cellIndices[1], DispersalSpeed);
+        vector<unsigned> DestinationCell = CalculateDispersalProbability(gridForDispersal, cellIndices[0], cellIndices[1], DispersalSpeed);
+        if (DestinationCell[0] < 999999) {
+            // Update the delta array of cohorts
+            relocate(disperseMonkeys, cohortToDisperse, cellIndices, DestinationCell);
 
-        // Check to see if it does disperse
-        CohortDispersed = CheckForDispersal(DispersalArray[0]);
-
-        // If it does, check to see where it will end up
-        if (CohortDispersed > 0) {
-            // Check to see if the direction is actually dispersable
-            vector<unsigned> DestinationCell = CellToDisperseTo(gridForDispersal, cellIndices[0], cellIndices[1], DispersalArray, CohortDispersed, DispersalArray[4], DispersalArray[5]);
-
-            if (DestinationCell[0] < 999999) {
-                // Update the delta array of cohorts
-                gridForDispersal.DeltaFunctionalGroupDispersalArray[cellIndices[0]][cellIndices[1]].push_back((unsigned) actingCohortFunctionalGroup);
-                gridForDispersal.DeltaCohortNumberDispersalArray[cellIndices[0]][cellIndices[1]].push_back((unsigned) actingCohortNumber);
-
-                // Update the delta array of cells to disperse to
-                gridForDispersal.DeltaCellToDisperseToArray[cellIndices[0]][cellIndices[1]].push_back(DestinationCell);
             }
-        }
+        return false;
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Calculates the average diffusive dispersal speed of individuals in a cohort given their body mass
@@ -109,7 +94,7 @@ public:
     The fifth element is the u velocity modified by the random diffusion component
     The sixth element is the v velocity modified by the random diffusion component
     Note that the second, third, and fourth elements are always positive; thus, they do not indicate 'direction' in terms of dispersal.*/
-    vector <double> CalculateDispersalProbability(ModelGrid& madingleyGrid, unsigned latIndex, unsigned lonIndex, double dispersalSpeed) {
+    vector <unsigned> CalculateDispersalProbability(ModelGrid& madingleyGrid, unsigned latIndex, unsigned lonIndex, double dispersalSpeed) {
         // Check that the u speed and v speed are not greater than the cell length. If they are, then rescale them; this limits the max velocity
         // so that cohorts cannot be advected more than one grid cell per time step
         double LatCellLength = madingleyGrid.CellHeightsKm[latIndex];
@@ -123,97 +108,8 @@ public:
         // Calculate the u and v components given the dispersal speed
         double uSpeed = dispersalSpeed * cos(RandomDirection);
         double vSpeed = dispersalSpeed * sin(RandomDirection);
+        return newCell(madingleyGrid,uSpeed,vSpeed,LatCellLength,LonCellLength,latIndex,lonIndex);
 
-        // Calculate the area of the grid cell that is now outside in the diagonal direction
-        double AreaOutsideBoth = abs(uSpeed * vSpeed);
-
-        // Calculate the area of the grid cell that is now outside in the u direction (not including the diagonal)
-        double AreaOutsideU = abs(uSpeed * LatCellLength) - AreaOutsideBoth;
-
-        // Calculate the proportion of the grid cell that is outside in the v direction (not including the diagonal
-        double AreaOutsideV = abs(vSpeed * LonCellLength) - AreaOutsideBoth;
-
-        // Get the cell area, in kilometres squared
-        double CellArea = madingleyGrid.GetCellEnvironment(latIndex, lonIndex)["Cell Area"][0];
-
-        // Convert areas to a probability
-        double DispersalProbability = (AreaOutsideU + AreaOutsideV + AreaOutsideBoth) / CellArea;
-
-        // Check that the whole cell hasn't moved out. This could happen if dispersal speed was high enough
-
-        assert(DispersalProbability <= 1 && "Dispersal probability in diffusion should always be <= 1");
-
-
-        vector<double> NewArray = {DispersalProbability, AreaOutsideU / CellArea, AreaOutsideV / CellArea, AreaOutsideBoth / CellArea, uSpeed, vSpeed};
-
-        return NewArray;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Generate a random value to see if a cohort disperses
-    @param dispersalProbability The probability of dispersal 
-    @return Returns either the random value, if it less than dispersal probability, or -1*/
-    double CheckForDispersal(double dispersalProbability) {
-        // Randomly check to see if dispersal occurs
-        std::uniform_real_distribution<double> randomNumber(0.0, 1.0);
-        double RandomValue = randomNumber(RandomNumberGenerator);
-        if (dispersalProbability >= RandomValue) {
-            return RandomValue;
-        } else {
-            return -1.0;
-        }
-    }
-    // Determine to which cell the cohort disperses
-    // Note that if the direction is not dispersable, then it doesn't happen
-
-    vector<unsigned> CellToDisperseTo(ModelGrid& madingleyGrid, unsigned latIndex, unsigned lonIndex, vector<double>& dispersalArray, double RandomValue, double uSpeedIncDiffusion, double vSpeedIncDiffusion) {
-        vector<unsigned> DestinationCell;
-
-        // Check to see in which axis the cohort disperses
-        // Longitudinally
-        if (RandomValue <= dispersalArray[1]) {
-            // Work out whether dispersal is to the cell to the E or the W
-            if (uSpeedIncDiffusion > 0) {
-                DestinationCell = madingleyGrid.CheckDispersalEast(latIndex, lonIndex);
-            } else {
-                DestinationCell = madingleyGrid.CheckDispersalWest(latIndex, lonIndex);
-            }
-
-        } else {
-            // Latitudinally
-            if (RandomValue <= (dispersalArray[1] + dispersalArray[2])) {
-                // Work out whether dispersal is to the cell to the N or the S
-                if (vSpeedIncDiffusion > 0) {
-                    DestinationCell = madingleyGrid.CheckDispersalNorth(latIndex, lonIndex);
-                } else {
-                    DestinationCell = madingleyGrid.CheckDispersalSouth(latIndex, lonIndex);
-                }
-
-            } else {
-                // Diagonally
-                if (RandomValue <= (dispersalArray[1] + dispersalArray[2] + dispersalArray[3])) {
-                    // Work out to which cell dispersal occurs
-                    if (uSpeedIncDiffusion > 0) {
-                        if (vSpeedIncDiffusion > 0) {
-                            DestinationCell = madingleyGrid.CheckDispersalNorthEast(latIndex, lonIndex);
-                        } else {
-                            DestinationCell = madingleyGrid.CheckDispersalSouthEast(latIndex, lonIndex);
-                        }
-
-                    } else {
-                        if (vSpeedIncDiffusion > 0) {
-                            DestinationCell = madingleyGrid.CheckDispersalNorthWest(latIndex, lonIndex);
-                        } else {
-                            DestinationCell = madingleyGrid.CheckDispersalSouthWest(latIndex, lonIndex);
-                        }
-                    }
-                } else {
-                    assert("Error with advection when determining cell to disperse to in TDiffusiveDispersal.h");
-                    DestinationCell = {9999999, 9999999};
-                }
-            }
-
-        }
-        return DestinationCell;
     }
     //----------------------------------------------------------------------------------------------
 };

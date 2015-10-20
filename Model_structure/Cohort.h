@@ -36,6 +36,7 @@ public:
     /** \brief The index of the functional group that the cohort belongs to */
     //here the original code said "byte" - really necessary? not sure if unsigned char will work
     unsigned char FunctionalGroupIndex;
+    int cell0,cell1,positionInList,latIndex,lonIndex;
     /** \brief Whether this cohort has ever been merged with another cohort */
     bool Merged;
     /** \brief The proportion of the timestep for which this cohort is active */

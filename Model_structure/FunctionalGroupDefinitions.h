@@ -1,6 +1,8 @@
 #ifndef FUNCTIONALGROUPDEFINITIONS_H
 #define FUNCTIONALGROUPDEFINITIONS_H
 #include <string>
+#include <fstream>
+#include <sstream>
 using namespace std;
 /** \file FunctionalGroupDefinitions.h
  * \brief the FunctionalGroupDefinitions header file

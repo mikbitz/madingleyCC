@@ -56,8 +56,7 @@ public:
     @param specificLocations Whether the model is being run for specific locations */
     GridCell(float latitude, unsigned latIndex, float longitude, unsigned lonIndex, float latCellSize, float lonCellSize,
             map<string, EnviroData>& dataLayers, double missingValue, FunctionalGroupDefinitions& cohortFunctionalGroups,
-            FunctionalGroupDefinitions& stockFunctionalGroups, map<string, double>& globalDiagnostics, bool tracking,
-            bool specificLocations) {
+            FunctionalGroupDefinitions& stockFunctionalGroups, map<string, double>& globalDiagnostics, bool tracking) {
 
         // bool to track when environmental data are missing
         bool EnviroMissingValue;

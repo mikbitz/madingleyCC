@@ -45,7 +45,7 @@ public:
     @param GlobalModelTimeStepUnit The time step unit used in the model */
     void ConvertNPPToAutotroph(map<string, vector<double>>&cellEnvironment, GridCellStockHandler& gridCellStockHandler, vector<int>&
             actingStock, string terrestrialNPPUnits, string oceanicNPPUnits, unsigned currentTimestep, string GlobalModelTimeStepUnit,
-            ProcessTracker& trackProcesses, GlobalProcessTracker& globalTracker, string outputDetail, bool specificLocations, unsigned currentMonth) {
+            ProcessTracker& trackProcesses, GlobalProcessTracker& globalTracker, string outputDetail,  unsigned currentMonth) {
         // Get NPP from the cell environment
         double NPP = cellEnvironment["NPP"][currentMonth];
 

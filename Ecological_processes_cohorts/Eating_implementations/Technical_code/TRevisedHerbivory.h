@@ -195,9 +195,8 @@ public:
     @param madingleyStockDefinitions The functional group definitions for stocks in the model 
     @param trackProcesses An instance of ProcessTracker to hold diagnostics for herbivory 
     @param currentTimestep The current model time step 
-    @param specificLocations Whether the model is being run for specific locations 
     @param outputDetail The level of output detail being used in this model run */
-    void RunEating(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double> >& deltas, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, ProcessTracker& trackProcesses, unsigned currentTimestep, bool specificLocations, string outputDetail, MadingleyModelInitialisation& initialisation) {
+    void RunEating(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double> >& deltas, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, ProcessTracker& trackProcesses, unsigned currentTimestep,  string outputDetail, MadingleyModelInitialisation& initialisation) {
 
         EdibleScaling = 1.0;
         if (cellEnvironment["Realm"][0] == 1.0) EdibleScaling = 0.1;
@@ -215,22 +214,6 @@ public:
 
                 // Remove the biomass eaten from the autotroph stock
                 gridCellStocks[FunctionalGroup][i].TotalBiomass -= BiomassesEaten[FunctionalGroup][i];
-
-                //                    // If the model is being run for specific locations and if track processes has been specified, then track the mass flow between
-                //                    // primary producer and herbivore
-                //                    if (specificLocations && trackProcesses.TrackProcesses)
-                //                    {
-                //                        trackProcesses.RecordHerbivoryMassFlow(currentTimestep, BodyMassHerbivore, BiomassesEaten[FunctionalGroup][i]);
-                //                    }
-                //
-                //                    // If track processes has been specified and the output detail level is set to high and the model is being run for specific locations,
-                //                    // then track the flow of mass between trophic levels
-                //                    if (trackProcesses.TrackProcesses && (outputDetail == "high") && specificLocations)
-                //                    {
-                //                        trackProcesses.TrackHerbivoryTrophicFlow((unsigned)cellEnvironment["LatIndex"][0], (unsigned)cellEnvironment["LonIndex"][0],
-                //                            gridCellCohorts[actingCohort].FunctionalGroupIndex, madingleyCohortDefinitions, BiomassesEaten[FunctionalGroup][i], BodyMassHerbivore, initialisation, cellEnvironment["Realm"][0] == 2.0);
-                //
-                //                    }
 
 
                 // Check that the biomass eaten is not a negative value

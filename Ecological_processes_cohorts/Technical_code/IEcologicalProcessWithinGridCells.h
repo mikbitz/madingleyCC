@@ -30,7 +30,6 @@ public:
     @param currentTimestep The current model time step 
     @param trackProcesses An instance of ProcessTracker to hold diagnostics for this ecological process 
     @param partial Thread-locked variables 
-    @param specificLocations Whether the model is being run for specific locations 
     @param outputDetail The level of output detail used for this model simulation 
     @param currentMonth The current model month 
     @param initialisation The instance of the MadingleyModelInitialisation class for this simulation 
@@ -44,7 +43,7 @@ public:
             unsigned currentTimestep,
             ProcessTracker& trackProcesses,
             ThreadLockedParallelVariables& partial,
-            bool specificLocations, string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
+            string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
         ;
     }
     //----------------------------------------------------------------------------------------------

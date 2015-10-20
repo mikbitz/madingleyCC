@@ -46,34 +46,6 @@ public:
     vector<float> Lons;
     /** \brief Array of grid cells */
     vector< vector <GridCell> > InternalGrid;
-    /** \brief An array of lists of the functional group indices of each cohort to disperse. Array corresponds to grid cells. The lists correspond to individual cohorts to disperse. */
-    vector< vector <vector<unsigned> > > DeltaFunctionalGroupDispersalArray;
-    /** \brief An array of lists of the positions within functional groups of each cohort to disperse. Array corresponds 
-    to grid cells. The lists correspond to individual cohorts to disperse. */
-    //MB seems clunky - maybe this could be done better! need to get initialisation right...
-    vector< vector <vector<unsigned> > > DeltaCohortNumberDispersalArray;
-    /** \brief An array of lists of paired longitude and latitude indices for the grid cells that each cohort will 
-    to. Array corresponds to grid cells. The lists correspond to paired latitude and longitude indices that 
-    each cohort will disperse to.
-     */
-    //MB urg!
-    vector< vector< vector <vector<unsigned> > > > DeltaCellToDisperseToArray;
-    //        
-    /** \brief An array of lists of cells that cohorts in a given grid cell can potentially disperse to (i.e. adjacent cells
-    in the same realm). Array corresponds to focal grid cells. Lists correspond to cells that cohorts could
-    disperse to from these focal cells.
-     */
-    vector<vector< vector <vector<unsigned> > > >CellsForDispersal;
-    //
-    /** \brief
-    Analagous to the array of lists CellsForDispersal, but instead of containing the identities of the cells that are dispersable to,
-    instead each array element contains a unsigned list which is coded to correspond to directions:
-    1. N, 2. NE, 3. E, 4. SE, 5. S, 6. SW, 7 W, 8, NW.
-    Each item in the list corresponds to the analagous item in CellsForDispersal, and indicates to which direction the cell for dispersal lies. 
-    This is used by the advective dispersal class, in order to check whether advective dispersal in a particular direction can actually occur.
-     */
-    vector< vector <vector<unsigned> > > CellsForDispersalDirection;
-    //
     /** \brief
     The heights of grid cells in each latitudinal band
      */
@@ -115,7 +87,7 @@ public:
     ModelGrid(float minLat, float minLon, float maxLat, float maxLon, float latCellSize, float lonCellSize, vector<vector<unsigned>>&cellList,
             map<string, EnviroData>& enviroStack, FunctionalGroupDefinitions& cohortFunctionalGroups,
             FunctionalGroupDefinitions& stockFunctionalGroups, map<string, double>& globalDiagnostics, bool tracking,
-            bool specificLocations, bool runInParallel) {
+             bool runInParallel) {
         // Add one to the counter of the number of grids. If there is more than one model grid, exit the program with a debug crash.
         NumGrids = NumGrids + 1;
         assert(NumGrids < 2 && "You have initialised more than one grid on which to apply models. At present, this is not supported");
@@ -151,57 +123,31 @@ public:
         InternalGrid.resize(NumLatCells);
         for (auto &g : InternalGrid)g.resize(NumLonCells);
 
-        // Instantiate the arrays of lists of cohorts to disperse
-        DeltaFunctionalGroupDispersalArray.resize(NumLatCells);
-        for (auto &d : DeltaFunctionalGroupDispersalArray)d.resize(NumLonCells);
-
-        DeltaCohortNumberDispersalArray.resize(NumLatCells);
-        for (auto &d : DeltaCohortNumberDispersalArray)d.resize(NumLonCells);
-
-        // Instantiate the array of lists of grid cells to disperse those cohorts to
-        DeltaCellToDisperseToArray.resize(NumLatCells);
-        for (auto &d : DeltaCellToDisperseToArray)d.resize(NumLonCells);
-
-        // An array of lists of cells to which organisms in each cell can disperse to; includes all cells which contribute to the 
-        // perimeter list, plus diagonal cells if they are in the same realm
-        CellsForDispersal.resize(NumLatCells);
-        for (auto &d : CellsForDispersal)d.resize(NumLonCells);
-
-        // An array of lists of directions corresponding to cells which organisms can disperse to
-        CellsForDispersalDirection.resize(NumLatCells);
-        for (auto &d : CellsForDispersalDirection)d.resize(NumLonCells);
-
         cout << "Initialising grid cell environment:" << endl;
 
         int Count = 0;
 
         int NCells = cellList.size();
-        if (!runInParallel) {
+   
             // Loop over cells to set up the model grid
             for (int ii = 0; ii < cellList.size(); ii++) {
 
                 // Create the grid cell at the specified position
                 InternalGrid[cellList[ii][0]][ cellList[ii][1]] = GridCell(Lats[cellList[ii][0]], cellList[ii][0],
                         Lons[cellList[ii][1]], cellList[ii][1], latCellSize, lonCellSize, enviroStack, GlobalMissingValue,
-                        cohortFunctionalGroups, stockFunctionalGroups, globalDiagnostics, tracking, specificLocations);
-                if (!specificLocations) {
-                    //CellsForDispersal[cellList[ii][0], cellList[ii][1]] = new vector<vector<unsigned>>();
-                    //CellsForDispersalDirection[cellList[ii][0], cellList[ii][1]] = new vector<unsigned>();
-                    Count++;
-                    //cout<<"\rInitialised "<<Count<<" of"<< NCells<<endl;
-                } else {
-                    cout << "\rRow " << ii + 1 << " of NumLatCells / GridCellRarefaction";
-                    cout << "" << endl;
-                    cout << "" << endl;
-                }
-            }
-        }
+                        cohortFunctionalGroups, stockFunctionalGroups, globalDiagnostics, tracking);
 
-        if (!specificLocations) {
+                     Count++;
+                    //cout<<"\rInitialised "<<Count<<" of"<< NCells<<endl;
+
+            }
+        
+
+        
             //InterpolateMissingValues();//MB data should be prepared so this is not needed
 
             // Fill in the array of dispersable perimeter lengths for each grid cell
-            CalculatePerimeterLengthsAndCellsDispersableTo();
+            //CalculatePerimeterLengthsAndCellsDispersableTo();
 
             CellHeightsKm.resize(Lats.size());
             CellWidthsKm.resize(Lats.size());
@@ -212,7 +158,7 @@ public:
                 CellHeightsKm[ii] = Utilities.CalculateLengthOfDegreeLatitude(Lats[ii] + LatCellSize / 2) * LatCellSize;
                 CellWidthsKm[ii] = Utilities.CalculateLengthOfDegreeLongitude(Lats[ii] + LatCellSize / 2) * LonCellSize;
             }
-        }
+        
 
         cout << "\n" << endl;
         cout.flush();
@@ -525,14 +471,11 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Remove an individual cohort from a functional group; necessary due to dispersal moving cohorts from one cell to another
-    @param latIndex Grid cell latitude index 
-    @param lonIndex Grid cell longitude index 
     @param functionalGroup Cohort functional group 
-    @param positionInList Position of cohort in the list of that functional group 
      */
-    void DeleteGridCellIndividualCohort(unsigned latIndex, unsigned lonIndex, int functionalGroup, int positionInList) {
-        auto begin = InternalGrid[latIndex][ lonIndex].GridCellCohorts[functionalGroup].begin();
-        InternalGrid[latIndex][ lonIndex].GridCellCohorts[functionalGroup].erase(begin + positionInList);
+    void DeleteGridCellIndividualCohort(Cohort& c) {
+        auto begin = InternalGrid[c.latIndex][c.lonIndex].GridCellCohorts[c.FunctionalGroupIndex].begin();
+        InternalGrid[c.latIndex][c.lonIndex].GridCellCohorts[c.FunctionalGroupIndex].erase(begin + c.positionInList);
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Delete a specified list of cohorts from a grid cell
@@ -596,8 +539,8 @@ public:
     @param functionalGroup Functional group of the cohort (i.e. array index) 
     @param cohortToAdd The cohort object to add 
      */
-    void AddNewCohortToGridCell(unsigned latIndex, unsigned lonIndex, int functionalGroup, Cohort cohortToAdd) {
-        InternalGrid[latIndex][ lonIndex].GridCellCohorts[functionalGroup].push_back(cohortToAdd);
+    void AddNewCohortToGridCell(Cohort& c) {
+        InternalGrid[c.latIndex][ c.lonIndex].GridCellCohorts[c.FunctionalGroupIndex].push_back(c);
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Return the value of a specified environmental layer from an individual grid cell    @param variableName The name of the environmental lyaer 
@@ -1254,633 +1197,27 @@ public:
         return enviroTotal;
     }
     //----------------------------------------------------------------------------------------------
-    /** \brief  Check to see if the top perimeter of the cell is traversable for dispersal (i.e. is from the same realm)
-    @param latCell The latitudinal cell index 
-    @param lonCell The longitudinal cell index 
-    @param gridCellRealm The grid cell realm 
+/** \brief  Get the longitudinal and latitudinal indices of the cell of a viable cell to move to
+    @param  latCell The latitudinal index of the focal grid cell 
+    @param  lonCell The longitudinal index of the focal grid cell
+    @param  v latitudinal displacement
+    @param  u longitudinal displacement
+    @return The longitudinal and latitudinal cell indices of the cell that lies to the northwest of the focal grid cell
+    @remark Currently assumes wrapping in longitude
      */
-    void CheckTopPerimeterTraversable(unsigned latCell, unsigned lonCell, double gridCellRealm) {
-        // Check to see if top perimeter is traversable
-        if (InternalGrid[latCell + 1][ lonCell].CellEnvironment["Realm"][0] == gridCellRealm) {
-            // Add the cell above to the list of cells that are dispersable to
-            vector<unsigned> v = {(latCell + 1), (lonCell)};
-            CellsForDispersal[latCell][ lonCell].push_back(v);
-
-            // Also add it to the directional list
-            CellsForDispersalDirection[latCell][ lonCell].push_back(1);
-        }
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief   Check to see if the top right perimeter of the cell is traversable for dispersal (i.e. is from the same realm)
-    @param latCell The latitudinal cell index 
-    @param lonCell The longitudinal cell index 
-    @param lonCellToGoTo The index of the cell to go to (needs to take into account grid wrapping) 
-    @param gridCellRealm The grid cell realm 
-     */
-    void CheckTopRightPerimeterTraversable(unsigned latCell, unsigned lonCell, unsigned lonCellToGoTo, double gridCellRealm) {
-
-        // Check to see if right perimeter is traversable
-        if (InternalGrid[latCell + 1][ lonCellToGoTo].CellEnvironment["Realm"][0] == gridCellRealm) {
-            // Add the cell above to the list of cells that are dispersable to
-            vector<unsigned> v = {(latCell + 1), (lonCellToGoTo)};
-            CellsForDispersal[latCell][ lonCell].push_back(v);
-
-            // Also add it to the directional list
-            CellsForDispersalDirection[latCell][ lonCell].push_back(2);
-        }
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief   Check to see if the right perimeter of the cell is traversable for dispersal (i.e. is from the same realm)
-    @param latCell The latitudinal cell index 
-    @param lonCell The longitudinal cell index 
-    @param lonCellToGoTo The index of the cell to go to (needs to take into account grid wrapping) 
-    @param gridCellRealm The grid cell realm 
-     */
-    void CheckRightPerimeterTraversable(unsigned latCell, unsigned lonCell, unsigned lonCellToGoTo, double gridCellRealm) {
-        // Check to see if right perimeter is traversable
-        if (InternalGrid[latCell][ lonCellToGoTo].CellEnvironment["Realm"][0] == gridCellRealm) {
-            // Add the cell above to the list of cells that are dispersable to
-            vector<unsigned> v = {(latCell), (lonCellToGoTo)};
-            CellsForDispersal[latCell][ lonCell].push_back(v);
-
-            // Also add it to the directional list
-            CellsForDispersalDirection[latCell][ lonCell].push_back(3);
-
-        }
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief  Check to see if the bottom right perimeter of the cell is traversable for dispersal (i.e. is from the same realm)
-    @param latCell The latitudinal cell index 
-    @param lonCell The longitudinal cell index 
-    @param lonCellToGoTo The index of the cell to go to (needs to take into account grid wrapping) 
-    @param gridCellRealm The grid cell realm 
-     */
-    void CheckBottomRightPerimeterTraversable(unsigned latCell, unsigned lonCell, unsigned lonCellToGoTo, double gridCellRealm) {
-        // Check to see if bottom right perimeter is traversable
-        if (InternalGrid[latCell - 1][ lonCellToGoTo].CellEnvironment["Realm"][0] == gridCellRealm) {
-            // Add the cell above to the list of cells that are dispersable to
-            vector<unsigned> v = {(latCell - 1), (lonCellToGoTo)};
-            CellsForDispersal[latCell][ lonCell].push_back(v);
-
-            // Also add it to the directional list
-            CellsForDispersalDirection[latCell][ lonCell].push_back(4);
-        }
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief   Check to see if the right perimeter of the cell is traversable for dispersal (i.e. is from the same realm)
-    @param latCell The latitudinal cell index 
-    @param lonCell The longitudinal cell index 
-    @param gridCellRealm The grid cell realm 
-     */
-    void CheckBottomPerimeterTraversable(unsigned latCell, unsigned lonCell, double gridCellRealm) {
-        // Check to see if top perimeter is traversable
-        if (InternalGrid[latCell - 1][ lonCell].CellEnvironment["Realm"][0] == gridCellRealm) {
-            // Add the cell above to the list of cells that are dispersable to
-            vector<unsigned> v = {(latCell - 1), (lonCell)};
-            CellsForDispersal[latCell][ lonCell].push_back(v);
-
-            // Also add it to the directional list
-            CellsForDispersalDirection[latCell][ lonCell].push_back(5);
-
-        }
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief  Check to see if the bottom left perimeter of the cell is traversable for dispersal (i.e. is from the same realm)
-    @param latCell The latitudinal cell index 
-    @param lonCell The longitudinal cell index 
-    @param lonCellToGoTo The index of the cell to go to (needs to take into account grid wrapping) 
-    @param gridCellRealm The grid cell realm 
-     */
-    void CheckBottomLeftPerimeterTraversable(unsigned latCell, unsigned lonCell, unsigned lonCellToGoTo, double gridCellRealm) {
-        // Check to see if bottom right perimeter is traversable
-        if (InternalGrid[latCell - 1][ lonCellToGoTo].CellEnvironment["Realm"][0] == gridCellRealm) {
-            // Add the cell above to the list of cells that are dispersable to
-            vector<unsigned> v = {(latCell - 1), (lonCellToGoTo)};
-            CellsForDispersal[latCell][ lonCell].push_back(v);
-
-            // Also add it to the directional list
-            CellsForDispersalDirection[latCell][ lonCell].push_back(6);
-
-        }
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief   Check to see if the left perimeter of the cell is traversable for dispersal (i.e. is from the same realm)
-    @param latCell The latitudinal cell index 
-    @param lonCell The longitudinal cell index 
-    @param lonCellToGoTo The index of the cell to go to (needs to take into account grid wrapping) 
-    @param gridCellRealm The grid cell realm 
-     */
-    void CheckLeftPerimeterTraversable(unsigned latCell, unsigned lonCell, unsigned lonCellToGoTo, double gridCellRealm) {
-        // Check to see if left perimeter is traversable
-        if (InternalGrid[latCell][ lonCellToGoTo].CellEnvironment["Realm"][0] == gridCellRealm) {
-            // Add the cell above to the list of cells that are dispersable to
-            vector<unsigned> v = {(latCell), (lonCellToGoTo)};
-            CellsForDispersal[latCell][ lonCell].push_back(v);
-
-            // Also add it to the directional list
-            CellsForDispersalDirection[latCell][ lonCell].push_back(7);
-
-        }
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief    Check to see if the top left perimeter of the cell is traversable for dispersal (i.e. is from the same realm)
-    @param latCell The latitudinal cell index 
-    @param lonCell The longitudinal cell index 
-    @param lonCellToGoTo The index of the cell to go to (needs to take into account grid wrapping) 
-    @param gridCellRealm The grid cell realm 
-     */
-    void CheckTopLeftPerimeterTraversable(unsigned latCell, unsigned lonCell, unsigned lonCellToGoTo, double gridCellRealm) {
-        // Check to see if bottom right perimeter is traversable
-        if (InternalGrid[latCell + 1][ lonCellToGoTo].CellEnvironment["Realm"][0] == gridCellRealm) {
-            // Add the cell above to the list of cells that are dispersable to
-            vector<unsigned> v = {(latCell + 1), (lonCellToGoTo)};
-            CellsForDispersal[latCell][ lonCell].push_back(v);
-
-            //Also add it to the directional list
-            CellsForDispersalDirection[latCell][ lonCell].push_back(8);
-
-        }
-    }
-
-    //       Currently assumes that the grid does not run from -90 to 90 (in which case there would be transfer at top and bottom latitude)
-    //       Also needs checking to see if it works with a sub-grid
-    //----------------------------------------------------------------------------------------------
-    /** \brief Calculate the dispersable perimeter lengths of each of the grid cells */
-    void CalculatePerimeterLengthsAndCellsDispersableTo() {
-        int counter = 1;
-        // Loop through grid cells
-        for (unsigned ii = 0; ii < NumLatCells; ii++) {
-            // Bottom of the grid
-            if (ii == 0) {
-                // Loop through the longitude indices of each cell
-                for (unsigned jj = 0; jj < NumLonCells; jj++) {
-                    // Get the realm of the cell (i.e. whether it is land or sea)
-                    double GridCellRealm = InternalGrid[ii][jj].CellEnvironment["Realm"][0];
-                    if ((GridCellRealm != 1.0) && (GridCellRealm != 2.0)) {
-                        cout << "\r" << counter << " cells classified as neither land nor sea";
-                        counter++;
-                        break;
-                    }
-
-                    // Check to see if we are at the left-most edge
-                    if (jj == 0) {
-                        // Are we on a grid that spans the globe?
-                        if ((MaxLongitude - MinLongitude) > 359.9) {
-                            // Check to see if the top perimeter is dispersable
-                            CheckTopPerimeterTraversable(ii, jj, GridCellRealm);
-
-                            // Check to see if the top right perimeter is dispersable
-                            CheckTopRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                            // Check to see if the right perimeter is dispersable
-                            CheckRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                            // Check to see if the left perimeter is dispersable
-                            CheckLeftPerimeterTraversable(ii, jj, NumLonCells - 1, GridCellRealm);
-
-                            // Check to see if the top left perimeter is dispersable
-                            CheckTopLeftPerimeterTraversable(ii, jj, NumLonCells - 1, GridCellRealm);
-                        }
-                            // Otherwise, we are simply on a non-wrappable boundary. 
-                            // Assumes that we have a closed system on this boundary and that organisms cannot disperse through it
-                        else {
-                            // Check to see if the top perimeter is traversable
-                            CheckTopPerimeterTraversable(ii, jj, GridCellRealm);
-
-                            // Check to see if the top right perimeter is dispersable
-                            CheckTopRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                            // Check to see if the right perimeter is dispersable
-                            CheckRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-                        }
-                    }                        // Check to see if we are at the right-most edge
-                    else if (jj == (NumLonCells - 1)) {
-                        // Are we on a grid that spans the globe?
-                        if ((MaxLongitude - MinLongitude) > 359.9) {
-                            // Check to see if the top perimeter is traversable
-                            CheckTopPerimeterTraversable(ii, jj, GridCellRealm);
-
-                            // Check to see if the top right perimeter is dispersable
-                            CheckTopRightPerimeterTraversable(ii, jj, 0, GridCellRealm);
-
-                            // Check to see if the right perimeter is dispersable
-                            CheckRightPerimeterTraversable(ii, jj, 0, GridCellRealm);
-
-                            // Check to see if the left perimeter is dispersable
-                            CheckLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-
-                            // Check to see if the top left perimeter is dispersable
-                            CheckTopLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-                        }                            // Otherwise, we are simply on a non-wrappable boundary. 
-                            // Assumes that we have a closed system on this boundary and that organisms cannot disperse through it
-                        else {
-                            // Check to see if the top perimeter is traversable
-                            CheckTopPerimeterTraversable(ii, jj, GridCellRealm);
-
-                            // Check to see if the left perimeter is dispersable
-                            CheckLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-
-                            // Check to see if the top left perimeter is dispersable
-                            CheckTopLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-                        }
-                    }
-                        // Otherwise internal in the grid longitudinally
-                    else {
-                        // Check to see if the top perimeter is traversable
-                        CheckTopPerimeterTraversable(ii, jj, GridCellRealm);
-
-                        // Check to see if the top right perimeter is dispersable
-                        CheckTopRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                        // Check to see if the right perimeter is dispersable
-                        CheckRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                        // Check to see if the left perimeter is dispersable
-                        CheckLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-
-                        // Check to see if the top left perimeter is dispersable
-                        CheckTopLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-                    }
-                }
-            }
-                // Top of the grid
-            else if (ii == (NumLatCells - 1)) {
-                // Loop through the longitude indices of each cell
-                for (unsigned jj = 0; jj < NumLonCells; jj++) {
-                    // Get the realm of the cell (i.e. whether it is land or sea)
-                    double GridCellRealm = InternalGrid[ii][jj].CellEnvironment["Realm"][0];
-                    if ((GridCellRealm != 1.0) && (GridCellRealm != 2.0)) {
-                        cout << "\r" << counter << " cells classified as neither land nor sea";
-                        counter++;
-                        break;
-                    }
-
-                    // Check to see if we are at the left-most edge
-                    if (jj == 0) {
-                        // Are we on a grid that spans the globe?
-                        if ((MaxLongitude - MinLongitude) > 359.9) {
-                            // Check to see if the right perimeter is dispersable
-                            CheckRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                            // Check to see if the bottom right perimeter is dispersable
-                            CheckBottomRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                            // Check to see if the bottom perimeter is dispersable
-                            CheckBottomPerimeterTraversable(ii, jj, GridCellRealm);
-
-                            // Check to see if the bottom left perimeter is dispersable
-                            CheckBottomLeftPerimeterTraversable(ii, jj, NumLonCells - 1, GridCellRealm);
-
-                            // Check to see if the left perimeter is dispersable
-                            CheckLeftPerimeterTraversable(ii, jj, NumLonCells - 1, GridCellRealm);
-                        }                            // Otherwise, we are simply on a non-wrappable boundary. 
-                            // Assumes that we have a closed system on this boundary and that organisms cannot disperse through it
-                        else {
-                            // Check to see if the right perimeter is dispersable
-                            CheckRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                            // Check to see if the bottom right perimeter is dispersable
-                            CheckBottomRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                            // Check to see if the bottom perimeter is dispersable
-                            CheckBottomPerimeterTraversable(ii, jj, GridCellRealm);
-                        }
-                    }                        // Check to see if we are at the right-most edge
-                    else if (jj == (NumLonCells - 1)) {
-                        // Are we on a grid that spans the globe?
-                        if ((MaxLongitude - MinLongitude) > 359.9) {
-                            // Check to see if the right perimeter is dispersable
-                            CheckRightPerimeterTraversable(ii, jj, 0, GridCellRealm);
-
-                            // Check to see if the bottom right perimeter is dispersable
-                            CheckBottomRightPerimeterTraversable(ii, jj, 0, GridCellRealm);
-
-                            // Check to see if the bottom perimeter is dispersable
-                            CheckBottomPerimeterTraversable(ii, jj, GridCellRealm);
-
-                            // Check to see if the bottom left perimeter is dispersable
-                            CheckBottomLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-
-                            // Check to see if the left perimeter is dispersable
-                            CheckLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-                        }
-                            // Otherwise, we are simply on a non-wrappable boundary. 
-                            // Assumes that we have a closed system on this boundary and that organisms cannot disperse through it
-                        else {
-                            // Check to see if the bottom perimeter is dispersable
-                            CheckBottomPerimeterTraversable(ii, jj, GridCellRealm);
-
-                            // Check to see if the bottom left perimeter is dispersable
-                            CheckBottomLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-
-                            // Check to see if the left perimeter is dispersable
-                            CheckLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-                        }
-
-                    }                        // Otherwise, internal in the grid longitudinally
-                    else {
-                        // Check to see if the right perimeter is dispersable
-                        CheckRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                        // Check to see if the bottom right perimeter is dispersable
-                        CheckBottomRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                        // Check to see if the bottom perimeter is dispersable
-                        CheckBottomPerimeterTraversable(ii, jj, GridCellRealm);
-
-                        // Check to see if the bottom left perimeter is dispersable
-                        CheckBottomLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-
-                        // Check to see if the left perimeter is dispersable
-                        CheckLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-                    }
-                }
-
-            }                // Otherwise internal latitudinally
-            else {
-                // Loop through the longitude indices of each cell
-                for (unsigned jj = 0; jj < NumLonCells; jj++) {
-                    // Get the realm of the cell (i.e. whether it is land or sea)
-                    double GridCellRealm = InternalGrid[ii][ jj].CellEnvironment["Realm"][0];
-                    if ((GridCellRealm != 1.0) && (GridCellRealm != 2.0)) {
-                        cout << "\r" << counter << " cells classified as neither land nor sea";
-                        counter++;
-                        break;
-                    }
-
-                    // Check to see if we are at the left-most edge
-                    if (jj == 0) {
-                        // Are we on a grid that spans the globe?
-                        if ((MaxLongitude - MinLongitude) > 359.9) {
-                            // Check to see if the top perimeter is dispersable
-                            CheckTopPerimeterTraversable(ii, jj, GridCellRealm);
-
-                            // Check to see if the top right perimeter is dispersable
-                            CheckTopRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                            // Check to see if the right perimeter is dispersable
-                            CheckRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                            // Check to see if the bottom right perimeter is dispersable
-                            CheckBottomRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                            // Check to see if the bottom perimeter is dispersable
-                            CheckBottomPerimeterTraversable(ii, jj, GridCellRealm);
-
-                            // Check to see if the bottom left perimeter is dispersable
-                            CheckBottomLeftPerimeterTraversable(ii, jj, NumLonCells - 1, GridCellRealm);
-
-                            // Check to see if the left perimeter is dispersable
-                            CheckLeftPerimeterTraversable(ii, jj, NumLonCells - 1, GridCellRealm);
-
-                            // Check to see if the top left perimeter is dispersable
-                            CheckTopLeftPerimeterTraversable(ii, jj, NumLonCells - 1, GridCellRealm);
-                        }                            // Otherwise, we are simply on a non-wrappable boundary. 
-                            // Assumes that we have a closed system on this boundary and that organisms cannot disperse through it
-                        else {
-                            // Check to see if the top perimeter is dispersable
-                            CheckTopPerimeterTraversable(ii, jj, GridCellRealm);
-
-                            // Check to see if the top right perimeter is dispersable
-                            CheckTopRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                            // Check to see if the right perimeter is dispersable
-                            CheckRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                            // Check to see if the bottom right perimeter is dispersable
-                            CheckBottomRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                            // Check to see if the bottom perimeter is dispersable
-                            CheckBottomPerimeterTraversable(ii, jj, GridCellRealm);
-                        }
-                    }                        // Check to see if we are at the rightmost edge
-                    else if (jj == (NumLonCells - 1)) {
-                        // Are we on a grid that spans the globe?
-                        if ((MaxLongitude - MinLongitude) > 359.9) {
-                            // Check to see if the top perimeter is dispersable
-                            CheckTopPerimeterTraversable(ii, jj, GridCellRealm);
-
-                            // Check to see if the top right perimeter is dispersable
-                            CheckTopRightPerimeterTraversable(ii, jj, 0, GridCellRealm);
-
-                            // Check to see if the right perimeter is dispersable
-                            CheckRightPerimeterTraversable(ii, jj, 0, GridCellRealm);
-
-                            // Check to see if the bottom right perimeter is dispersable
-                            CheckBottomRightPerimeterTraversable(ii, jj, 0, GridCellRealm);
-
-                            // Check to see if the bottom perimeter is dispersable
-                            CheckBottomPerimeterTraversable(ii, jj, GridCellRealm);
-
-                            // Check to see if the bottom left perimeter is dispersable
-                            CheckBottomLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-
-                            // Check to see if the left perimeter is dispersable
-                            CheckLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-
-                            // Check to see if the top left perimeter is dispersable
-                            CheckTopLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-                        } else {
-                            // Check to see if the top perimeter is dispersable
-                            CheckTopPerimeterTraversable(ii, jj, GridCellRealm);
-
-                            // Check to see if the bottom perimeter is dispersable
-                            CheckBottomPerimeterTraversable(ii, jj, GridCellRealm);
-
-                            // Check to see if the bottom left perimeter is dispersable
-                            CheckBottomLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-
-                            // Check to see if the left perimeter is dispersable
-                            CheckLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-
-                            // Check to see if the top left perimeter is dispersable
-                            CheckTopLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-                        }
-                    }                        // Otherwise internal in the grid both latitudinally and longitudinally - the easiest case
-                    else {
-                        // Check to see if the top perimeter is dispersable
-                        CheckTopPerimeterTraversable(ii, jj, GridCellRealm);
-
-                        // Check to see if the top right perimeter is dispersable
-                        CheckTopRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                        // Check to see if the right perimeter is dispersable
-                        CheckRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                        // Check to see if the bottom right perimeter is dispersable
-                        CheckBottomRightPerimeterTraversable(ii, jj, jj + 1, GridCellRealm);
-
-                        // Check to see if the bottom perimeter is dispersable
-                        CheckBottomPerimeterTraversable(ii, jj, GridCellRealm);
-
-                        // Check to see if the bottom left perimeter is dispersable
-                        CheckBottomLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-
-                        // Check to see if the left perimeter is dispersable
-                        CheckLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-
-                        // Check to see if the top left perimeter is dispersable
-                        CheckTopLeftPerimeterTraversable(ii, jj, jj - 1, GridCellRealm);
-                    }
-                }
+    const vector<unsigned> getNewCell(const unsigned& latCell, const unsigned& lonCell, const int& v, const int& u) {
+        vector<unsigned> Cell = {9999999, 9999999};
+
+        if (latCell + v >= 0 && latCell + v < NumLatCells) {
+            int lnc = lonCell + u;
+            if (lnc < 0)lnc += NumLonCells;
+            if (lnc >= NumLonCells)lnc -= NumLonCells;
+            if (InternalGrid[latCell + v][ lnc].CellEnvironment["Realm"][0] == InternalGrid[latCell][ lonCell].CellEnvironment["Realm"][0]) {
+                Cell[0] = latCell + v;
+                Cell[1] = lnc;
             }
         }
-        cout << endl;
-
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief  Given a grid cell from where a cohort is dispersing, select at random a grid cell for it to disperse to from those that exist within the 
-    same realm
-    @param fromCellLatIndex The latitudinal index of the cell from which the cohort is dispersing 
-    @param fromCellLonIndex The longitudinal index of the cell from which the cohort is dispersing 
-    @return what?
-     */
-    vector<unsigned> GetRandomGridCellToDisperseTo(unsigned fromCellLatIndex, unsigned fromCellLonIndex) {
-        // Select a cell at random
-        std::uniform_real_distribution<double> randomNumber(0.0, 1.0);
-        double RandomValue = randomNumber(RandomNumberGenerator);
-        int CellPickedAtRandom = floor(RandomValue * CellsForDispersal[fromCellLatIndex][ fromCellLonIndex].size());
-
-        // Return the coordinates of that cell
-        return CellsForDispersal[fromCellLatIndex][ fromCellLonIndex][CellPickedAtRandom];
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief   Get the longitudinal and latitudinal indices of the cell that lies to the north of the focal grid cell, if a viable cell to disperse to
-    @param fromCellLatIndex The latitudinal index of the focal grid cell 
-    @param fromCellLonIndex The longitudinal index of the focal grid cell 
-    @return The longitudinal and latitudinal cell indices of the cell that lies to the north of the focal grid cell
-     */
-    vector<unsigned> CheckDispersalNorth(unsigned fromCellLatIndex, unsigned fromCellLonIndex) {
-        vector<unsigned> NorthCell = {9999999, 9999999};
-
-        for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex] [fromCellLonIndex].size(); ii++) {
-            if (CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex][ii] == 1) {
-                NorthCell = CellsForDispersal[fromCellLatIndex][ fromCellLonIndex][ii];
-                break;
-            }
-        }
-
-        return NorthCell;
-    }    
-    //----------------------------------------------------------------------------------------------
-    /** \brief  Get the longitudinal and latitudinal indices of the cell that lies to the east of the focal grid cell, if a viable cell to disperse to
-    @param fromCellLatIndex The latitudinal index of the focal grid cell 
-    @param fromCellLonIndex The longitudinal index of the focal grid cell 
-    @return The longitudinal and latitudinal cell indcies of the cell that lies to the east of the focal grid cell
-     */
-    vector<unsigned> CheckDispersalEast(unsigned fromCellLatIndex, unsigned fromCellLonIndex) {
-        vector<unsigned> EastCell = {9999999, 9999999};
-
-        for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex].size(); ii++) {
-            if (CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex][ii] == 3) {
-                EastCell = CellsForDispersal[fromCellLatIndex][ fromCellLonIndex][ii];
-                break;
-            }
-        }
-
-        return EastCell;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief  Get the longitudinal and latitudinal indices of the cell that lies to the south of the focal grid cell, if a viable cell to disperse to
-    @param fromCellLatIndex The latitudinal index of the focal grid cell 
-    @param fromCellLonIndex The longitudinal index of the focal grid cell 
-    @return The longitudinal and latitudinal cell indcies of the cell that lies to the south of the focal grid cell
-     */
-    vector<unsigned> CheckDispersalSouth(unsigned fromCellLatIndex, unsigned fromCellLonIndex) {
-        vector<unsigned> SouthCell = {9999999, 9999999};
-        for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex].size(); ii++) {
-            if (CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex][ii] == 5) {
-                SouthCell = CellsForDispersal[fromCellLatIndex][ fromCellLonIndex][ii];
-            }
-        }
-
-        return SouthCell;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief   Get the longitudinal and latitudinal indices of the cell that lies to the west of the focal grid cell, if a viable cell to disperse to
-    @param fromCellLatIndex The latitudinal index of the focal grid cell 
-    @param fromCellLonIndex The longitudinal index of the focal grid cell 
-    @return The longitudinal and latitudinal cell indcies of the cell that lies to the west of the focal grid cell
-     */
-    vector<unsigned> CheckDispersalWest(unsigned fromCellLatIndex, unsigned fromCellLonIndex) {
-        vector<unsigned> WestCell = {9999999, 9999999};
-
-        for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex].size(); ii++) {
-            if (CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex][ii] == 7) {
-                WestCell = CellsForDispersal[fromCellLatIndex][ fromCellLonIndex][ii];
-            }
-        }
-
-        return WestCell;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief   Get the longitudinal and latitudinal indices of the cell that lies to the northeast of the focal grid cell, if a viable cell to disperse to
-
-    @param fromCellLatIndex The latitudinal index of the focal grid cell 
-    @param fromCellLonIndex The longitudinal index of the focal grid cell 
-    @return The longitudinal and latitudinal cell indcies of the cell that lies to the northeast of the focal grid cell
-     */
-    vector<unsigned> CheckDispersalNorthEast(unsigned fromCellLatIndex, unsigned fromCellLonIndex) {
-        vector<unsigned> NECell = {9999999, 9999999};
-
-        for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex].size(); ii++) {
-            if (CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex][ii] == 2) {
-                NECell = CellsForDispersal[fromCellLatIndex][ fromCellLonIndex][ii];
-            }
-        }
-
-        return NECell;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief  Get the longitudinal and latitudinal indices of the cell that lies to the southeast of the focal grid cell, if a viable cell to disperse to
-    @param fromCellLatIndex The latitudinal index of the focal grid cell 
-    @param fromCellLonIndex The longitudinal index of the focal grid cell 
-    @return The longitudinal and latitudinal cell indcies of the cell that lies to the southeast of the focal grid cell
-     */
-    vector<unsigned> CheckDispersalSouthEast(unsigned fromCellLatIndex, unsigned fromCellLonIndex) {
-        vector<unsigned> SECell = {9999999, 9999999};
-
-        for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex] [fromCellLonIndex].size(); ii++) {
-            if (CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex][ii] == 4) {
-                SECell = CellsForDispersal[fromCellLatIndex][ fromCellLonIndex][ii];
-            }
-        }
-
-        return SECell;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief   Get the longitudinal and latitudinal indices of the cell that lies to the southwest of the focal grid cell, if a viable cell to disperse to
-    @param fromCellLatIndex The latitudinal index of the focal grid cell 
-    @param fromCellLonIndex The longitudinal index of the focal grid cell 
-    @return The longitudinal and latitudinal cell indcies of the cell that lies to the southwest of the focal grid cell
-     */
-    vector<unsigned> CheckDispersalSouthWest(unsigned fromCellLatIndex, unsigned fromCellLonIndex) {
-        vector<unsigned> SWCell = {9999999, 9999999};
-
-        for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex ][fromCellLonIndex].size(); ii++) {
-            if (CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex][ii] == 6) {
-                SWCell = CellsForDispersal[fromCellLatIndex][ fromCellLonIndex][ii];
-            }
-        }
-
-        return SWCell;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief   Get the longitudinal and latitudinal indices of the cell that lies to the northwest of focal grid cell, if a viable cell to disperse to
-    @param fromCellLatIndex The latitudinal index of the focal grid cell 
-    @param fromCellLonIndex The longitudinal index of the focal grid cell 
-    @return The longitudinal and latitudinal cell indcies of the cell that lies to the northwest of the focal grid cell
-     */
-    vector<unsigned> CheckDispersalNorthWest(unsigned fromCellLatIndex, unsigned fromCellLonIndex) {
-        vector<unsigned> NWCell = {9999999, 9999999};
-
-        for (int ii = 0; ii < CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex].size(); ii++) {
-            if (CellsForDispersalDirection[fromCellLatIndex][ fromCellLonIndex][ii] == 8) {
-                NWCell = CellsForDispersal[fromCellLatIndex][ fromCellLonIndex][ii];
-            }
-        }
-
-        return NWCell;
+        return Cell;
     }
     //----------------------------------------------------------------------------------------------
 

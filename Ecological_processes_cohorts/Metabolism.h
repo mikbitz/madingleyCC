@@ -74,7 +74,7 @@ public:
             vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&deltas,
             FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
             unsigned currentTimestep, ProcessTracker& trackProcesses, ThreadLockedParallelVariables& partial,
-            bool specificLocations, string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
+             string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
         double Realm = cellEnvironment["Realm"][0];
         if (madingleyCohortDefinitions.GetTraitNames("Heterotroph/Autotroph", gridCellCohorts[actingCohort].FunctionalGroupIndex) == "heterotroph") {
             if (madingleyCohortDefinitions.GetTraitNames("Endo/Ectotherm", gridCellCohorts[actingCohort].FunctionalGroupIndex) == "endotherm") {

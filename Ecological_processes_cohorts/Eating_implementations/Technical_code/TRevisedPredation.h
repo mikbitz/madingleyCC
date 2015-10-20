@@ -185,7 +185,7 @@ public:
     void GetEatingPotentialMarine(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions) {
 
         BinnedPreyDensities.resize(gridCellCohorts.size());
-        for (auto b : BinnedPreyDensities)b.resize(NumberOfBins);
+        for (auto& b : BinnedPreyDensities)b.resize(NumberOfBins);
 
         // Set the total eaten by the acting cohort to zero
         TotalBiomassEatenByCohort = 0.0;
@@ -306,8 +306,8 @@ public:
         int BinNumber = 0;
 
         // Loop through prey functional groups
-        for (auto fg : functionalGroupIndicesToEat) {
-            for (auto cohort : gridCellCohorts[fg]) {
+        for (auto& fg : functionalGroupIndicesToEat) {
+            for (auto& cohort : gridCellCohorts[fg]) {
                 // Calculate the difference between the actual body size ratio and the optimal ratio, 
                 // and then divide by the standard deviation in log ratio space to determine in 
                 // which bin to assign the prey item.
@@ -346,7 +346,7 @@ public:
             madingleyStockDefinitions) {
 
         BinnedPreyDensities.resize(gridCellCohorts.size());
-        for (auto b : BinnedPreyDensities)b.resize(NumberOfBins);
+        for (auto& b : BinnedPreyDensities)b.resize(NumberOfBins);
 
         // Set the total eaten by the acting cohort to zero
         TotalBiomassEatenByCohort = 0.0;
@@ -429,10 +429,9 @@ public:
     @param madingleyStockDefinitions The functional group definitions for stocks in the model 
     @param trackProcesses An instance of ProcessTracker to hold diagnostics for predation 
     @param currentTimestep The current model time step 
-    @param specificLocations Whether the model is being run for specific locations 
     @param outputDetail The level of output detail used in this model run  */
     void RunEating(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&deltas, FunctionalGroupDefinitions& madingleyCohortDefinitions,
-            FunctionalGroupDefinitions& madingleyStockDefinitions, ProcessTracker& trackProcesses, unsigned currentTimestep, bool specificLocations, string outputDetail, MadingleyModelInitialisation& initialisation) {
+            FunctionalGroupDefinitions& madingleyStockDefinitions, ProcessTracker& trackProcesses, unsigned currentTimestep, string outputDetail, MadingleyModelInitialisation& initialisation) {
         //            if (trackProcesses.TrackProcesses)
         //            {
         //                Track = (RandomNumberGenerator.GetUniform() > 0.975) ? true : false;

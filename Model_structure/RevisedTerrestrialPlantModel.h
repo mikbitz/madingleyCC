@@ -225,7 +225,7 @@ public:
     @param currentMonth The current model month */
     void UpdateLeafStock(map<string, vector<double>>&cellEnvironment, GridCellStockHandler& gridCellStocks, vector<int>& actingStock,
             unsigned currentTimeStep, bool deciduous, string GlobalModelTimeStepUnit, ProcessTracker& tracker, GlobalProcessTracker& globalTracker, unsigned currentMonth,
-            string outputDetail, bool specificLocations) {
+            string outputDetail) {
 
 
         //ESTIMATE ANNUAL LEAF CARBON FIXATION ASSUMING ENVIRONMENT THROUGHOUT THE YEAR IS THE SAME AS IN THIS MONTH

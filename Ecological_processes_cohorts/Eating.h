@@ -70,7 +70,6 @@ public:
     @param currentTimestep The current model time step 
     @param trackProcesses An instance of ProcessTracker to hold diagnostics for eating 
     @param partial Thread-locked variables 
-    @param specificLocations Whether the model is being run for specific locations 
     @param outputDetail The level of output detail being used for the current model run 
     @param currentMonth The current model month  */
     void RunEcologicalProcess(GridCellCohortHandler& gridCellCohorts,
@@ -80,7 +79,7 @@ public:
             FunctionalGroupDefinitions& madingleyCohortDefinitions,
             FunctionalGroupDefinitions& madingleyStockDefinitions,
             unsigned currentTimestep, ProcessTracker& trackProcesses,
-            ThreadLockedParallelVariables& partial, bool specificLocations,
+            ThreadLockedParallelVariables& partial,
             string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
         // Get the nutrition source (herbivory, carnivory or omnivory) of the acting cohort
         string NutritionSource = madingleyCohortDefinitions.GetTraitNames("Nutrition source", gridCellCohorts[actingCohort].FunctionalGroupIndex);
@@ -117,7 +116,7 @@ public:
                         (gridCellCohorts, gridCellStocks, actingCohort,
                         cellEnvironment, deltas, madingleyCohortDefinitions,
                         madingleyStockDefinitions, trackProcesses,
-                        currentTimestep, specificLocations, outputDetail, initialisation);
+                        currentTimestep,  outputDetail, initialisation);
 
                 break;
 
@@ -143,7 +142,7 @@ public:
                 Implementations["revised predation"]->RunEating
                         (gridCellCohorts, gridCellStocks, actingCohort, cellEnvironment, deltas,
                         madingleyCohortDefinitions, madingleyStockDefinitions, trackProcesses,
-                        currentTimestep, specificLocations, outputDetail, initialisation);
+                        currentTimestep,  outputDetail, initialisation);
 
 
                 break;
@@ -203,14 +202,14 @@ public:
                         (gridCellCohorts, gridCellStocks, actingCohort,
                         cellEnvironment, deltas, madingleyCohortDefinitions,
                         madingleyStockDefinitions, trackProcesses,
-                        currentTimestep, specificLocations, outputDetail, initialisation);
+                        currentTimestep,  outputDetail, initialisation);
 
                 // Run herbivory to update autotroph biomass and delta biomasses for the acting cohort
                 Implementations["revised herbivory"]->RunEating
                         (gridCellCohorts, gridCellStocks, actingCohort,
                         cellEnvironment, deltas, madingleyCohortDefinitions,
                         madingleyStockDefinitions, trackProcesses,
-                        currentTimestep, specificLocations, outputDetail, initialisation);
+                        currentTimestep,  outputDetail, initialisation);
 
                 break;
 

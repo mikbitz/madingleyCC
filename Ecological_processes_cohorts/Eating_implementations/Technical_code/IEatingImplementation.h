@@ -81,7 +81,6 @@ public:
     @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param trackProcesses An instance of ProcessTracker to hold diagnostics for eating 
     @param currentTimestep The current model time step 
-    @param specificLocations Whether the model is being run for specific locations 
     @param outputDetail The level of output detail being used in this model run  */
     virtual void RunEating(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
             vector<int>& actingCohort, map<string, vector< double > >& cellEnvironment,
@@ -89,7 +88,7 @@ public:
             FunctionalGroupDefinitions& madingleyCohortDefinitions,
             FunctionalGroupDefinitions& madingleyStockDefinitions,
             ProcessTracker& trackProcesses, unsigned currentTimestep,
-            bool specificLocations, string outputDetail, MadingleyModelInitialisation& initialisation) {
+             string outputDetail, MadingleyModelInitialisation& initialisation) {
         ;
     }
     //----------------------------------------------------------------------------------------------

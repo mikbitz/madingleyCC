@@ -78,7 +78,7 @@ public:
             vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&deltas,
             FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
             unsigned currentTimeStep, ProcessTracker& processTracker, ThreadLockedParallelVariables& partial,
-            bool specificLocations, string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
+             string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
 
         // Variables to hold the mortality rates
         double MortalityRateBackground;
