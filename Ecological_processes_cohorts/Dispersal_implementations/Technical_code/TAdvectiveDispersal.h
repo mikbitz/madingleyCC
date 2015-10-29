@@ -68,14 +68,12 @@ public:
     @param actingCohortNumber The position of the acting cohort within the functional group in the array of grid cell cohorts 
     @param currentMonth The current model month 
      */
-    bool RunDispersal(vector<std::reference_wrapper<Cohort>>& disperseMonkeys, const vector<unsigned>& origin, ModelGrid& gridForDispersal, Cohort& cohortToDisperse , const int& actingCohortFunctionalGroup,
-            const int& actingCohortNumber, const unsigned& currentMonth) {
-
+    bool RunDispersal(vector<Cohort>& disperseMonkeys,  ModelGrid& gridForDispersal, Cohort& cohortToDisperse , const unsigned& currentMonth) {
         // A double to indicate whether or not the cohort has dispersed, and if it has dispersed, where to
         double CohortDispersed = 0;
 
         // An array to hold the present cohort location for the intermediate steps that occur before the final dispersal this time step
-        vector<unsigned> destination = {origin[0], origin[1]};
+        vector<unsigned> destination = {cohortToDisperse.origin[0], cohortToDisperse.origin[1]};
 
         vector<unsigned>currentCell=destination;
         // Loop through a number of times proportional to the rescaled dispersal
@@ -87,11 +85,10 @@ public:
                     destination = currentCell;
                 }
         }
-
         // Update the dipersal deltas for this cohort, if necessary
-        if ((origin[0] != destination[0]) || (origin[1] != destination[1])) {
-            relocate(disperseMonkeys,cohortToDisperse,origin,destination);
-
+        if ((cohortToDisperse.origin[0] != destination[0]) || (cohortToDisperse.origin[1] != destination[1])) {
+                relocate(disperseMonkeys,cohortToDisperse,destination);//stores a copy of the cohort
+            
             return true;
         }
         return false;

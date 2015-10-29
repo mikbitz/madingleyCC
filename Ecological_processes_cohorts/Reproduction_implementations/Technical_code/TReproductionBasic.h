@@ -146,7 +146,9 @@ public:
             OffspringCohortAbundance = (OffspringCohortAbundance * gridCellCohorts[actingCohort].JuvenileMass) / OffspringJuvenileAndAdultBodyMasses[0];
 
             // Create the offspring cohort
-            Cohort OffspringCohort(actingCohort[0], OffspringJuvenileAndAdultBodyMasses[0], OffspringJuvenileAndAdultBodyMasses[1], OffspringJuvenileAndAdultBodyMasses[0], OffspringCohortAbundance, exp(gridCellCohorts[actingCohort].LogOptimalPreyBodySizeRatio), currentTimestep, gridCellCohorts[actingCohort].ProportionTimeActive, partial.NextCohortIDThreadLocked, tracker.TrackProcesses);
+            unsigned p=gridCellCohorts[actingCohort[0]].size();
+            
+            Cohort OffspringCohort(gridCellCohorts[actingCohort].origin[0],gridCellCohorts[actingCohort].origin[1],p,actingCohort[0], OffspringJuvenileAndAdultBodyMasses[0], OffspringJuvenileAndAdultBodyMasses[1], OffspringJuvenileAndAdultBodyMasses[0], OffspringCohortAbundance, exp(gridCellCohorts[actingCohort].LogOptimalPreyBodySizeRatio), currentTimestep, gridCellCohorts[actingCohort].ProportionTimeActive, partial.NextCohortIDThreadLocked, tracker.TrackProcesses);
 
             // Add the offspring cohort to the grid cell cohorts array
             gridCellCohorts[actingCohort[0]].push_back(OffspringCohort);

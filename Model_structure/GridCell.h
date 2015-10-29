@@ -358,10 +358,10 @@ public:
     @param DrawRandomly Whether the model is set to use random draws 
     @param ZeroAbundance Set this parameter to 'true' if you want to seed the cohorts with zero abundance 
      */
-    void SeedGridCellCohortsAndStocks(FunctionalGroupDefinitions& cohortFunctionalGroups, FunctionalGroupDefinitions& stockFunctionalGroups,
+    void SeedGridCellCohortsAndStocks(vector<unsigned>& cellIndxs,FunctionalGroupDefinitions& cohortFunctionalGroups, FunctionalGroupDefinitions& stockFunctionalGroups,
             map<string, double>& globalDiagnostics, long long& nextCohortID, bool tracking, double totalCellTerrestrialCohorts,
             double totalCellMarineCohorts, bool DrawRandomly, bool ZeroAbundance) {
-        SeedGridCellCohorts(cohortFunctionalGroups, CellEnvironment, globalDiagnostics, nextCohortID, tracking,
+        SeedGridCellCohorts(cellIndxs,cohortFunctionalGroups, CellEnvironment, globalDiagnostics, nextCohortID, tracking,
                 totalCellTerrestrialCohorts, totalCellMarineCohorts, DrawRandomly, ZeroAbundance);
         SeedGridCellStocks(stockFunctionalGroups, CellEnvironment, globalDiagnostics);
     }
@@ -433,7 +433,7 @@ public:
     @param totalCellMarineCohorts The total number of cohorts to be seeded in each marine grid cell 
     @param drawRandomly Whether the model is set to use random draws 
     @param ZeroAbundance Set this parameter to 'true' if you want to seed the cohorts with zero abundance */
-    void SeedGridCellCohorts(FunctionalGroupDefinitions& functionalGroups, map<string, vector<double>>&
+    void SeedGridCellCohorts(vector<unsigned>& cellIndxs,FunctionalGroupDefinitions& functionalGroups, map<string, vector<double>>&
             cellEnvironment, map<string, double>& globalDiagnostics, long long& nextCohortID, bool tracking, double& totalCellTerrestrialCohorts,
             double& totalCellMarineCohorts, bool DrawRandomly, bool ZeroAbundance) {
         // Set the seed for the random number generator from the system time
@@ -472,23 +472,25 @@ public:
 
             FunctionalGroupsToUse = functionalGroups.GetFunctionalGroupIndex("realm", "marine", true);
             NumCohortsThisCell = totalCellMarineCohorts;
-
+if (cellIndxs[0]==0 && cellIndxs[1]==0)for (int i=0;i<10;i++)cout<<"wrr2 "<<FunctionalGroupsToUse[i]<<endl;
         }
         assert(cellEnvironment["Realm"][0] > 0.0 && "Missing realm for grid cell");
 
         if (NumCohortsThisCell > 0);
         {
             //Loop over all functional groups in the model
-            for (int FunctionalGroup = 0; FunctionalGroup < functionalGroups.GetNumberOfFunctionalGroups(); FunctionalGroup++) {
+            for (int& FunctionalGroup : FunctionalGroupsToUse) {
                 // If it is a functional group that corresponds to the current realm, then seed cohorts
-                if (find(FunctionalGroupsToUse.begin(), FunctionalGroupsToUse.end(), FunctionalGroup) != FunctionalGroupsToUse.end()) {
-
+                    
+                //if (find(FunctionalGroupsToUse.begin(), FunctionalGroupsToUse.end(), FunctionalGroup) != FunctionalGroupsToUse.end()) {
+                
                     // Loop over the initial number of cohorts
                     double NumberOfCohortsInThisFunctionalGroup = 1.0;
                     if (!ZeroAbundance) {
                         NumberOfCohortsInThisFunctionalGroup = functionalGroups.GetBiologicalPropertyOneFunctionalGroup("initial number of gridcellcohorts", FunctionalGroup);
                     }
                     for (int jj = 0; jj < NumberOfCohortsInThisFunctionalGroup; jj++) {
+                        
                         // Check whether the model is set to randomly draw the body masses of new cohorts
                         if (DrawRandomly) {
                             // Draw adult mass from a log-normal distribution with mean -6.9 and standard deviation 10.0,
@@ -593,8 +595,10 @@ public:
                         }
 
                         // Initialise the new cohort with the relevant properties
+                        //p stores in the cohort the position in the list in this cell - used for deletion later
+                        unsigned p=GridCellCohorts[FunctionalGroup].size();
                         // An instance of Cohort to hold the new cohort
-                        Cohort NewCohort(FunctionalGroup, CohortJuvenileMass, CohortAdultMass, CohortJuvenileMass, NewAbund,
+                        Cohort NewCohort(cellIndxs[0],cellIndxs[1],p,FunctionalGroup, CohortJuvenileMass, CohortAdultMass, CohortJuvenileMass, NewAbund,
                                 OptimalPreyBodySizeRatio, 0, ProportionTimeActive[FunctionalGroup], nextCohortID, tracking);
 
                         // Add the new cohort to the list of grid cell cohorts
@@ -608,7 +612,7 @@ public:
 
                     }
 
-                }
+                //}
             }
         }
     }

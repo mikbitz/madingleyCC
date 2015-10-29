@@ -187,7 +187,8 @@ public:
         bool varExists;
         Dispersals = 0;         
         /// Run the model
-        for (unsigned hh = 0; hh < NumTimeSteps; hh += 1) {
+        //for (unsigned hh = 0; hh < NumTimeSteps; hh += 1) {
+        for (unsigned hh = 0; hh < 1; hh += 1) {
             cout << "Running time step " << hh + 1 << "..." << endl;
             // Start the timer
             TimeStepTimer.Start();
@@ -202,7 +203,7 @@ public:
             //if(TrackGlobalProcesses.TrackProcesses) TrackGlobalProcesses.StoreNPPGrid(hh);
             EcologyTimer.Start();
             // Run cross grid cell ecology
-            RunCrossGridCellEcology(Dispersals, initialisation.DispersalOnly);
+            RunCrossGridCellEcology(Dispersals);
             EcologyTimer.Stop();
             cout << "Across grid ecology took: " << EcologyTimer.GetElapsedTimeSecs() << endl;               
             // Stop the timer
@@ -249,13 +250,13 @@ public:
     @remarks Note that variables and instances of classes that are written to within this method MUST be local within this method to prevent 
      race issues and multiple threads attempting to write to the same variable when running the program in parallel
      */
-    void RunCell(int cellIndex, ThreadLockedParallelVariables& partial, bool dispersalOnly, MadingleyModelInitialisation& initialisation) {
+    void RunCell(int cellIndex, ThreadLockedParallelVariables& partial,  MadingleyModelInitialisation& initialisation) {
         // Create a temporary internal copy of the grid cell cohorts
         GridCellCohortHandler WorkingGridCellCohorts = EcosystemModelGrid.GetGridCellCohorts(CellList[cellIndex][0], CellList[cellIndex][1]);
         // Create a temporary internal copy of the grid cell stocks
         GridCellStockHandler WorkingGridCellStocks = EcosystemModelGrid.GetGridCellStocks(CellList[cellIndex][0], CellList[cellIndex][1]);
         // Run stock ecology
-        RunWithinCellStockEcology(CellList[cellIndex][0], CellList[cellIndex][1], WorkingGridCellStocks, cellIndex);
+        //RunWithinCellStockEcology(CellList[cellIndex][0], CellList[cellIndex][1], WorkingGridCellStocks, cellIndex);
         // Run cohort ecology
         RunWithinCellCohortEcology(CellList[cellIndex][0], CellList[cellIndex][1], partial, WorkingGridCellCohorts, WorkingGridCellStocks, InitialisationFileStrings["OutputDetail"], cellIndex, initialisation);
     }
@@ -387,7 +388,7 @@ public:
 
         // Seed stocks and cohorts in the grid cells
         EcosystemModelGrid.SeedGridCellStocksAndCohorts(CellList, CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions,
-                GlobalDiagnosticVariables, NextCohortID, InitialisationFileStrings["OutputDetail"] == "high", DrawRandomly, initialisation.DispersalOnly, InitialisationFileStrings["DispersalOnlyType"]);
+                GlobalDiagnosticVariables, NextCohortID, InitialisationFileStrings["OutputDetail"] == "high", DrawRandomly);
     }
     //----------------------------------------------------------------------------------------------
     /** \brief   Generates the initial outputs for this model run
@@ -435,23 +436,9 @@ public:
         //            // Instantiate a class to hold thread locked global diagnostic variables
         ThreadLockedParallelVariables singleThreadDiagnostics(0, 0, 0, NextCohortID);
 
-        if (initialisation.RunRealm == "") {
-
             for (int ii = 0; ii < CellList.size(); ii++) {
-                RunCell(ii, singleThreadDiagnostics, initialisation.DispersalOnly, initialisation);
+                RunCell(ii, singleThreadDiagnostics,  initialisation);
             }
-        } else {
-
-            if (initialisation.RunRealm == "marine") {
-                for (int ii = 0; ii < CellList.size(); ii++) {
-                    if (EcosystemModelGrid.GetCellEnvironment(CellList[ii][0], CellList[ii][1])["Realm"][0] == 2.0) RunCell(ii, singleThreadDiagnostics, initialisation.DispersalOnly, initialisation);
-                }
-            } else {
-                for (int ii = 0; ii < CellList.size(); ii++) {
-                    if (EcosystemModelGrid.GetCellEnvironment(CellList[ii][0], CellList[ii][1])["Realm"][0] == 1.0) RunCell(ii, singleThreadDiagnostics, initialisation.DispersalOnly, initialisation);
-                }
-            }
-        }
 
         // Update the variable tracking cohort unique IDs
         NextCohortID = singleThreadDiagnostics.NextCohortIDThreadLocked;
@@ -583,7 +570,7 @@ public:
 
                 CohortActivity.AssignProportionTimeActive(workingGridCellCohorts[ActingCohort], EcosystemModelGrid.GetCellEnvironment(latCellIndex, lonCellIndex), CohortFunctionalGroupDefinitions, CurrentTimeStep, CurrentMonth);
 
-                //                    // Run ecology
+                // Run ecology
                 MadingleyEcologyCohort.RunWithinCellEcology(workingGridCellCohorts, workingGridCellStocks,
                         ActingCohort, EcosystemModelGrid.GetCellEnvironment(latCellIndex, lonCellIndex),
                         EcosystemModelGrid.GetCellDeltas(latCellIndex, lonCellIndex),
@@ -678,13 +665,15 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Run ecological processes that operate across grid cells */
-    void RunCrossGridCellEcology(unsigned& dispersals, bool dispersalOnly) {
+    void RunCrossGridCellEcology(unsigned& dispersals) {
         // Loop through each grid cell, and run dispersal for each.
         // Note that currently dispersal is not parallelised, although it could be (though care would need to be taken to ensure that necessary variables are thread-locked
+        
         for (int ii = 0; ii < CellList.size(); ii++) {
+
             // We have looped through individual cells and calculated ecological processes for each. Now do this for cross grid cell dispersal
 
-            disperser.RunCrossGridCellEcologicalProcess(CellList[ii], EcosystemModelGrid, dispersalOnly, CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions, CurrentMonth);
+            disperser.RunCrossGridCellEcologicalProcess(CellList[ii], EcosystemModelGrid,  CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions, CurrentMonth);
 
         }
         // Apply the changes from dispersal

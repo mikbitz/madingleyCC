@@ -6,6 +6,7 @@
 #include <chrono>
 #include <assert.h>
 #include <math.h>
+#include <vector>
 /** \file TResponsiveDispersal.h
  * \brief the TResponsiveDispersal header file
  */
@@ -63,24 +64,24 @@ public:
     @param actingCohortNumber The position of the acting cohort within the functional group in the array of grid cell cohorts 
     @param currentMonth The current model month 
      */
-    bool RunDispersal(vector<std::reference_wrapper<Cohort>>& disperseMonkeys, vector<unsigned>& cellIndices, ModelGrid& gridForDispersal, Cohort& cohortToDisperse,
-            const int& actingCohortFunctionalGroup, const int& actingCohortNumber, const unsigned& currentMonth) {
+    bool RunDispersal(vector<Cohort>& disperseMonkeys, ModelGrid& gridForDispersal, Cohort& cohortToDisperse,
+              const unsigned& currentMonth) {
         // Starvation driven dispersal takes precedence over density driven dispersal (i.e. a cohort can't do both). Also, the delta 
         // arrays only allow each cohort to perform one type of dispersal each time step
         bool CohortDispersed = false;
 
         // Check for starvation-driven dispersal
-        CohortDispersed = CheckStarvationDispersal(disperseMonkeys,gridForDispersal, cellIndices[0], cellIndices[1], cohortToDisperse, actingCohortFunctionalGroup, actingCohortNumber);
+        CohortDispersed = CheckStarvationDispersal(disperseMonkeys,gridForDispersal, cohortToDisperse);
 
         if (!CohortDispersed) {
             // Check for density driven dispersal
-            CheckDensityDrivenDispersal(disperseMonkeys,gridForDispersal, cellIndices[0], cellIndices[1], cohortToDisperse, actingCohortFunctionalGroup, actingCohortNumber);
+            CheckDensityDrivenDispersal(disperseMonkeys,gridForDispersal, cohortToDisperse);
         }
         return false;
     }
 
     //----------------------------------------------------------------------------------------------
-    bool CheckStarvationDispersal(vector<std::reference_wrapper<Cohort>>& disperseMonkeys,ModelGrid& gridForDispersal, unsigned latIndex, unsigned lonIndex, Cohort& cohortToDisperse, int functionalGroup, int cohortNumber) {
+    bool CheckStarvationDispersal(vector<Cohort>& disperseMonkeys,ModelGrid& gridForDispersal, Cohort& cohortToDisperse) {
         // A boolean to check whether a cohort has dispersed
         bool CohortHasDispersed = false;
 
@@ -99,13 +100,12 @@ public:
             if (ProportionalPresentMass < StarvationDispersalBodyMassThreshold) {
                 // Cohort tries to disperse
 
-                vector<unsigned> DestinationCell = CalculateDispersalProbability(gridForDispersal, latIndex, lonIndex, CalculateDispersalSpeed(AdultMass));
+                vector<unsigned> DestinationCell = CalculateDispersalProbability(gridForDispersal, cohortToDisperse.origin[0], cohortToDisperse.origin[1], CalculateDispersalSpeed(AdultMass));
 
                 // Update the delta array of cells to disperse to, if the cohort moves
                 if (DestinationCell[0] < 999999) {
                     // Update the delta array of cohorts
-                    vector<unsigned> cell = {latIndex, lonIndex};
-                    relocate(disperseMonkeys, cohortToDisperse, cell, DestinationCell);
+                    relocate(disperseMonkeys, cohortToDisperse, DestinationCell);
                 }
 
                 // Note that regardless of whether or not it succeeds, if a cohort tries to disperse, it is counted as having dispersed for the purposes of not then allowing it to disperse
@@ -120,13 +120,12 @@ public:
                 double RandomValue = randomNumber(RandomNumberGenerator);
                 if (((1.0 - ProportionalPresentMass) / (1.0 - StarvationDispersalBodyMassThreshold)) > RandomValue) {
 
-                    vector<unsigned> DestinationCell = CalculateDispersalProbability(gridForDispersal, latIndex, lonIndex, CalculateDispersalSpeed(AdultMass));
+                    vector<unsigned> DestinationCell = CalculateDispersalProbability(gridForDispersal, cohortToDisperse.origin[0], cohortToDisperse.origin[1], CalculateDispersalSpeed(AdultMass));
 
                     // Update the delta array of cells to disperse to, if the cohort moves
                     if (DestinationCell[0] < 999999) {
                         // Update the delta array of cohorts
-                        vector<unsigned> cell = {latIndex, lonIndex};
-                        relocate(disperseMonkeys, cohortToDisperse, cell, DestinationCell);
+                        relocate(disperseMonkeys, cohortToDisperse, DestinationCell);
                     }
 
 
@@ -138,12 +137,12 @@ public:
         return CohortHasDispersed;
     }
     //----------------------------------------------------------------------------------------------
-    void CheckDensityDrivenDispersal(vector<std::reference_wrapper<Cohort>>& disperseMonkeys,ModelGrid& gridForDispersal, unsigned latIndex, unsigned lonIndex, Cohort& cohortToDisperse, int functionalGroup, int cohortNumber) {
+    void CheckDensityDrivenDispersal(vector<Cohort>& disperseMonkeys,ModelGrid& gridForDispersal, Cohort& cohortToDisperse) {
         // Check the population density
         double NumberOfIndividuals = cohortToDisperse.CohortAbundance;
 
         // Get the cell area, in kilometres squared
-        double CellArea = gridForDispersal.GetCellEnvironment(latIndex, lonIndex)["Cell Area"][0];
+        double CellArea = gridForDispersal.GetCellEnvironment(cohortToDisperse.origin[0], cohortToDisperse.origin[1])["Cell Area"][0];
 
         // If below the density threshold
         if ((NumberOfIndividuals / CellArea) < DensityThresholdScaling / cohortToDisperse.AdultMass) {
@@ -152,13 +151,12 @@ public:
             double DispersalSpeed = CalculateDispersalSpeed(cohortToDisperse.AdultMass);
 
             // Cohort tries to disperse
-            vector<unsigned> DestinationCell = CalculateDispersalProbability(gridForDispersal, latIndex, lonIndex, DispersalSpeed);
+            vector<unsigned> DestinationCell = CalculateDispersalProbability(gridForDispersal, cohortToDisperse.origin[0], cohortToDisperse.origin[1], DispersalSpeed);
 
             // Update the delta array of cells to disperse to, if the cohort moves
             if (DestinationCell[0] < 999999) {
                 // Update the delta array of cohorts
-                vector<unsigned> cell = {latIndex, lonIndex};
-                relocate(disperseMonkeys, cohortToDisperse, cell, DestinationCell);
+                 relocate(disperseMonkeys, cohortToDisperse, DestinationCell);
 
             }
 

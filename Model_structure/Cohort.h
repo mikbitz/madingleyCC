@@ -5,10 +5,6 @@
  * \brief the Cohort header file
  */
 
-
-//namespace Madingley
-//{
-
 /** \brief Class to hold properties of a single cohort */
 class Cohort {
 public:
@@ -34,15 +30,16 @@ public:
     /** \brief The number of individuals in the cohort */
     double CohortAbundance;
     /** \brief The index of the functional group that the cohort belongs to */
-    //here the original code said "byte" - really necessary? not sure if unsigned char will work
-    unsigned char FunctionalGroupIndex;
-    int cell0,cell1,positionInList,latIndex,lonIndex;
+    unsigned FunctionalGroupIndex;
+    unsigned positionInList;
+    unsigned origin[2],destination[2];
     /** \brief Whether this cohort has ever been merged with another cohort */
     bool Merged;
     /** \brief The proportion of the timestep for which this cohort is active */
     double ProportionTimeActive;
     /** \brief The optimal prey body size for individuals in this cohort */
     double LogOptimalPreyBodySizeRatio;
+    long long ID;
     //----------------------------------------------------------------------------------------------
     //Methods
     //----------------------------------------------------------------------------------------------
@@ -59,7 +56,7 @@ public:
     @param nextCohortID The unique ID to assign to the next cohort created 
     @param tracking Whether the process tracker is enabled 
      */
-    Cohort(unsigned char functionalGroupIndex, double juvenileBodyMass, double adultBodyMass, double initialBodyMass, double initialAbundance, double optimalPreyBodySizeRatio, unsigned short birthTimeStep, double proportionTimeActive, long long &nextCohortID, bool tracking) {
+    Cohort(const unsigned cellId0, const unsigned cellId1, const unsigned& pos, unsigned functionalGroupIndex, double juvenileBodyMass, double adultBodyMass, double initialBodyMass, double initialAbundance, double optimalPreyBodySizeRatio, unsigned short birthTimeStep, double proportionTimeActive, long long &nextCohortID, bool tracking) {
         FunctionalGroupIndex = functionalGroupIndex;
         JuvenileMass = juvenileBodyMass;
         AdultMass = adultBodyMass;
@@ -71,7 +68,13 @@ public:
         MaximumAchievedBodyMass = juvenileBodyMass;
         Merged = false;
         ProportionTimeActive = proportionTimeActive;
+        positionInList=pos;
+        origin[0]=cellId0;
+        origin[1]=cellId1;        
+        destination[0]=cellId0;
+        destination[1]=cellId1;
         //if(tracking)_CohortID.Add(Convert.ToUInt32(nextCohortID));
+        ID=nextCohortID;//added MB to track this object.
         nextCohortID++;
     }
     //----------------------------------------------------------------------------------------------

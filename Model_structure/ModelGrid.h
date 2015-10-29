@@ -342,12 +342,11 @@ public:
     @param nextCohortID The ID number to be assigned to the next produced cohort 
     @param tracking Whether process-tracking is enabled 
     @param DrawRandomly Whether the model is set to use a random draw 
-    @param dispersalOnly Whether to run dispersal only (i.e. to turn off all other ecological processes 
     @param processTrackers An instance of the ecological process tracker 
      */
     void SeedGridCellStocksAndCohorts(vector<vector<unsigned>>&cellIndices, FunctionalGroupDefinitions& cohortFunctionalGroupDefinitions,
             FunctionalGroupDefinitions& stockFunctionalGroupDefinitions, map<string, double>& globalDiagnostics, long long& nextCohortID,
-            bool tracking, bool DrawRandomly, bool dispersalOnly, string dispersalOnlyType) {
+            bool tracking, bool DrawRandomly) {
         int ii = 1;
         cout << "Seeding grid cell stocks and cohorts:" << endl;
 
@@ -375,55 +374,11 @@ public:
         }
 
         for (vector<unsigned> cellIndexPair : cellIndices) {
-            if (dispersalOnly) {
-                if (dispersalOnlyType == "diffusion") {
-                    // Diffusive dispersal
 
-                    if ((cellIndexPair[0] == 90) && (cellIndexPair[1] == 180)) {
-                        InternalGrid[cellIndexPair[0]][ cellIndexPair[1]].SeedGridCellCohortsAndStocks(cohortFunctionalGroupDefinitions,
-                                stockFunctionalGroupDefinitions, globalDiagnostics, nextCohortID, tracking, TotalTerrestrialCellCohorts, TotalMarineCellCohorts,
-                                DrawRandomly, false);
-                    } else if ((cellIndexPair[0] == 95) && (cellIndexPair[1] == 110)) {
-                        InternalGrid[cellIndexPair[0]][ cellIndexPair[1]].SeedGridCellCohortsAndStocks(cohortFunctionalGroupDefinitions,
-                                stockFunctionalGroupDefinitions, globalDiagnostics, nextCohortID, tracking, TotalTerrestrialCellCohorts, TotalMarineCellCohorts,
-                                DrawRandomly, false);
-                    } else {
-                        InternalGrid[cellIndexPair[0]][ cellIndexPair[1]].SeedGridCellCohortsAndStocks(cohortFunctionalGroupDefinitions,
-                                stockFunctionalGroupDefinitions, globalDiagnostics, nextCohortID, tracking, TotalTerrestrialCellCohorts, TotalMarineCellCohorts,
-                                DrawRandomly, true);
-                    }
-                    //cout<<"\rGrid Cell: "<<ii++<<" of "<<cellIndices.size()<<endl;
-                } else if (dispersalOnlyType == "advection") {
-                    //Advective dispersal
-                    if (InternalGrid[cellIndexPair[0]][ cellIndexPair[1]].CellEnvironment["Realm"][0] == 1.0) {
-                        InternalGrid[cellIndexPair[0]][ cellIndexPair[1]].SeedGridCellCohortsAndStocks(cohortFunctionalGroupDefinitions,
-                                stockFunctionalGroupDefinitions, globalDiagnostics, nextCohortID, tracking, TotalTerrestrialCellCohorts, TotalMarineCellCohorts,
-                                DrawRandomly, true);
-                    } else {
-                        InternalGrid[cellIndexPair[0]][ cellIndexPair[1]].SeedGridCellCohortsAndStocks(cohortFunctionalGroupDefinitions,
-                                stockFunctionalGroupDefinitions, globalDiagnostics, nextCohortID, tracking, TotalTerrestrialCellCohorts, TotalMarineCellCohorts,
-                                DrawRandomly, false);
-                    }
-                    //cout<<"\rGrid Cell: "<<ii++<<" of "<<cellIndices.size()<<endl;
-                } else if (dispersalOnlyType == "responsive") {
-                    // Responsive dispersal
-
-                    InternalGrid[cellIndexPair[0]][ cellIndexPair[1]].SeedGridCellCohortsAndStocks(cohortFunctionalGroupDefinitions,
-                            stockFunctionalGroupDefinitions, globalDiagnostics, nextCohortID, tracking, TotalTerrestrialCellCohorts, TotalMarineCellCohorts,
-                            DrawRandomly, true);
-
-                    //cout<<"\rGrid Cell: "<<ii++<<" of "<<cellIndices.size()<<endl;
-                } else {
-                    cout << "Dispersal only type not recognized from initialisation file" << endl;
-                    exit(1);
-                }
-            }
-            else {
-                InternalGrid[cellIndexPair[0]][ cellIndexPair[1]].SeedGridCellCohortsAndStocks(cohortFunctionalGroupDefinitions,
+                InternalGrid[cellIndexPair[0]][ cellIndexPair[1]].SeedGridCellCohortsAndStocks(cellIndexPair,cohortFunctionalGroupDefinitions,
                         stockFunctionalGroupDefinitions, globalDiagnostics, nextCohortID, tracking, TotalTerrestrialCellCohorts, TotalMarineCellCohorts,
                         DrawRandomly, false);
                 //cout<<"\rGrid Cell: "<<ii++<<" of "<<cellIndices.size()<<endl;
-            }
         }
         cout << "Total cohorts initialised: " << globalDiagnostics["NumberOfCohortsInModel"] << endl;
         cout << "" << endl;
@@ -473,9 +428,11 @@ public:
     /** \brief Remove an individual cohort from a functional group; necessary due to dispersal moving cohorts from one cell to another
     @param functionalGroup Cohort functional group 
      */
-    void DeleteGridCellIndividualCohort(Cohort& c) {
-        auto begin = InternalGrid[c.latIndex][c.lonIndex].GridCellCohorts[c.FunctionalGroupIndex].begin();
-        InternalGrid[c.latIndex][c.lonIndex].GridCellCohorts[c.FunctionalGroupIndex].erase(begin + c.positionInList);
+    void DeleteGridCellIndividualCohort(Cohort c) {
+      
+        auto begin = InternalGrid[c.origin[0]][c.origin[1]].GridCellCohorts[c.FunctionalGroupIndex].begin();
+        InternalGrid[c.origin[0]][c.origin[1]].GridCellCohorts[c.FunctionalGroupIndex].erase(begin + c.positionInList);
+
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Delete a specified list of cohorts from a grid cell
@@ -539,8 +496,10 @@ public:
     @param functionalGroup Functional group of the cohort (i.e. array index) 
     @param cohortToAdd The cohort object to add 
      */
-    void AddNewCohortToGridCell(Cohort& c) {
-        InternalGrid[c.latIndex][ c.lonIndex].GridCellCohorts[c.FunctionalGroupIndex].push_back(c);
+    void AddNewCohortToGridCell(Cohort c) {
+        c.origin[0]=c.destination[0];c.origin[1]=c.destination[1];
+        c.positionInList=InternalGrid[c.destination[0]][ c.destination[1]].GridCellCohorts[c.FunctionalGroupIndex].size();
+        InternalGrid[c.destination[0]][ c.destination[1]].GridCellCohorts[c.FunctionalGroupIndex].push_back(c);
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Return the value of a specified environmental layer from an individual grid cell    @param variableName The name of the environmental lyaer 

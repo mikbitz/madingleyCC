@@ -13,7 +13,7 @@ public:
     //----------------------------------------------------------------------------------------------
 
     /** \brief The index of the functional group that the stock belongs to */
-    unsigned char FunctionalGroupIndex;
+    unsigned FunctionalGroupIndex;
 
     /** \brief The mean body mass of an individual in this stock */
 
@@ -33,7 +33,7 @@ public:
     @param functionalGroupIndex The functional group index of the stock being generated 
     @param individualMass The individual mass of the stock 
     @param initialTotalBiomass The initial total biomass of the stock */
-    Stock(unsigned char functionalGroupIndex, double individualMass, double initialTotalBiomass) {
+    Stock(unsigned functionalGroupIndex, double individualMass, double initialTotalBiomass) {
         FunctionalGroupIndex = functionalGroupIndex;
         IndividualBodyMass = individualMass;
         TotalBiomass = initialTotalBiomass;

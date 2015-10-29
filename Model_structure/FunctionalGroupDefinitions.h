@@ -67,7 +67,7 @@ public:
             //retrieve the lines defining each functional group
             while (infile.good()) {
                 AllFunctionalGroupsIndex.push_back(count);
-                count++;
+
                 string l, data;
                 getline(infile, l);
                 if (infile.good())l.pop_back();
@@ -84,7 +84,7 @@ public:
                             TraitLookupFromIndex[header[i]].push_back(data);
                             //for a given trait, store the functional group number
                             //which has a given value for that trait
-                            IndexLookupFromTrait[header[i]][data].push_back(i);
+                            IndexLookupFromTrait[header[i]][data].push_back(count);
                         }
                         //Otherwise get the value for the given property
                         //for this functional group
@@ -93,6 +93,7 @@ public:
                         }
                     }
                 }
+                count++;
             }
 
 

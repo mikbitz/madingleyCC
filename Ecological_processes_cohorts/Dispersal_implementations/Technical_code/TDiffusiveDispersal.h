@@ -57,18 +57,17 @@ public:
     @param actingCohortFunctionalGroup The functional group index of the acting cohort 
     @param actingCohortNumber The position of the cohort within the functional group in the array of grid cell cohorts 
     @param currentMonth The current model month */
-    bool RunDispersal(vector<std::reference_wrapper<Cohort>>& disperseMonkeys, vector<unsigned>& cellIndices, ModelGrid& gridForDispersal, Cohort& cohortToDisperse,
-            int actingCohortFunctionalGroup, int actingCohortNumber, unsigned currentMonth) {
+    bool RunDispersal(vector<Cohort>& disperseMonkeys, ModelGrid& gridForDispersal, Cohort& cohortToDisperse,unsigned currentMonth) {
         // Calculate dispersal speed for the cohort         
         double DispersalSpeed = CalculateDispersalSpeed(cohortToDisperse.IndividualBodyMass);
 
         // A double to indicate whether or not the cohort has dispersed, and if it has dispersed, where to
         double CohortDispersed = 0;
 
-        vector<unsigned> DestinationCell = CalculateDispersalProbability(gridForDispersal, cellIndices[0], cellIndices[1], DispersalSpeed);
+        vector<unsigned> DestinationCell = CalculateDispersalProbability(gridForDispersal, cohortToDisperse.origin[0], cohortToDisperse.origin[1], DispersalSpeed);
         if (DestinationCell[0] < 999999) {
             // Update the delta array of cohorts
-            relocate(disperseMonkeys, cohortToDisperse, cellIndices, DestinationCell);
+            relocate(disperseMonkeys, cohortToDisperse, DestinationCell);
 
             }
         return false;

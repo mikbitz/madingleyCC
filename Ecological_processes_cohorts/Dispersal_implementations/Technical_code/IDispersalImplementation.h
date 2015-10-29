@@ -24,15 +24,13 @@ public:
 
     //----------------------------------------------------------------------------------------------
      /** \brief Run the dispersal implementation */
-    virtual bool RunDispersal(vector<std::reference_wrapper<Cohort>>& disperseMonkeys, vector<unsigned>& cellIndex, ModelGrid& gridForDispersal, Cohort& cohortToDisperse, int actingCohortFunctionalGroup, int actingCohortNumber, unsigned currentMonth) {
+    virtual bool RunDispersal(vector<Cohort>& disperseMonkeys, vector<unsigned>& cellIndex, ModelGrid& gridForDispersal, Cohort& cohortToDisperse, int actingCohortFunctionalGroup, int actingCohortNumber, unsigned currentMonth) {
         ;
     }
     //----------------------------------------------------------------------------------------------
-    void relocate(vector<std::reference_wrapper<Cohort>>&disperseMonkeys, Cohort& cohortToDisperse, const vector<unsigned>& origin, const vector<unsigned>& destination) {
-            cohortToDisperse.latIndex= origin[0];
-            cohortToDisperse.lonIndex= origin[1];
-            cohortToDisperse.cell0   = destination[0];
-            cohortToDisperse.cell1   = destination[1];
+    void relocate(vector<Cohort>&disperseMonkeys, Cohort& cohortToDisperse,  const vector<unsigned>& destination) {
+            cohortToDisperse.destination[0] = destination[0];
+            cohortToDisperse.destination[1] = destination[1];
             disperseMonkeys.push_back(cohortToDisperse);
     }
     //----------------------------------------------------------------------------------------------
@@ -75,7 +73,7 @@ public:
                     signu = 0;
                 }
             }
-            // try to get a cell - will only work if realm is the same.
+            // try to get a cell - will only work if realm is the same as the origin cell.
             DestinationCell = madingleyGrid.getNewCell(latIndex, lonIndex, signv, signu);
         }
 

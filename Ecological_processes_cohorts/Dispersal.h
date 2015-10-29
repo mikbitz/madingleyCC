@@ -17,7 +17,7 @@ class Dispersal  {
     //----------------------------------------------------------------------------------------------
     //Variables
     //----------------------------------------------------------------------------------------------
-    vector<std::reference_wrapper<Cohort>>disperseMonkeys;
+    vector<Cohort>disperseMonkeys;
     /** \brief The available implementations of the dispersal process */
     AdvectiveDispersal* AdvectiveDispersalImplementation;
     DiffusiveDispersal* DiffusiveDispersalImplementation;
@@ -60,7 +60,7 @@ class Dispersal  {
     @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
     @param madingleyStockDefinitions The functional group definitions for stocks in the model 
     @param currentMonth The current model month */
-    void RunCrossGridCellEcologicalProcess(vector<unsigned>& cellIndex, ModelGrid& gridForDispersal, bool dispersalOnly, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, unsigned currentMonth) {
+    void RunCrossGridCellEcologicalProcess(vector<unsigned>& cellIndex, ModelGrid& gridForDispersal,  FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, unsigned currentMonth) {
 
         // Get the lat and lon indices
         unsigned ii = cellIndex[0];
@@ -68,29 +68,31 @@ class Dispersal  {
 
         // A boolean to check that the environmental layer exists
         bool varExists;
-           
+
         // Check to see if the cell is marine
         double CellRealm = gridForDispersal.GetEnviroLayer("Realm", 0, ii, jj, varExists);
 
         // Go through all of the cohorts in turn and see if they disperse
         GridCellCohortHandler& WorkingGridCellCohorts = gridForDispersal.GetGridCellCohorts(ii, jj);
+
         // Loop through functional groups, and perform dispersal according to cohort type and status
-        for (int kk = 0; kk < WorkingGridCellCohorts.size(); kk++) {
+        for (int FG = 0; FG < WorkingGridCellCohorts.size(); FG++) {
             // Work through the list of cohorts - be sure to work backward to get order of deletion right later
-            for (int ll = WorkingGridCellCohorts[kk].size()-1;ll>0; ll--) {
+            for (Cohort& c : WorkingGridCellCohorts[FG]) {
                 // Check to see if the cell is marine and the cohort type is planktonic
                 bool dispersed=false;
+                
                 if (CellRealm == 2.0 &&
-                        ((madingleyCohortDefinitions.GetTraitNames("Mobility", WorkingGridCellCohorts[kk][ll].FunctionalGroupIndex) == "planktonic") || (WorkingGridCellCohorts[kk][ll].IndividualBodyMass <= PlanktonThreshold))) {
+                        ((madingleyCohortDefinitions.GetTraitNames("Mobility", c.FunctionalGroupIndex) == "planktonic") || (c.IndividualBodyMass <= PlanktonThreshold))) {
                     // Run advective dispersal
-                    AdvectiveDispersalImplementation->RunDispersal(disperseMonkeys,cellIndex, gridForDispersal, WorkingGridCellCohorts[kk][ll], kk, ll, currentMonth);
+                    AdvectiveDispersalImplementation->RunDispersal(disperseMonkeys, gridForDispersal, c, currentMonth);
                 }   // Otherwise, if mature do responsive dispersal
-                else if (WorkingGridCellCohorts[kk][ll].MaturityTimeStep < std::numeric_limits<unsigned>::max()) {
+                else if (c.MaturityTimeStep < std::numeric_limits<unsigned>::max()) {
                      //Run responsive dispersal
-                    ResponsiveDispersalImplementation->RunDispersal(disperseMonkeys, cellIndex, gridForDispersal, WorkingGridCellCohorts[kk][ll], kk, ll, currentMonth);
+                    ResponsiveDispersalImplementation->RunDispersal(disperseMonkeys, gridForDispersal, c, currentMonth);
                 }    // If the cohort is immature, run diffusive dispersal
                 else {
-                    DiffusiveDispersalImplementation->RunDispersal(disperseMonkeys, cellIndex, gridForDispersal, WorkingGridCellCohorts[kk][ll], kk, ll, currentMonth);
+                    DiffusiveDispersalImplementation->RunDispersal(disperseMonkeys, gridForDispersal, c,  currentMonth);
                 }
             }
         }
