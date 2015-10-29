@@ -41,7 +41,6 @@ public:
             FunctionalGroupDefinitions& madingleyCohortHandler,
             FunctionalGroupDefinitions& madingleyStockHandler,
             unsigned currentTimestep,
-            ProcessTracker& trackProcesses,
             ThreadLockedParallelVariables& partial,
             string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
         ;

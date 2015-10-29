@@ -73,8 +73,13 @@ public:
                     signu = 0;
                 }
             }
-            // try to get a cell - will only work if realm is the same as the origin cell.
-            DestinationCell = madingleyGrid.getNewCell(latIndex, lonIndex, signv, signu);
+            // try to get a cell - only use it if realm is the same as the origin cell.
+            
+            vector<unsigned> FreshCell = madingleyGrid.getNewCell(latIndex, lonIndex, signv, signu);
+            if ((FreshCell[0]<9999999) &&
+                (madingleyGrid.InternalGrid[latIndex    ][lonIndex    ].CellEnvironment["Realm"][0] == 
+                 madingleyGrid.InternalGrid[FreshCell[0]][FreshCell[1]].CellEnvironment["Realm"][0]) )
+                    DestinationCell=FreshCell;
         }
 
         return DestinationCell;

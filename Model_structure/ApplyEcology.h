@@ -23,11 +23,11 @@ public:
     @param currentTimestep The current model time step 
     @param tracker A process tracker */
     void UpdateAllEcology(GridCellCohortHandler& gridCellCohorts, vector<int>& actingCohort, map<string, vector<double>>&cellEnvironment, map<string, map<string, double>>&
-            deltas, unsigned currentTimestep, ProcessTracker& tracker) {
+            deltas, unsigned currentTimestep) {
         // Apply cohort abundance changes
         UpdateAbundance(gridCellCohorts, actingCohort, deltas);
         // Apply cohort biomass changes
-        UpdateBiomass(gridCellCohorts, actingCohort, deltas, currentTimestep, tracker, cellEnvironment);
+        UpdateBiomass(gridCellCohorts, actingCohort, deltas, currentTimestep, cellEnvironment);
         // Apply changes to the environmental biomass pools
         UpdatePools(cellEnvironment, deltas);
     }
@@ -69,19 +69,9 @@ public:
     @param tracker A process tracker 
     @param cellEnvironment The cell environment */
     void UpdateBiomass(GridCellCohortHandler& gridCellCohorts, vector<int>& actingCohort, map<string, map<string, double>>&deltas,
-            unsigned currentTimestep, ProcessTracker& tracker, map<string, vector<double>>&cellEnvironment) {
+            unsigned currentTimestep,  map<string, vector<double>>&cellEnvironment) {
         // Extract the biomass deltas from the sorted list of all deltas
         map<string, double> deltaBiomass = deltas["biomass"];
-
-        //            if (tracker.TrackProcesses)
-        //            {
-        //                // Calculate net growth of individuals in this cohort
-        //                double growth = deltaBiomass["predation"] + deltaBiomass["herbivory"] + deltaBiomass["metabolism"];
-        //                tracker.TrackTimestepGrowth((unsigned)cellEnvironment["LatIndex"][0], (unsigned)cellEnvironment["LonIndex"][0], currentTimestep,
-        //                    gridCellCohorts[actingCohort].IndividualBodyMass, gridCellCohorts[actingCohort].FunctionalGroupIndex, growth, deltaBiomass["metabolism"],deltaBiomass["predation"],deltaBiomass["herbivory"]);
-        //                  
-        //            }
-        //
 
         // Variable to calculate net biomass change to check that cohort individual body mass will not become negative
         double NetBiomass = 0.0;

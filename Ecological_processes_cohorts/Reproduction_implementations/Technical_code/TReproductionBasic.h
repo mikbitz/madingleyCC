@@ -148,16 +148,10 @@ public:
             // Create the offspring cohort
             unsigned p=gridCellCohorts[actingCohort[0]].size();
             
-            Cohort OffspringCohort(gridCellCohorts[actingCohort].origin[0],gridCellCohorts[actingCohort].origin[1],p,actingCohort[0], OffspringJuvenileAndAdultBodyMasses[0], OffspringJuvenileAndAdultBodyMasses[1], OffspringJuvenileAndAdultBodyMasses[0], OffspringCohortAbundance, exp(gridCellCohorts[actingCohort].LogOptimalPreyBodySizeRatio), currentTimestep, gridCellCohorts[actingCohort].ProportionTimeActive, partial.NextCohortIDThreadLocked, tracker.TrackProcesses);
+            Cohort OffspringCohort(gridCellCohorts[actingCohort].origin[0],gridCellCohorts[actingCohort].origin[1],p,actingCohort[0], OffspringJuvenileAndAdultBodyMasses[0], OffspringJuvenileAndAdultBodyMasses[1], OffspringJuvenileAndAdultBodyMasses[0], OffspringCohortAbundance, exp(gridCellCohorts[actingCohort].LogOptimalPreyBodySizeRatio), currentTimestep, gridCellCohorts[actingCohort].ProportionTimeActive, partial.NextCohortIDThreadLocked);
 
             // Add the offspring cohort to the grid cell cohorts array
             gridCellCohorts[actingCohort[0]].push_back(OffspringCohort);
-
-            //                // If track processes has been specified then add the new cohort to the process tracker 
-            //                if (tracker.TrackProcesses)
-            //                    tracker.RecordNewCohort((unsigned)cellEnvironment["LatIndex"][0],  (unsigned)cellEnvironment["LonIndex"][0], 
-            //                        currentTimestep, OffspringCohortAbundance, gridCellCohorts[actingCohort].AdultMass, gridCellCohorts[actingCohort].FunctionalGroupIndex,
-            //                        gridCellCohorts[actingCohort].CohortID, (unsigned)partial.NextCohortIDThreadLocked);
 
             // Subtract all of the reproductive potential mass of the parent cohort, which has been used to generate the new
             // cohort, from the delta reproductive potential mass and delta adult body mass

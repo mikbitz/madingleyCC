@@ -3,9 +3,10 @@
 /** \file Stock.h
  * \brief the Stock header file
  */
-
-/** \brief
-//    /// Hold individual stocks */
+#include <map>
+#include <vector>
+#include <FunctionalGroupDefinitions.h>
+/** \brief  Individual stocks */
 class Stock {
 public:
     //----------------------------------------------------------------------------------------------
@@ -24,21 +25,14 @@ public:
     //----------------------------------------------------------------------------------------------
     //Methods
     //----------------------------------------------------------------------------------------------
-    /** \brief default constructor - used only at definition in continain classes*/
-    Stock() {
-        ;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Constructor for stock class. Assigns stock starting properties
-    @param functionalGroupIndex The functional group index of the stock being generated 
-    @param individualMass The individual mass of the stock 
-    @param initialTotalBiomass The initial total biomass of the stock */
-    Stock(unsigned functionalGroupIndex, double individualMass, double initialTotalBiomass) {
-        FunctionalGroupIndex = functionalGroupIndex;
-        IndividualBodyMass = individualMass;
-        TotalBiomass = initialTotalBiomass;
-    }
-    //----------------------------------------------------------------------------------------------
 
+    /** \brief Constructor for stock class. Assigns stock starting properties
+    @param StockDefinitions Definitions of Stock Properties
+    @param Functional Group The functional group index of the stock being generated 
+    @param Environment The cell environment 
+    @param Success Whether the stock should be present in this cell */
+    Stock(FunctionalGroupDefinitions& , const unsigned , map<string, vector<double>>&, bool& success);
+        
+     
 };
 #endif

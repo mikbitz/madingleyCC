@@ -183,7 +183,7 @@ public:
                 if (param == "mortality filename") ProcessTrackingOutputs["MortalityOutput"] = val;
                 if (param == "extinction filename") ProcessTrackingOutputs["ExtinctionOutput"] = val;
 
-                if (param == "output detail") InitialisationFileStrings["OutputDetail"] = val;
+                if (param == "output detail")InitialisationFileStrings["OutputDetail"] = val;
                 if (param == "human npp extraction") InitialisationFileStrings["HumanNPPExtraction"] = val;
                 if (param == "dispersal only type") InitialisationFileStrings["DispersalOnlyType"] = val;
                 if (param == "cohort functional group definitions file") InitialisationFileStrings["CohortFunctional"] = val;

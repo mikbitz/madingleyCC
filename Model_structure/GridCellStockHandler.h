@@ -1,6 +1,7 @@
 #ifndef GRIDCELLSTOCKHANDLER_H
 #define GRIDCELLSTOCKHANDLER_H
 #include <Stock.h>
+
 /** \file GridCellStockHandler.h
  * \brief the GridCellStockHandler header file
  */

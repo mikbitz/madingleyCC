@@ -86,13 +86,12 @@ public:
      */
     ModelGrid(float minLat, float minLon, float maxLat, float maxLon, float latCellSize, float lonCellSize, vector<vector<unsigned>>&cellList,
             map<string, EnviroData>& enviroStack, FunctionalGroupDefinitions& cohortFunctionalGroups,
-            FunctionalGroupDefinitions& stockFunctionalGroups, map<string, double>& globalDiagnostics, bool tracking,
-             bool runInParallel) {
+            FunctionalGroupDefinitions& stockFunctionalGroups, map<string, double>& globalDiagnostics) {
         // Add one to the counter of the number of grids. If there is more than one model grid, exit the program with a debug crash.
         NumGrids = NumGrids + 1;
         assert(NumGrids < 2 && "You have initialised more than one grid on which to apply models. At present, this is not supported");
 
-        //            // CURRENTLY DEFINING MODEL CELLS BY BOTTOM LEFT CORNER
+        // CURRENTLY DEFINING MODEL CELLS BY BOTTOM LEFT CORNER
         MinLatitude = minLat;
         MinLongitude = minLon;
         MaxLatitude = maxLat;
@@ -135,7 +134,7 @@ public:
                 // Create the grid cell at the specified position
                 InternalGrid[cellList[ii][0]][ cellList[ii][1]] = GridCell(Lats[cellList[ii][0]], cellList[ii][0],
                         Lons[cellList[ii][1]], cellList[ii][1], latCellSize, lonCellSize, enviroStack, GlobalMissingValue,
-                        cohortFunctionalGroups, stockFunctionalGroups, globalDiagnostics, tracking);
+                        cohortFunctionalGroups, stockFunctionalGroups, globalDiagnostics);
 
                      Count++;
                     //cout<<"\rInitialised "<<Count<<" of"<< NCells<<endl;
@@ -334,57 +333,6 @@ public:
         return InterpData;
     }
     //----------------------------------------------------------------------------------------------
-    /** \brief Seed the stocks and cohorts for all active cells in the model grid
-    @param cellIndices A list of the active cells in the model grid 
-    @param cohortFunctionalGroupDefinitions The functional group definitions for cohorts in the model 
-    @param stockFunctionalGroupDefinitions The functional group definitions for stocks in the model 
-    @param globalDiagnostics A list of global diagnostic variables 
-    @param nextCohortID The ID number to be assigned to the next produced cohort 
-    @param tracking Whether process-tracking is enabled 
-    @param DrawRandomly Whether the model is set to use a random draw 
-    @param processTrackers An instance of the ecological process tracker 
-     */
-    void SeedGridCellStocksAndCohorts(vector<vector<unsigned>>&cellIndices, FunctionalGroupDefinitions& cohortFunctionalGroupDefinitions,
-            FunctionalGroupDefinitions& stockFunctionalGroupDefinitions, map<string, double>& globalDiagnostics, long long& nextCohortID,
-            bool tracking, bool DrawRandomly) {
-        int ii = 1;
-        cout << "Seeding grid cell stocks and cohorts:" << endl;
-
-        //Work out how many cohorts are to be seeded in each grid cell - split by realm as different set of cohorts initialised by realm
-        double TotalTerrestrialCellCohorts = 0;
-        double TotalMarineCellCohorts = 0;
-
-        vector<int> TerrestrialFunctionalGroups = cohortFunctionalGroupDefinitions.GetFunctionalGroupIndex("Realm", "Terrestrial", false);
-        if (TerrestrialFunctionalGroups.size() == 0) {
-            TotalTerrestrialCellCohorts = 0;
-        } else {
-            for (int F : TerrestrialFunctionalGroups) {
-                TotalTerrestrialCellCohorts += cohortFunctionalGroupDefinitions.GetBiologicalPropertyOneFunctionalGroup("Initial number of GridCellCohorts", F);
-            }
-        }
-
-
-        vector<int> MarineFunctionalGroups = cohortFunctionalGroupDefinitions.GetFunctionalGroupIndex("Realm", "Marine", false);
-        if (MarineFunctionalGroups.size() == 0) {
-            TotalMarineCellCohorts = 0;
-        } else {
-            for (int F : MarineFunctionalGroups) {
-                TotalMarineCellCohorts += cohortFunctionalGroupDefinitions.GetBiologicalPropertyOneFunctionalGroup("Initial number of GridCellCohorts", F);
-            }
-        }
-
-        for (vector<unsigned> cellIndexPair : cellIndices) {
-
-                InternalGrid[cellIndexPair[0]][ cellIndexPair[1]].SeedGridCellCohortsAndStocks(cellIndexPair,cohortFunctionalGroupDefinitions,
-                        stockFunctionalGroupDefinitions, globalDiagnostics, nextCohortID, tracking, TotalTerrestrialCellCohorts, TotalMarineCellCohorts,
-                        DrawRandomly, false);
-                //cout<<"\rGrid Cell: "<<ii++<<" of "<<cellIndices.size()<<endl;
-        }
-        cout << "Total cohorts initialised: " << globalDiagnostics["NumberOfCohortsInModel"] << endl;
-        cout << "" << endl;
-        cout << "" << endl;
-    }
-    //----------------------------------------------------------------------------------------------
     /** \brief Returns the stocks within the specified grid cell
     @param latIndex Latitude index 
     @param lonIndex Longitude index 
@@ -432,52 +380,6 @@ public:
       
         auto begin = InternalGrid[c.origin[0]][c.origin[1]].GridCellCohorts[c.FunctionalGroupIndex].begin();
         InternalGrid[c.origin[0]][c.origin[1]].GridCellCohorts[c.FunctionalGroupIndex].erase(begin + c.positionInList);
-
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Delete a specified list of cohorts from a grid cell
-    @param latIndex The latitudinal index of the grid cell to delete cohorts from 
-    @param lonIndex The longitudinal index of the grid cell to delete cohorts from 
-    @param cohortFGsToDelete A list of the functional groups that each cohort to delete belongs to 
-    @param cohortNumbersToDelete A list of the positions with each functional group that each cohort to delete occupies 
-    \remarks This is inefficient and needs double-checking for errors
-     */
-    void DeleteGridCellIndividualCohorts(unsigned latIndex, unsigned lonIndex, vector<unsigned> cohortFGsToDelete, vector<unsigned> cohortNumbersToDelete) {
-
-        // Get the unique functional groups that have cohorts to be removed
-
-        vector<unsigned> TempList = cohortFGsToDelete;
-        sort(TempList.begin(), TempList.end());
-        TempList.erase(unique(TempList.begin(), TempList.end()), TempList.end());
-
-        // Loop over these unique functional  groups
-        for (int ii = 0; ii < TempList.size(); ii++) {
-            // Get the functional group index of the current functional group
-            int FG = (int) TempList[ii];
-
-            // Create a local list to hold the positions of the cohorts to delete from this functional group
-            vector<unsigned> CohortIndexList;
-            // Loop over all cohorts to be deleted
-            for (int jj = 0; jj < cohortFGsToDelete.size(); jj++) {
-                // Check whether the functional group correpsonds with the functional group currently being processed 
-                if (cohortFGsToDelete.at((int) jj) == FG) {
-                    // Add the cohort to the list of cohorts to delete
-                    CohortIndexList.push_back(cohortNumbersToDelete[jj]);
-                }
-            }
-
-            // Sort the list of positions of the cohorts to delete in this functional group
-            sort(CohortIndexList.begin(), CohortIndexList.end());
-            // Reverse the list so that the highest positions come first
-            reverse(CohortIndexList.begin(), CohortIndexList.end());
-
-            // Loop over cohorts and delete in turn, starting with cohorts in the highest positions
-            for (int kk = 0; kk < CohortIndexList.size(); kk++) {
-                auto it = InternalGrid[latIndex][ lonIndex].GridCellCohorts[FG].begin();
-                InternalGrid[latIndex][ lonIndex].GridCellCohorts[FG].erase(it + (int) CohortIndexList[kk]);
-            }
-
-        }
 
     }
     //----------------------------------------------------------------------------------------------
@@ -1171,10 +1073,9 @@ public:
             int lnc = lonCell + u;
             if (lnc < 0)lnc += NumLonCells;
             if (lnc >= NumLonCells)lnc -= NumLonCells;
-            if (InternalGrid[latCell + v][ lnc].CellEnvironment["Realm"][0] == InternalGrid[latCell][ lonCell].CellEnvironment["Realm"][0]) {
                 Cell[0] = latCell + v;
                 Cell[1] = lnc;
-            }
+                
         }
         return Cell;
     }

@@ -3,6 +3,9 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <iostream>
+#include <algorithm>
+#include <assert.h>
 using namespace std;
 /** \file FunctionalGroupDefinitions.h
  * \brief the FunctionalGroupDefinitions header file
@@ -50,7 +53,7 @@ public:
             //trim off newline character
             l.pop_back();
             istringstream s(l);
-            //split out the comma-separated header
+            //split out the comma-separated and underscore separated header
             while (s.good()) {
                 string tmp;
                 getline(s, tmp, ',');
@@ -65,35 +68,39 @@ public:
             }
             int count = 0;
             //retrieve the lines defining each functional group
+
             while (infile.good()) {
-                AllFunctionalGroupsIndex.push_back(count);
 
                 string l, data;
                 getline(infile, l);
-                if (infile.good())l.pop_back();
-                if (l.length() > 1) {
-                    istringstream s(l);
-                    //step through the columns for this functional group
-                    for (unsigned i = 0; i < header.size(); i++) {
-                        getline(s, data, ',');
-                        transform(data.begin(), data.end(), data.begin(), ::tolower);
+                if (infile.good()) {
+                    l.pop_back();
+                    AllFunctionalGroupsIndex.push_back(count);
 
-                        if (category[i] == "definition") {
-                            //for each trait, store the value for a given functional group
-                            //indexed by functional group number
-                            TraitLookupFromIndex[header[i]].push_back(data);
-                            //for a given trait, store the functional group number
-                            //which has a given value for that trait
-                            IndexLookupFromTrait[header[i]][data].push_back(count);
-                        }
-                        //Otherwise get the value for the given property
-                        //for this functional group
-                        if (category[i] == "property") {
-                            FunctionalGroupProperties[header[i]].push_back(atof(data.c_str()));
+                    if (l.length() > 1) {
+                        istringstream s(l);
+                        //step through the columns for this functional group
+                        for (unsigned i = 0; i < header.size(); i++) {
+                            getline(s, data, ',');
+                            transform(data.begin(), data.end(), data.begin(), ::tolower);
+
+                            if (category[i] == "definition") {
+                                //for each trait, store the value for a given functional group
+                                //indexed by functional group number
+                                TraitLookupFromIndex[header[i]].push_back(data);
+                                //for a given trait, store the functional group number
+                                //which has a given value for that trait
+                                IndexLookupFromTrait[header[i]][data].push_back(count);
+                            }
+                            //Otherwise get the value for the given property
+                            //for this functional group
+                            if (category[i] == "property") {
+                                FunctionalGroupProperties[header[i]].push_back(atof(data.c_str()));
+                            }
                         }
                     }
+                    count++;
                 }
-                count++;
             }
 
 
@@ -200,7 +207,7 @@ public:
             }
         }
         sort(Result.begin(),Result.end());
-        unique(Result.begin(),Result.end());
+        if (intersection)unique(Result.begin(),Result.end());
         return Result;
     }
     //----------------------------------------------------------------------------------------------
@@ -227,7 +234,7 @@ public:
             //and add it to the List of these for processing - intersection of union
             if (IndexLookupFromTrait[searchTraits].count(searchTraitValues) != 0) {
                 return IndexLookupFromTrait[searchTraits][searchTraitValues];
-            }                //If trait value string not found then show error message
+            }//If trait value string not found then show error message
             else {
                 cout << "Trait Value to search for not found in lookup tables" << endl;
                 exit(1);
@@ -237,7 +244,8 @@ public:
             cout << "Trait to search for not found in lookup tables" << endl;
             exit(1);
         }
-
+        sort(IndexList.begin(),IndexList.end());
+        if (intersection)unique(IndexList.begin(),IndexList.end());
         return IndexList;
     }
     //----------------------------------------------------------------------------------------------

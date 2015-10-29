@@ -45,10 +45,10 @@ public:
     @param GlobalModelTimeStepUnit The time step unit used in the model */
     void ConvertNPPToAutotroph(map<string, vector<double>>&cellEnvironment, GridCellStockHandler& gridCellStockHandler, vector<int>&
             actingStock, string terrestrialNPPUnits, string oceanicNPPUnits, unsigned currentTimestep, string GlobalModelTimeStepUnit,
-            ProcessTracker& trackProcesses, GlobalProcessTracker& globalTracker, string outputDetail,  unsigned currentMonth) {
+             string outputDetail,  unsigned currentMonth) {
         // Get NPP from the cell environment
         double NPP = cellEnvironment["NPP"][currentMonth];
-
+        
         // If NPP is a mssing value then set to zero
         if (NPP == cellEnvironment["Missing Value"][0]) NPP = 0.0;
 
@@ -69,18 +69,6 @@ public:
             //Finally convert to g/cell/month and add to the stock totalbiomass
             NPP *= Utilities.ConvertTimeUnits(GlobalModelTimeStepUnit, "day");
             gridCellStockHandler[actingStock].TotalBiomass += NPP;
-
-            //                if (trackProcesses.TrackProcesses && (outputDetail == "high") && specificLocations)
-            //                {
-            //                    trackProcesses.TrackPrimaryProductionTrophicFlow((unsigned)cellEnvironment["LatIndex"][0], (unsigned)cellEnvironment["LonIndex"][0],
-            //                        NPP);
-            //                }
-
-            //                if (globalTracker.TrackProcesses)
-            //                {
-            //                    globalTracker.RecordNPP((unsigned)cellEnvironment["LatIndex"][0], (unsigned)cellEnvironment["LonIndex"][0],
-            //                            NPP / cellEnvironment["Cell Area"][0]);
-            //                }
 
             // If the biomass of the autotroph stock has been made less than zero (i.e. because of negative NPP) then reset to zero
             if (gridCellStockHandler[actingStock].TotalBiomass < 0.0)

@@ -56,7 +56,7 @@ public:
     @param nextCohortID The unique ID to assign to the next cohort created 
     @param tracking Whether the process tracker is enabled 
      */
-    Cohort(const unsigned cellId0, const unsigned cellId1, const unsigned& pos, unsigned functionalGroupIndex, double juvenileBodyMass, double adultBodyMass, double initialBodyMass, double initialAbundance, double optimalPreyBodySizeRatio, unsigned short birthTimeStep, double proportionTimeActive, long long &nextCohortID, bool tracking) {
+    Cohort(const unsigned cellId0, const unsigned cellId1, const unsigned& pos, unsigned functionalGroupIndex, double juvenileBodyMass, double adultBodyMass, double initialBodyMass, double initialAbundance, double optimalPreyBodySizeRatio, unsigned short birthTimeStep, double proportionTimeActive, long long &nextCohortID) {
         FunctionalGroupIndex = functionalGroupIndex;
         JuvenileMass = juvenileBodyMass;
         AdultMass = adultBodyMass;

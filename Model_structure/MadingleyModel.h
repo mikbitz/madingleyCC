@@ -7,6 +7,7 @@
 #include <Stopwatch.h>
 #include <CohortMerge.h>
 #include <ModelGrid.h>
+#include <GridCell.h>
 #include <Dispersal.h>
 #include <EcologyStock.h>
 #include <EcologyCohort.h>
@@ -65,16 +66,12 @@ public:
     vector< vector<unsigned> > CellList;
     /** \brief A list of global diagnostics for this model run */
     map<string, double> GlobalDiagnosticVariables;
-    /** \brief Whether the model will run in parallel (default  is false) */
-    bool RunGridCellsInParallel = false;
     /** \brief An instance of StopWatch to time individual time steps */
     StopWatch TimeStepTimer;
     StopWatch EcologyTimer;
     StopWatch OutputTimer;
     /** \brief An array of instances of the output class to deal with grid cell outputs */
     //vector<OutputCell> CellOutputs;
-    /** \brief  An array of indices of process trackers for each grid cell */
-    vector<ProcessTracker> ProcessTrackers;
     /** \brief  An instance of a global process tracker to track across the model grid */
     GlobalProcessTracker TrackGlobalProcesses;
     /** \brief An instance of the output class to deal with global outputs */
@@ -97,6 +94,8 @@ public:
     UtilityFunctions Utilities;
     /** \brief An instance of the merging class */
     CohortMerge CohortMerger;
+        /** \brief An instance of the simple random number generator class */
+    std::default_random_engine RandomNumberGenerator;
     //
     MadingleyModelInitialisation initialisation;
     Dispersal disperser;
@@ -114,8 +113,9 @@ public:
      */
     MadingleyModel(string initialisationFileName, string OutputPath) {
         initialisation = MadingleyModelInitialisation(initialisationFileName, OutputPath);
+        
         // Assign the properties for this model run
-        AssignModelRunProperties(initialisation);
+        setUpModelRunProperties(initialisation);
         // Set up list of global diagnostics
         SetUpGlobalDiagnosticsList();
         // Set up the model grid
@@ -124,47 +124,10 @@ public:
         SetUpOutputs(initialisation);
         // Make the initial outputs
         InitialOutputs(initialisation, CurrentMonth);
-        //Instance the array of process trackers
-        //ProcessTrackers.resize[CellList.size()];
+
         // Temporary variables
         bool varExists;
-        //
-        //            // Set up process trackers for each grid cell
-        //            for (int i = 0; i < _CellList.Count; i++)
-        //            {
-        //                ProcessTrackers[i] = new ProcessTracker(NumTimeSteps,
-        //                EcosystemModelGrid.Lats, EcosystemModelGrid.Lons,
-        //                _CellList,
-        //                initialisation.ProcessTrackingOutputs,
-        //                initialisation.TrackProcesses,
-        //                CohortFunctionalGroupDefinitions,
-        //                EcosystemModelGrid.GlobalMissingValue,
-        //                outputFilesSuffix,
-        //                initialisation.OutputPath, initialisation.ModelMassBins,
-        //                SpecificLocations, i, initialisation, 
-        //                EcosystemModelGrid.GetEnviroLayer("Realm", 0, _CellList[i][0], _CellList[i][1], out varExists) == 2.0,
-        //                EcosystemModelGrid.LatCellSize,
-        //                EcosystemModelGrid.LonCellSize);
-        //            }
-        //            
-        //            //Set up a global process tracker
-        //            if (SpecificLocations) initialisation.TrackGlobalProcesses = false;
-        //
-        //            TrackGlobalProcesses = new GlobalProcessTracker(NumTimeSteps,
-        //                EcosystemModelGrid.Lats, EcosystemModelGrid.Lons,
-        //                _CellList,
-        //                initialisation.ProcessTrackingOutputs,
-        //                initialisation.TrackGlobalProcesses,
-        //                CohortFunctionalGroupDefinitions,
-        //                EcosystemModelGrid.GlobalMissingValue,
-        //                outputFilesSuffix,
-        //                initialisation.OutputPath, initialisation.ModelMassBins,
-        //                SpecificLocations, initialisation,
-        //                EcosystemModelGrid.LatCellSize,
-        //                EcosystemModelGrid.LonCellSize);
-        //
-        //Record the initial cohorts in the process trackers
-        //RecordInitialCohorts();
+ 
         // Set the global model time step unit
         GlobalModelTimeStepUnit = initialisation.GlobalModelTimeStepUnit;
         //end of initialisations
@@ -188,7 +151,7 @@ public:
         Dispersals = 0;         
         /// Run the model
         //for (unsigned hh = 0; hh < NumTimeSteps; hh += 1) {
-        for (unsigned hh = 0; hh < 1; hh += 1) {
+        for (unsigned hh = 0; hh < 2; hh += 1) {
             cout << "Running time step " << hh + 1 << "..." << endl;
             // Start the timer
             TimeStepTimer.Start();
@@ -196,14 +159,16 @@ public:
             CurrentTimeStep = hh;
             CurrentMonth = Utilities.GetCurrentMonth(hh, GlobalModelTimeStepUnit);
             EcologyTimer.Start();
-            // Run cells in sequence
-            RunCellsSequentially();
+
+            RunWithinCells();
+
             EcologyTimer.Stop();
             cout << "Within grid ecology took: " << EcologyTimer.GetElapsedTimeSecs() << endl;
-            //if(TrackGlobalProcesses.TrackProcesses) TrackGlobalProcesses.StoreNPPGrid(hh);
+
             EcologyTimer.Start();
-            // Run cross grid cell ecology
+
             RunCrossGridCellEcology(Dispersals);
+
             EcologyTimer.Stop();
             cout << "Across grid ecology took: " << EcologyTimer.GetElapsedTimeSecs() << endl;               
             // Stop the timer
@@ -228,232 +193,41 @@ public:
             // Write the results of dispersal to the console
             cout << "Number of cohorts that dispersed this time step: " << Dispersals << endl;
         }
-        //
-        //             if (TrackGlobalProcesses.TrackProcesses) TrackGlobalProcesses.CloseNPPFile();
-        //
-        //            // Loop over cells and close process trackers
-        //             for (int i = 0; i < _CellList.Count; i++)
-        //             {
-        //                 if (ProcessTrackers[i].TrackProcesses) ProcessTrackers[i].CloseStreams(SpecificLocations);
-        //             }
-        //
+
         //            // Write the final global outputs
         //            GlobalOutputs.FinalOutputs();
            
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief  A method to run the main ecosystem model loop in parallel (latitudinal strips)
-    @param latCellIndex The latitude index of the cell to run
-    @param lonCellIndex The longitude index of the cell to run
-    @param partial A threadlockedparallelvariable that is used to pass global diagnostic information back with locking or race conditions
-    @param dispersalOnly Whether to run dispersal only (i.e. to turn all other ecological processes off
-    @remarks Note that variables and instances of classes that are written to within this method MUST be local within this method to prevent 
-     race issues and multiple threads attempting to write to the same variable when running the program in parallel
-     */
-    void RunCell(int cellIndex, ThreadLockedParallelVariables& partial,  MadingleyModelInitialisation& initialisation) {
-        // Create a temporary internal copy of the grid cell cohorts
-        GridCellCohortHandler WorkingGridCellCohorts = EcosystemModelGrid.GetGridCellCohorts(CellList[cellIndex][0], CellList[cellIndex][1]);
-        // Create a temporary internal copy of the grid cell stocks
-        GridCellStockHandler WorkingGridCellStocks = EcosystemModelGrid.GetGridCellStocks(CellList[cellIndex][0], CellList[cellIndex][1]);
-        // Run stock ecology
-        //RunWithinCellStockEcology(CellList[cellIndex][0], CellList[cellIndex][1], WorkingGridCellStocks, cellIndex);
-        // Run cohort ecology
-        RunWithinCellCohortEcology(CellList[cellIndex][0], CellList[cellIndex][1], partial, WorkingGridCellCohorts, WorkingGridCellStocks, InitialisationFileStrings["OutputDetail"], cellIndex, initialisation);
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief  Assigns the properties of the current model run
-    @param initialisation An instance of the model initialisation class 
-    @param scenarioParameters The parameters for the scenarios to run
-    @param scenarioIndex The index of the scenario that this model is to run
-    @param outputFilesSuffix The suffix to be applied to all outputs from this model run
-     */
-    void AssignModelRunProperties(MadingleyModelInitialisation& initialisation) {
-        // Assign the properties of this model run from the same properties in the specified model initialisation
-        GlobalModelTimeStepUnit = initialisation.GlobalModelTimeStepUnit;
-        NumTimeSteps = initialisation.NumTimeSteps;
-        CellSize = initialisation.CellSize;
-        BottomLatitude = initialisation.BottomLatitude;
-        TopLatitude = initialisation.TopLatitude;
-        LeftmostLongitude = initialisation.LeftmostLongitude;
-        RightmostLongitude = initialisation.RightmostLongitude;
-        CellRarefaction = initialisation.CellRarefaction;
-        RunGridCellsInParallel = initialisation.RunCellsInParallel;
-        DrawRandomly = initialisation.DrawRandomly;
-        ExtinctionThreshold = initialisation.ExtinctionThreshold;
-        MergeDifference = initialisation.MergeDifference;
-        InitialisationFileStrings = initialisation.InitialisationFileStrings;
-        CohortFunctionalGroupDefinitions = initialisation.CohortFunctionalGroupDefinitions;
-        StockFunctionalGroupDefinitions = initialisation.StockFunctionalGroupDefinitions;
-        EnviroStack = initialisation.EnviroStack;
-        HumanNPPExtraction = initialisation.InitialisationFileStrings["HumanNPPExtraction"];
-        OutputFilesSuffix = "";
-        EnvironmentalDataUnits = initialisation.Units;
-
-        // If the model run is for a whole grid, then create envirodata classes with the environmental data
-            // TEMP COMMENT OUT OF TEMPERATURE
-            //MB originally these were done with "FetchClimate" but this needs to be replaced
-            if (EnviroStack.count("Temperature")   == 0) EnviroStack["Temperature"]   = EnviroData("temperature", "month", BottomLatitude, LeftmostLongitude, TopLatitude, RightmostLongitude, CellSize); //, EnvironmentalDataSource.ANY));
-            if (EnviroStack.count("LandDTR")       == 0) EnviroStack["LandDTR"]       = EnviroData("land_dtr", "month", BottomLatitude, LeftmostLongitude, TopLatitude, RightmostLongitude, CellSize); //, EnvironmentalDataSource.ANY));
-            if (EnviroStack.count("OceanTemp")     == 0) EnviroStack["OceanTemp"]     = EnviroData("temperature_ocean", "month", BottomLatitude, LeftmostLongitude, TopLatitude, RightmostLongitude, CellSize); //, EnvironmentalDataSource.ANY));
-            if (EnviroStack.count("Precipitation") == 0) EnviroStack["Precipitation"] = EnviroData("precipitation", "month", BottomLatitude, LeftmostLongitude, TopLatitude, RightmostLongitude, CellSize); //, EnvironmentalDataSource.ANY));
-            if (EnviroStack.count("FrostDays")     == 0) EnviroStack["FrostDays"]     = EnviroData("frost", "month", BottomLatitude, LeftmostLongitude, TopLatitude, RightmostLongitude, CellSize); //, EnvironmentalDataSource.ANY));
-        // Initialise the cohort ID to zero
-        NextCohortID = 0;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief   Sets up the list of global diagnostic variables
-     */
-    void SetUpGlobalDiagnosticsList() {
-        // Add global diagnostic variables
-        GlobalDiagnosticVariables["NumberOfCohortsExtinct"] = 0.0;
-        GlobalDiagnosticVariables["NumberOfCohortsProduced"] = 0.0;
-        GlobalDiagnosticVariables["NumberOfCohortsCombined"] = 0.0;
-        GlobalDiagnosticVariables["NumberOfCohortsInModel"] = 0.0;
-        GlobalDiagnosticVariables["NumberOfStocksInModel"] = 0.0;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief   Sets up the model outputs
-    @param initialisation An instance of the model initialisation class
-     */
-    void SetUpOutputs(MadingleyModelInitialisation initialisation) {
-        //            // Initialise the global outputs
-        //            GlobalOutputs = new OutputGlobal(InitialisationFileStrings["OutputDetail"], initialisation);
-        //
-        //            // Create new outputs class instances (if the model is run for the whold model grid then select the grid view for the live output,
-        //            // if the model is run for specific locations then use the graph view)
-        //            if (SpecificLocations)
-        //            {
-        //
-        //                // Initialise the vector of outputs instances
-        //                CellOutputs = new OutputCell[_CellList.Count];
-        //
-        //                for (int i = 0; i < _CellList.Count; i++)
-        //                {
-        //                    CellOutputs[i] = new OutputCell(InitialisationFileStrings["OutputDetail"], initialisation);
-        //                }
-        //
-        //                // Spawn a dataset viewer instance for each cell to display live model results
-        //                if (initialisation.LiveOutputs)
-        //                {
-        //                    for (int i = 0; i < _CellList.Count; i++)
-        //                    {
-        //                        CellOutputs[i].SpawnDatasetViewer(NumTimeSteps);
-        //                    }
-        //                }
-        //            
-        //            }
-        //            else
-        //            {
-        //                GridOutputs = new OutputGrid(InitialisationFileStrings["OutputDetail"], initialisation);
-        //            }
-        //
-        //            
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief    Sets up the model grid within a Madingley model run
-    @param initialisation An instance of the model initialisation class 
-    @param scenarioParameters The parameters for the scenarios to run
-    @param scenarioIndex The index of the scenario that this model is to run
-     */
-    void SetUpModelGrid(MadingleyModelInitialisation& initialisation) {
-
-        //Switched order so we create cell list first then initialise cells using list rather than grid.
-
-        unsigned NumLatCells = (unsigned) ((TopLatitude - BottomLatitude) / CellSize);
-        unsigned NumLonCells = (unsigned) ((RightmostLongitude - LeftmostLongitude) / CellSize);
-        //
-        //                // Loop over all cells in the model
-        for (unsigned ii = 0; ii < NumLatCells; ii += (unsigned) CellRarefaction) {
-            for (unsigned jj = 0; jj < NumLonCells; jj += (unsigned) CellRarefaction) {
-                //                        // Define a vector to hold the pair of latitude and longitude indices for this grid cell
-                vector<unsigned> cellIndices(2);
-                // Add the latitude and longitude indices to this vector
-                cellIndices[0] = ii;
-                cellIndices[1] = jj;
-                // Add the vector to the list of all active grid cells
-                CellList.push_back(cellIndices);
-            }
-        }
-
-        EcologyTimer.Start();
-
-        // Set up the model grid using these locations
-
-        EcosystemModelGrid = ModelGrid(BottomLatitude, LeftmostLongitude, TopLatitude, RightmostLongitude,
-                CellSize, CellSize, CellList, EnviroStack, CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions,
-                GlobalDiagnosticVariables, initialisation.TrackProcesses,  RunGridCellsInParallel);
-
-        EcologyTimer.Stop();
-        cout << "Time to initialise cells: " << EcologyTimer.GetElapsedTimeSecs() << endl;
-
-        // Seed stocks and cohorts in the grid cells
-        EcosystemModelGrid.SeedGridCellStocksAndCohorts(CellList, CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions,
-                GlobalDiagnosticVariables, NextCohortID, InitialisationFileStrings["OutputDetail"] == "high", DrawRandomly);
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief   Generates the initial outputs for this model run
-    @param outputFilesSuffix The suffix to be applied to all outputs from this model run
-     */
-    void InitialOutputs(MadingleyModelInitialisation initialisation, unsigned month) {
-        //            // Set up global outputs for all model runs
-        //            GlobalOutputs.SetupOutputs(NumTimeSteps, EcosystemModelGrid, OutputFilesSuffix);
-        //
-        //            // Create initial global outputs
-        //            GlobalOutputs.InitialOutputs(EcosystemModelGrid,CohortFunctionalGroupDefinitions,StockFunctionalGroupDefinitions,_CellList,
-        //                GlobalDiagnosticVariables, initialisation);
-        //
-        //            // Temporary
-        //            Boolean varExists;
-        //
-        //            if (SpecificLocations)
-        //            {
-        //                for (int i = 0; i < _CellList.Count; i++)
-        //                {
-        //                    // Set up grid cell outputs
-        //                    CellOutputs[i].SetUpOutputs(EcosystemModelGrid, CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions,
-        //                        NumTimeSteps, OutputFilesSuffix, _CellList, i, EcosystemModelGrid.GetEnviroLayer("Realm", 0, _CellList[i][0], _CellList[i][1], out varExists) == 2.0);
-        //
-        //                    // Create initial grid cell outputs
-        //                    CellOutputs[i].InitialOutputs(EcosystemModelGrid, CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions,
-        //                        _CellList, i, GlobalDiagnosticVariables, NumTimeSteps, initialisation, month, EcosystemModelGrid.GetEnviroLayer("Realm", 0, _CellList[i][0], _CellList[i][1], out varExists) == 2.0);
-        //                }
-        //            }
-        //            else
-        //            {
-        //                // Set up grid outputs
-        //                GridOutputs.SetupOutputs(EcosystemModelGrid, OutputFilesSuffix, NumTimeSteps, 
-        //                    CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions);
-        //
-        //                // Create initial grid outputs
-        //                GridOutputs.InitialOutputs(EcosystemModelGrid, CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions, _CellList, initialisation);
-        //            }
-        //
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief  Run processes for cells sequentially
-     */
-    void RunCellsSequentially() {
-        //            // Instantiate a class to hold thread locked global diagnostic variables
+    }//----------------------------------------------------------------------------------------------
+    /** \brief  Run processes for cells*/
+    void RunWithinCells() {
+        // Instantiate a class to hold thread locked global diagnostic variables
         ThreadLockedParallelVariables singleThreadDiagnostics(0, 0, 0, NextCohortID);
 
-            for (int ii = 0; ii < CellList.size(); ii++) {
-                RunCell(ii, singleThreadDiagnostics,  initialisation);
-            }
+        for (int cellIndex = 0; cellIndex < CellList.size(); cellIndex++) {
 
+            // Create a temporary internal copy of the grid cell cohorts
+            GridCellCohortHandler& WorkingGridCellCohorts = EcosystemModelGrid.GetGridCellCohorts(CellList[cellIndex][0], CellList[cellIndex][1]);
+            // Create a temporary internal copy of the grid cell stocks
+            GridCellStockHandler& WorkingGridCellStocks = EcosystemModelGrid.GetGridCellStocks(CellList[cellIndex][0], CellList[cellIndex][1]);
+
+            RunWithinCellStockEcology(CellList[cellIndex][0], CellList[cellIndex][1], WorkingGridCellStocks, cellIndex);
+ 
+            RunWithinCellCohortEcology(CellList[cellIndex][0], CellList[cellIndex][1], singleThreadDiagnostics, WorkingGridCellCohorts, WorkingGridCellStocks, InitialisationFileStrings["OutputDetail"], cellIndex, initialisation);
+        }
         // Update the variable tracking cohort unique IDs
         NextCohortID = singleThreadDiagnostics.NextCohortIDThreadLocked;
         // Take the results from the thread local variables and apply to the global diagnostic variables
-        GlobalDiagnosticVariables["NumberOfCohortsExtinct"]  = singleThreadDiagnostics.Extinctions - singleThreadDiagnostics.Combinations;
+        GlobalDiagnosticVariables["NumberOfCohortsExtinct"] = singleThreadDiagnostics.Extinctions - singleThreadDiagnostics.Combinations;
         GlobalDiagnosticVariables["NumberOfCohortsProduced"] = singleThreadDiagnostics.Productions;
-        GlobalDiagnosticVariables["NumberOfCohortsInModel"]  = GlobalDiagnosticVariables["NumberOfCohortsInModel"] + singleThreadDiagnostics.Productions - singleThreadDiagnostics.Extinctions;
+        GlobalDiagnosticVariables["NumberOfCohortsInModel"] = GlobalDiagnosticVariables["NumberOfCohortsInModel"] + singleThreadDiagnostics.Productions - singleThreadDiagnostics.Extinctions;
         GlobalDiagnosticVariables["NumberOfCohortsCombined"] = singleThreadDiagnostics.Combinations;
     }
     //----------------------------------------------------------------------------------------------
     /** \brief   Run ecological processes for stocks in a specified grid cell
     @param latCellIndex The latitudinal index of the cell to run stock ecology for
     @param lonCellIndex The longitudinal index of the cell to run stock ecology for
-    @param workingGridCellStocks A copy of the cohorts in the current grid cell
-     * NB - acting on a copy here? needed of parallelity?
+    @param workingGridCellStocks A (copy of?) the stocks in the current grid cell
+     * NB - acting on a copy here? needed of parallelity? Depends if you write to the grid cell pools...
      */
     void RunWithinCellStockEcology(unsigned latCellIndex, unsigned lonCellIndex, GridCellStockHandler& workingGridCellStocks, int cellIndex) {
         // Create a local instance of the stock ecology class
@@ -465,14 +239,14 @@ public:
         // Loop over autotroph functional groups
         for (int FunctionalGroup : AutotrophStockFunctionalGroups) {
             for (int ll = 0; ll < workingGridCellStocks[FunctionalGroup].size(); ll++) {
-                //                    // Get the position of the acting stock
+                // Get the position of the acting stock
                 ActingStock[0] = FunctionalGroup;
                 ActingStock[1] = ll;
                 // Run stock ecology
                 MadingleyEcologyStock.RunWithinCellEcology(workingGridCellStocks, ActingStock, EcosystemModelGrid.GetCellEnvironment(
                         latCellIndex, lonCellIndex), EnvironmentalDataUnits, HumanNPPExtraction, StockFunctionalGroupDefinitions,
-                        CurrentTimeStep, GlobalModelTimeStepUnit, ProcessTrackers[cellIndex].TrackProcesses, ProcessTrackers[cellIndex], TrackGlobalProcesses, CurrentMonth,
-                        InitialisationFileStrings["OutputDetail"]);
+                        CurrentTimeStep, GlobalModelTimeStepUnit,CurrentMonth,
+                        initialisation.InitialisationFileStrings["OutputDetail"]);
                 //workingGridCellStocks[ActingStock].TotalBiomass *= 0.75;//MB strange line - commented out in original?
             }
         }
@@ -575,13 +349,12 @@ public:
                         ActingCohort, EcosystemModelGrid.GetCellEnvironment(latCellIndex, lonCellIndex),
                         EcosystemModelGrid.GetCellDeltas(latCellIndex, lonCellIndex),
                         CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions, CurrentTimeStep,
-                        ProcessTrackers[cellIndex], partial,  outputDetail, CurrentMonth, initialisation);
+                         partial,  outputDetail, CurrentMonth, initialisation);
 
                 // Update the properties of the acting cohort
                 MadingleyEcologyCohort.UpdateEcology(workingGridCellCohorts, workingGridCellStocks, ActingCohort,
                         EcosystemModelGrid.GetCellEnvironment(latCellIndex, lonCellIndex), EcosystemModelGrid.GetCellDeltas(
-                        latCellIndex, lonCellIndex), CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions, CurrentTimeStep,
-                        ProcessTrackers[cellIndex]);
+                        latCellIndex, lonCellIndex), CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions, CurrentTimeStep);
 
                 // Add newly produced cohorts to the tracking variable
                 EcosystemModelParallelTempval2 += workingGridCellCohorts[ActingCohort[0]].size() - EcosystemModelParallelTempval1;
@@ -600,8 +373,6 @@ public:
         partial.Productions += EcosystemModelParallelTempval2;
 
         RunExtinction(latCellIndex, lonCellIndex, partial, workingGridCellCohorts, cellIndex);
-
-
 
         // Merge cohorts, if necessary
         if (workingGridCellCohorts.GetNumberOfCohorts() > initialisation.MaxNumberOfCohorts) {
@@ -635,12 +406,6 @@ public:
 
                     partial.Extinctions += 1;
 
-                    //                        // If track processes is set and output detail is set to high and the cohort being made extinct has never been merged,
-                    //                        // then output its mortality profile
-                    //                        if (ProcessTrackers[cellIndex].TrackProcesses && (InitialisationFileStrings["OutputDetail"] == "high") && (workingGridCellCohorts[kk][ll].CohortID.Count == 1))
-                    //                        {
-                    //                            ProcessTrackers[cellIndex].OutputMortalityProfile(workingGridCellCohorts[kk][ll].CohortID[0]);
-                    //                        }
                 }
             }
 
@@ -650,10 +415,7 @@ public:
                 EcosystemModelGrid.SetEnviroLayer("Organic Pool", 0, EcosystemModelGrid.GetEnviroLayer("Organic Pool", 0, latCellIndex, lonCellIndex, VarExists) +
                         (workingGridCellCohorts[kk][CohortIndicesToRemove[ll]].IndividualBodyMass + workingGridCellCohorts[kk][CohortIndicesToRemove[ll]].IndividualReproductivePotentialMass) * workingGridCellCohorts[kk][CohortIndicesToRemove[ll]].CohortAbundance, latCellIndex, lonCellIndex);
                 assert(EcosystemModelGrid.GetEnviroLayer("Organic Pool", 0, latCellIndex, lonCellIndex, VarExists) >= 0 && "Organic pool < 0");
-                //
-                //                    if (ProcessTrackers[cellIndex].TrackProcesses && SpecificLocations == true)
-                //                        ProcessTrackers[cellIndex].RecordExtinction(latCellIndex, lonCellIndex, CurrentTimeStep, workingGridCellCohorts[kk][CohortIndicesToRemove[ll]].Merged, workingGridCellCohorts[kk][CohortIndicesToRemove[ll]].CohortID);
-
+ 
                 // Remove the extinct cohort from the list of cohorts
                 workingGridCellCohorts[kk].erase(workingGridCellCohorts[kk].begin() + CohortIndicesToRemove[ll]);
 
@@ -681,31 +443,333 @@ public:
 
     }
     //----------------------------------------------------------------------------------------------
-    /** \brief Make a record of the properties of the intial model cohorts in the new cohorts output file */
-    void RecordInitialCohorts() {
-        //            int i = 0;
-        //            foreach (uint[] cell in _CellList)
-        //            {
-        //                if (ProcessTrackers[i].TrackProcesses)
-        //                {
-        //
-        //                    GridCellCohortHandler TempCohorts = EcosystemModelGrid.GetGridCellCohorts(cell[0], cell[1]);
-        //
-        //                    for (int FunctionalGroup = 0; FunctionalGroup < TempCohorts.Count; FunctionalGroup++)
-        //                    {
-        //                        foreach (Cohort item in TempCohorts[FunctionalGroup])
-        //                        {
-        //                            ProcessTrackers[i].RecordNewCohort(cell[0], cell[1], 0, item.CohortAbundance, item.AdultMass, item.FunctionalGroupIndex,
-        //                                new List<uint> { uint.MaxValue }, item.CohortID[0]);
-        //                        }
-        //                    }
-        //                }
-        //                i += 1;
-        //            }
-        //        }
-        //
+    /** \brief  Assigns the properties of the current model run
+    @param initialisation An instance of the model initialisation class 
+    @param scenarioParameters The parameters for the scenarios to run
+    @param scenarioIndex The index of the scenario that this model is to run
+    @param outputFilesSuffix The suffix to be applied to all outputs from this model run
+     */
+    void setUpModelRunProperties(MadingleyModelInitialisation& initialisation) {
+        // Assign the properties of this model run from the same properties in the specified model initialisation
+        GlobalModelTimeStepUnit = initialisation.GlobalModelTimeStepUnit;
+        NumTimeSteps = initialisation.NumTimeSteps;
+        CellSize = initialisation.CellSize;
+        BottomLatitude = initialisation.BottomLatitude;
+        TopLatitude = initialisation.TopLatitude;
+        LeftmostLongitude = initialisation.LeftmostLongitude;
+        RightmostLongitude = initialisation.RightmostLongitude;
+        CellRarefaction = initialisation.CellRarefaction;
+        DrawRandomly = initialisation.DrawRandomly;
+        ExtinctionThreshold = initialisation.ExtinctionThreshold;
+        MergeDifference = initialisation.MergeDifference;
+        InitialisationFileStrings = initialisation.InitialisationFileStrings;
+        CohortFunctionalGroupDefinitions = initialisation.CohortFunctionalGroupDefinitions;
+        StockFunctionalGroupDefinitions = initialisation.StockFunctionalGroupDefinitions;
+        EnviroStack = initialisation.EnviroStack;
+        HumanNPPExtraction = initialisation.InitialisationFileStrings["HumanNPPExtraction"];
+        OutputFilesSuffix = "";
+        EnvironmentalDataUnits = initialisation.Units;
+
+        // If the model run is for a whole grid, then create envirodata classes with the environmental data
+            // TEMP COMMENT OUT OF TEMPERATURE
+            //MB originally these were done with "FetchClimate" but this needs to be replaced
+            if (EnviroStack.count("Temperature")   == 0) EnviroStack["Temperature"]   = EnviroData("temperature", "month", BottomLatitude, LeftmostLongitude, TopLatitude, RightmostLongitude, CellSize); //, EnvironmentalDataSource.ANY));
+            if (EnviroStack.count("LandDTR")       == 0) EnviroStack["LandDTR"]       = EnviroData("land_dtr", "month", BottomLatitude, LeftmostLongitude, TopLatitude, RightmostLongitude, CellSize); //, EnvironmentalDataSource.ANY));
+            if (EnviroStack.count("OceanTemp")     == 0) EnviroStack["OceanTemp"]     = EnviroData("temperature_ocean", "month", BottomLatitude, LeftmostLongitude, TopLatitude, RightmostLongitude, CellSize); //, EnvironmentalDataSource.ANY));
+            if (EnviroStack.count("Precipitation") == 0) EnviroStack["Precipitation"] = EnviroData("precipitation", "month", BottomLatitude, LeftmostLongitude, TopLatitude, RightmostLongitude, CellSize); //, EnvironmentalDataSource.ANY));
+            if (EnviroStack.count("FrostDays")     == 0) EnviroStack["FrostDays"]     = EnviroData("frost", "month", BottomLatitude, LeftmostLongitude, TopLatitude, RightmostLongitude, CellSize); //, EnvironmentalDataSource.ANY));
+        // Initialise the cohort ID to zero
+        NextCohortID = 0;
     }
     //----------------------------------------------------------------------------------------------
+    /** \brief   Sets up the list of global diagnostic variables
+     */
+    void SetUpGlobalDiagnosticsList() {
+        // Add global diagnostic variables
+        GlobalDiagnosticVariables["NumberOfCohortsExtinct"] = 0.0;
+        GlobalDiagnosticVariables["NumberOfCohortsProduced"] = 0.0;
+        GlobalDiagnosticVariables["NumberOfCohortsCombined"] = 0.0;
+        GlobalDiagnosticVariables["NumberOfCohortsInModel"] = 0.0;
+        GlobalDiagnosticVariables["NumberOfStocksInModel"] = 0.0;
+    }
+    //----------------------------------------------------------------------------------------------
+    /** \brief   Sets up the model outputs
+    @param initialisation An instance of the model initialisation class
+     */
+    void SetUpOutputs(MadingleyModelInitialisation initialisation) {
+        //            // Initialise the global outputs
+        //            GlobalOutputs = new OutputGlobal(InitialisationFileStrings["OutputDetail"], initialisation);
+        //
+        //            // Create new outputs class instances (if the model is run for the whold model grid then select the grid view for the live output,
+        //            // if the model is run for specific locations then use the graph view)
+        //            if (SpecificLocations)
+        //            {
+        //
+        //                // Initialise the vector of outputs instances
+        //                CellOutputs = new OutputCell[_CellList.Count];
+        //
+        //                for (int i = 0; i < _CellList.Count; i++)
+        //                {
+        //                    CellOutputs[i] = new OutputCell(InitialisationFileStrings["OutputDetail"], initialisation);
+        //                }
+        //            
+        //            }
+        //            else
+        //            {
+        //                GridOutputs = new OutputGrid(InitialisationFileStrings["OutputDetail"], initialisation);
+        //            }
+        //
+        //            
+    }
+    //----------------------------------------------------------------------------------------------
+    /** \brief    Sets up the model grid within a Madingley model run
+    @param initialisation An instance of the model initialisation class 
+    @param scenarioParameters The parameters for the scenarios to run
+    @param scenarioIndex The index of the scenario that this model is to run
+     */
+    void SetUpModelGrid(MadingleyModelInitialisation& initialisation) {
+
+        //Switched order so we create cell list first then initialise cells using list rather than grid.
+
+        unsigned NumLatCells = (unsigned) ((TopLatitude - BottomLatitude) / CellSize);
+        unsigned NumLonCells = (unsigned) ((RightmostLongitude - LeftmostLongitude) / CellSize);
+        //
+        //                // Loop over all cells in the model
+        for (unsigned ii = 0; ii < NumLatCells; ii += (unsigned) CellRarefaction) {
+            for (unsigned jj = 0; jj < NumLonCells; jj += (unsigned) CellRarefaction) {
+                // Define a vector to hold the pair of latitude and longitude indices for this grid cell
+                vector<unsigned> cellIndices(2);
+                // Add the latitude and longitude indices to this vector
+                cellIndices[0] = ii;
+                cellIndices[1] = jj;
+                // Add the vector to the list of all active grid cells
+                CellList.push_back(cellIndices);
+            }
+        }
+
+        EcologyTimer.Start();
+
+        // Set up the model grid 
+
+        EcosystemModelGrid = ModelGrid(BottomLatitude, LeftmostLongitude, TopLatitude, RightmostLongitude,
+                CellSize, CellSize, CellList, EnviroStack, CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions,
+                GlobalDiagnosticVariables);
+
+        EcologyTimer.Stop();
+        cout << "Time to initialise cells: " << EcologyTimer.GetElapsedTimeSecs() << endl;
+
+        cout << "Seeding grid cell stocks and cohorts:" << endl;
+
+        for (vector<unsigned> cellIndexPair : CellList) {
+            GridCell& g=EcosystemModelGrid.InternalGrid[cellIndexPair[0]][ cellIndexPair[1]];
+            SeedGridCellCohorts(g,cellIndexPair);
+            SeedGridCellStocks(g);
+        }
+        cout << "Total cohorts initialised: " << GlobalDiagnosticVariables["NumberOfCohortsInModel"] << endl;
+        cout << "Total stocks created " << GlobalDiagnosticVariables["NumberOfStocksInModel"] << endl;
+        cout << "" << endl;
+    }
+    //----------------------------------------------------------------------------------------------
+
+    /** \brief  Seed grid cell with cohorts, as specified in the model input files
+    @param g A reference to a grid cell 
+    @param cellIndxs The longitude and latitude indices of the cell 
+     */
+    void SeedGridCellCohorts(GridCell& gcl, vector<unsigned>& cellIndxs) {
+
+        // Set the seed for the random number generator from the system time
+        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+        if (DrawRandomly) RandomNumberGenerator.seed(seed);
+        else RandomNumberGenerator.seed(1000);
+
+
+        unsigned NumCohortsThisCell = 0;
+        // Define local variables
+        double CohortJuvenileMass;
+        double CohortAdultMassRatio;
+        double CohortAdultMass;
+        double ExpectedLnAdultMassRatio;
+        double TotalNewBiomass = 0.0;
+        double OptimalPreyBodySizeRatio;
+
+
+        //Variable for altering the juvenile to adult mass ratio for marine cells when handling certain functional groups eg baleen whales
+        double Scaling = 0.0;
+
+        for (int FunctionalGroup : CohortFunctionalGroupDefinitions.AllFunctionalGroupsIndex) {
+            if ((CohortFunctionalGroupDefinitions.GetTraitNames("Realm", FunctionalGroup) == "terrestrial" && gcl.CellEnvironment["Realm"][0] == 1.0) ||
+                (CohortFunctionalGroupDefinitions.GetTraitNames("Realm", FunctionalGroup) == "marine" && gcl.CellEnvironment["Realm"][0] == 2.0)) {
+
+                NumCohortsThisCell += CohortFunctionalGroupDefinitions.GetBiologicalPropertyOneFunctionalGroup("Initial number of GridCellCohorts", FunctionalGroup);
+            }
+        }
+
+        if (NumCohortsThisCell > 0);
+        {
+            //Loop over all functional groups in the model
+            for (int FunctionalGroup : CohortFunctionalGroupDefinitions.AllFunctionalGroupsIndex) {
+                // If it is a functional group that corresponds to the current realm, then seed cohorts
+                if ((CohortFunctionalGroupDefinitions.GetTraitNames("Realm", FunctionalGroup) == "terrestrial" && gcl.CellEnvironment["Realm"][0] == 1.0) ||
+                    (CohortFunctionalGroupDefinitions.GetTraitNames("Realm", FunctionalGroup) == "marine" && gcl.CellEnvironment["Realm"][0] == 2.0)) {
+                    // Get the minimum and maximum possible body masses for organisms in each functional group
+                    double MassMinimum = CohortFunctionalGroupDefinitions.GetBiologicalPropertyOneFunctionalGroup("minimum mass", FunctionalGroup);
+                    double MassMaximum = CohortFunctionalGroupDefinitions.GetBiologicalPropertyOneFunctionalGroup("maximum mass", FunctionalGroup);
+
+                    double ProportionTimeActive = CohortFunctionalGroupDefinitions.GetBiologicalPropertyOneFunctionalGroup("proportion suitable time active", FunctionalGroup);
+
+                    // Loop over the initial number of cohorts
+                    unsigned NumberOfCohortsInThisFunctionalGroup = 1;
+
+                    NumberOfCohortsInThisFunctionalGroup = CohortFunctionalGroupDefinitions.GetBiologicalPropertyOneFunctionalGroup("initial number of gridcellcohorts", FunctionalGroup);
+
+                    for (unsigned jj = 0; jj < NumberOfCohortsInThisFunctionalGroup; jj++) {
+
+
+                        // Draw adult mass from a log-normal distribution with mean -6.9 and standard deviation 10.0,
+                        // within the bounds of the minimum and maximum body masses for the functional group
+                        std::uniform_real_distribution<double> randomNumber(0.0, 1.0);
+                        CohortAdultMass = pow(10, (randomNumber(RandomNumberGenerator) * (log10(MassMaximum) - log10(50 * MassMinimum)) + log10(50 * MassMinimum)));
+
+                        // Terrestrial and marine organisms have different optimal prey/predator body mass ratios
+                        if (gcl.CellEnvironment["Realm"][0] == 1.0) {
+                            // Optimal prey body size 10%
+                            std::normal_distribution<double> randomNumber(0.1, 0.02);
+                            OptimalPreyBodySizeRatio = max(0.01, randomNumber(RandomNumberGenerator));
+                        } else {
+                            if (CohortFunctionalGroupDefinitions.GetTraitNames("Diet", FunctionalGroup) == "allspecial") {
+                                // Note that for this group
+                                // it is actually (despite the name) not an optimal prey body size ratio, but an actual body size.
+                                // This is because it is invariant as the predator (filter-feeding baleen whale) grows.
+                                // See also the predation classes.
+                                std::normal_distribution<double> randomNumber(0.0001, 0.1);
+                                OptimalPreyBodySizeRatio = max(0.00001, randomNumber(RandomNumberGenerator));
+                            } else {
+                                // Optimal prey body size for marine organisms is 10%
+                                std::normal_distribution<double> randomNumber(0.1, 0.02);
+                                OptimalPreyBodySizeRatio = max(0.01, randomNumber(RandomNumberGenerator));
+                            }
+
+                        }
+
+                        // Draw from a log-normal distribution with mean 10.0 and standard deviation 5.0, then add one to obtain 
+                        // the ratio of adult to juvenile body mass, and then calculate juvenile mass based on this ratio and within the
+                        // bounds of the minimum and maximum body masses for this functional group
+                        if (gcl.CellEnvironment["Realm"][0] == 1.0) {
+                            do {
+                                ExpectedLnAdultMassRatio = 2.24 + 0.13 * log(CohortAdultMass);
+                                std::lognormal_distribution<double> randomNumber(ExpectedLnAdultMassRatio, 0.5);
+                                CohortAdultMassRatio = 1.0 + randomNumber(RandomNumberGenerator);
+                                CohortJuvenileMass = CohortAdultMass * 1.0 / CohortAdultMassRatio;
+                            } while (CohortAdultMass <= CohortJuvenileMass || CohortJuvenileMass < MassMinimum);
+                        }// In the marine realm, have a greater difference between the adult and juvenile body masses, on average
+                        else {
+                            unsigned Counter = 0;
+                            Scaling = 0.2;
+                            // Use the scaling to deal with baleen whales not having such a great difference
+                            do {
+
+                                ExpectedLnAdultMassRatio = 2.5 + Scaling * log(CohortAdultMass);
+                                std::lognormal_distribution<double> randomNumber(ExpectedLnAdultMassRatio, 0.5);
+                                CohortAdultMassRatio = 1.0 + 10 * randomNumber(RandomNumberGenerator);
+                                CohortJuvenileMass = CohortAdultMass * 1.0 / CohortAdultMassRatio;
+                                Counter++;
+                                if (Counter > 10) {
+                                    Scaling -= 0.01;
+                                    Counter = 0;
+                                }
+                            } while (CohortAdultMass <= CohortJuvenileMass || CohortJuvenileMass < MassMinimum);
+                        }
+
+
+                        double NewBiomass = (3300 / NumCohortsThisCell) * 100 * 3000 *
+                                pow(0.6, (log10(CohortJuvenileMass))) * (gcl.CellEnvironment["Cell Area"][0]);
+                        TotalNewBiomass += NewBiomass;
+                        double NewAbund = 0.0;
+
+                        NewAbund = NewBiomass / CohortJuvenileMass;
+
+
+                        // Initialise the new cohort with the relevant properties
+                        //p stores in the cohort the position in the list in this cell - used for deletion later
+                        unsigned p = gcl.GridCellCohorts[FunctionalGroup].size();
+                        // An instance of Cohort to hold the new cohort
+                        Cohort NewCohort(cellIndxs[0], cellIndxs[1], p, FunctionalGroup, CohortJuvenileMass, CohortAdultMass, CohortJuvenileMass, NewAbund,
+                                OptimalPreyBodySizeRatio, 0, ProportionTimeActive, NextCohortID);
+
+                        // Add the new cohort to the list of grid cell cohorts
+                        gcl.GridCellCohorts[FunctionalGroup].push_back(NewCohort);
+
+
+                        // Increment the variable tracking the total number of cohorts in the model
+                        GlobalDiagnosticVariables["NumberOfCohortsInModel"]++;
+
+                    }
+                }
+            }
+        }
+    }
+    //----------------------------------------------------------------------------------------------
+
+    /** \brief    Seed grid cell with stocks, as specified in the model input files
+
+    @param gcl The grid cell  */
+    void SeedGridCellStocks(GridCell& gcl) {
+
+        // Loop over all stock functional groups in the model
+        for (int FunctionalGroup : StockFunctionalGroupDefinitions.AllFunctionalGroupsIndex) {
+
+            // Initialise the new stock with the relevant properties
+            bool success;
+            Stock NewStock(StockFunctionalGroupDefinitions,FunctionalGroup, gcl.CellEnvironment, success);
+            // Add the new stock to the list of grid cell stocks
+            if (success) {
+                gcl.GridCellStocks[FunctionalGroup].push_back(NewStock);
+
+                GlobalDiagnosticVariables["NumberOfStocksInModel"]++;
+            }
+        }
+    }
+    
+    //----------------------------------------------------------------------------------------------
+    /** \brief   Generates the initial outputs for this model run
+    @param outputFilesSuffix The suffix to be applied to all outputs from this model run
+     */
+    void InitialOutputs(MadingleyModelInitialisation initialisation, unsigned month) {
+        //            // Set up global outputs for all model runs
+        //            GlobalOutputs.SetupOutputs(NumTimeSteps, EcosystemModelGrid, OutputFilesSuffix);
+        //
+        //            // Create initial global outputs
+        //            GlobalOutputs.InitialOutputs(EcosystemModelGrid,CohortFunctionalGroupDefinitions,StockFunctionalGroupDefinitions,_CellList,
+        //                GlobalDiagnosticVariables, initialisation);
+        //
+        //            // Temporary
+        //            Boolean varExists;
+        //
+        //            if (SpecificLocations)
+        //            {
+        //                for (int i = 0; i < _CellList.Count; i++)
+        //                {
+        //                    // Set up grid cell outputs
+        //                    CellOutputs[i].SetUpOutputs(EcosystemModelGrid, CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions,
+        //                        NumTimeSteps, OutputFilesSuffix, _CellList, i, EcosystemModelGrid.GetEnviroLayer("Realm", 0, _CellList[i][0], _CellList[i][1], out varExists) == 2.0);
+        //
+        //                    // Create initial grid cell outputs
+        //                    CellOutputs[i].InitialOutputs(EcosystemModelGrid, CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions,
+        //                        _CellList, i, GlobalDiagnosticVariables, NumTimeSteps, initialisation, month, EcosystemModelGrid.GetEnviroLayer("Realm", 0, _CellList[i][0], _CellList[i][1], out varExists) == 2.0);
+        //                }
+        //            }
+        //            else
+        //            {
+        //                // Set up grid outputs
+        //                GridOutputs.SetupOutputs(EcosystemModelGrid, OutputFilesSuffix, NumTimeSteps, 
+        //                    CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions);
+        //
+        //                // Create initial grid outputs
+        //                GridOutputs.InitialOutputs(EcosystemModelGrid, CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions, _CellList, initialisation);
+        //            }
+        //
+    }
+    
 
 };
 #endif
