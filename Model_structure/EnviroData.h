@@ -143,30 +143,6 @@ Instance of the class to perform general functions
     //----------------------------------------------------------------------------------------------
     //Methods
     //----------------------------------------------------------------------------------------------
-/** \brief
-Overloaded constructor to fetch climate information from the cloud using FetchClimate
-
-@param dataName Name of the the climate variable to be fetched 
-@param dataResolution Time resolution requested 
-@param latMin Bottom latitude 
-@param lonMin Leftmost longitude 
-@param latMax Maximum latitude 
-@param lonMax Maximum longitude 
-@param cellSize Size of each grid cell 
-@param FetchClimateDataSource Data source from which to fetch environmental data 
-*/
-EnviroData(string dataName, string dataResolution, double latMin, double lonMin, double latMax, double lonMax, double cellSize)//not using fetchclimate!, EnvironmentalDataSource FetchClimateDataSource)
-        {
-    //dummy data for initial testing
-    int NumLonCells=1;int NumLatCells=1;double value=293;
-    if (dataName=="frost")value=0;
-    vector<vector< double> > TempStateVariable(NumLatCells);for (auto &t : TempStateVariable )t.resize(NumLonCells);
-    for (unsigned i=0;i<NumLatCells;i++)for (unsigned j=0;j<NumLonCells;j++)TempStateVariable[i][j]=value;
-    for (int i=0;i<12;i++)DataArray.push_back(TempStateVariable);
-    NumTimes=12;
-
-        }
-
 EnviroData(){;}
 /** \brief
 Constructor for EnviroData
@@ -188,28 +164,12 @@ EnviroData(string fileName, string dataName, string dataType, string dataResolut
     if(dataName=="AWC")value=0.1;
     if(dataName=="NPP")value=0.1;
     if(dataName=="land_sea_mask")value=0;
+    if (dataName=="frost")value=0;
     vector<vector< double> > TempStateVariable(NumLatCells);for (auto &t : TempStateVariable )t.resize(NumLonCells);
     for (unsigned i=0;i<NumLatCells;i++)for (unsigned j=0;j<NumLonCells;j++)TempStateVariable[i][j]=value;
     for (int i=0;i<12;i++)DataArray.push_back(TempStateVariable);
     NumTimes=12;
-
         }
-
-/** \brief
-A method to extract the value of an environmental variable from the grid cell closest to a specified latitude and longitude
-
-@param lat Latitude to get value from 
-@param lon Longitude to get value from 
-@param timeInterval The time interval to get the value from (i.e. the month, or 0 for yearly variables) 
-@param missingValue Boolean to indicate whether the returned value is a missing value 
-@returns The value of the environmental variable at the grid cell closest to the specified latitude and longitude
-*/
-double GetValue(double lat, double lon, unsigned timeInterval, bool missingValue)
-       {
-    //dummy value for initial testing
-    return DataArray[0][0][0];
-
-       }
 
 /** \brief
 A method to extract the area weighted value of an environmental variable from the envirodata cells overlapped by the cell specified by lat and lon
@@ -225,7 +185,7 @@ A method to extract the area weighted value of an environmental variable from th
 double GetValue(double lat, double lon, unsigned timeInterval, bool missingValue, double latCellSize, double lonCellSize)
        {
         return DataArray[0][0][0];
-
+        missingValue=false;
        }
 
 };

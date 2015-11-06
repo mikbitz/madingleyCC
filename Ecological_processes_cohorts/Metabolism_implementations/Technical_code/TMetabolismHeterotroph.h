@@ -60,19 +60,18 @@ class MetabolismHeterotroph : public IMetabolismImplementation {
     @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
     @param madingleyStockDefinitions The definitions for the stock functional groups in the model 
     @param currentTimestep The current model time step */
-    void RunMetabolism(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
-            vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&
-            deltas, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
-            unsigned currentTimestep, unsigned currentMonth) {
+    void RunMetabolism( 
+            Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&
+            deltas, unsigned currentTimestep, unsigned currentMonth) {
         // Calculate metabolic loss for an individual and add the value to the delta biomass for metabolism
-        deltas["biomass"]["metabolism"] = -CalculateIndividualMetabolicRate(gridCellCohorts[actingCohort].IndividualBodyMass,
+        deltas["biomass"]["metabolism"] = -CalculateIndividualMetabolicRate(actingCohort.IndividualBodyMass,
                 cellEnvironment["Temperature"][currentMonth] + TemperatureUnitsConvert) * DeltaT;
 
         // If metabolic loss is greater than individual body mass after herbivory and predation, then set equal to individual body mass
-        deltas["biomass"]["metabolism"] = max(deltas["biomass"]["metabolism"], -(gridCellCohorts[actingCohort].IndividualBodyMass + deltas["biomass"]["predation"] + deltas["biomass"]["herbivory"]));
+        deltas["biomass"]["metabolism"] = max(deltas["biomass"]["metabolism"], -(actingCohort.IndividualBodyMass + deltas["biomass"]["predation"] + deltas["biomass"]["herbivory"]));
 
         // Add total metabolic loss for all individuals in the cohort to delta biomass for metabolism in the respiratory CO2 pool
-        deltas["respiratoryCO2pool"]["metabolism"] = -deltas["biomass"]["metabolism"] * gridCellCohorts[actingCohort].CohortAbundance;
+        deltas["respiratoryCO2pool"]["metabolism"] = -deltas["biomass"]["metabolism"] * actingCohort.CohortAbundance;
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Initialises values for all ecological parameters for metabolism

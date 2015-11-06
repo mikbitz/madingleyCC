@@ -40,10 +40,10 @@ public:
     @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param currentTimestep The current model time step 
     @return The proportion of individuals in the cohort that die from starvation mortality*/
-    double CalculateMortalityRate(GridCellCohortHandler& gridCellCohorts, vector<int>& actingCohort, double bodyMassIncludingChangeThisTimeStep, map<string, map<string, double> >& deltas, unsigned currentTimestep) {
+    double CalculateMortalityRate(Cohort& actingCohort, double bodyMassIncludingChangeThisTimeStep,  unsigned currentTimestep) {
         // Calculate the starvation rate of the cohort given individual body masses compared to the maximum body
         // mass ever achieved
-        double MortalityRate = CalculateStarvationRate(gridCellCohorts, actingCohort, bodyMassIncludingChangeThisTimeStep, deltas);
+        double MortalityRate = CalculateStarvationRate(actingCohort, bodyMassIncludingChangeThisTimeStep);
 
         // Convert the mortality rate from formulation time step units to model time step units
         return MortalityRate * DeltaT;
@@ -58,11 +58,11 @@ public:
     @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param bodyMassIncludingChangeThisTimeStep Body mass including change from other ecological functions this time step; should not exceed adult mass 
     @return The starvation mortality rate in mortality formulation time step units*/
-    double CalculateStarvationRate(GridCellCohortHandler& gridCellCohorts, vector<int>& actingCohort, double bodyMassIncludingChangeThisTimeStep, map<string, map<string, double> >& deltas) {
-        if (bodyMassIncludingChangeThisTimeStep < gridCellCohorts[actingCohort].MaximumAchievedBodyMass) {
+    double CalculateStarvationRate( Cohort& actingCohort, double bodyMassIncludingChangeThisTimeStep) {
+        if (bodyMassIncludingChangeThisTimeStep < actingCohort.MaximumAchievedBodyMass) {
             // Calculate the first part of the relationship between body mass and mortality rate
-            double k = -(bodyMassIncludingChangeThisTimeStep - _LogisticInflectionPoint * gridCellCohorts[actingCohort].
-                    MaximumAchievedBodyMass) / (_LogisticScalingParameter * gridCellCohorts[actingCohort].MaximumAchievedBodyMass);
+            double k = -(bodyMassIncludingChangeThisTimeStep - _LogisticInflectionPoint * actingCohort.
+                    MaximumAchievedBodyMass) / (_LogisticScalingParameter * actingCohort.MaximumAchievedBodyMass);
 
             // Calculate mortality rate
             return _MaximumStarvationRate / (1 + exp(-k));

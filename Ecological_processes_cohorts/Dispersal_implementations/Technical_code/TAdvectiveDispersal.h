@@ -146,10 +146,10 @@ public:
 
         // Get the u speed and the v speed from the cell data
         uAdvectiveSpeed = madingleyGrid.GetEnviroLayer("uVel", currentMonth, latIndex, lonIndex, varExists);
-        assert(uAdvectiveSpeed != -9999);
+        assert(uAdvectiveSpeed > -9999);
 
         vAdvectiveSpeed = madingleyGrid.GetEnviroLayer("vVel", currentMonth, latIndex, lonIndex, varExists);
-        assert(vAdvectiveSpeed != -9999);
+        assert(vAdvectiveSpeed > -9999);
 
         // Calculate the diffusive movement speed, with a direction chosen at random
         DiffusiveUandVComponents = CalculateDiffusion();
@@ -162,7 +162,7 @@ public:
 
         LatCellLength = madingleyGrid.CellHeightsKm[latIndex];
         LonCellLength = madingleyGrid.CellWidthsKm[latIndex];
-
+        if (abs(uDistanceTravelled) > LonCellLength) cout<<"BIG U "<<uAdvectiveSpeed<<endl;
         assert(abs(uDistanceTravelled) <= LonCellLength && "u velocity greater than cell width");
         assert(abs(vDistanceTravelled) <= LatCellLength && "v velocity greater than cell width");
 

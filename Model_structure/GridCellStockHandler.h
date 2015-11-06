@@ -14,7 +14,7 @@ public:
     //Variables
     //----------------------------------------------------------------------------------------------
     /** \brief A vector (with elements correpsonding to functional groups) of lists of stocks in the current grid cell*/
-    vector< vector<Stock> > GridCellStocks;
+    map<unsigned, vector<Stock> > GridCellStocks;
     //----------------------------------------------------------------------------------------------
     //Methods
     //----------------------------------------------------------------------------------------------
@@ -38,11 +38,11 @@ public:
     /** \brief Overloaded constructor for the grid cell stock handler: initialises a new vector of lists of stocks with number of elements equal to the number of functional groups 
     @param NumFunctionalGroups The number of stock functional groups in the model */
     GridCellStockHandler(int NumFunctionalGroups){
-        GridCellStocks.resize(NumFunctionalGroups);
+        //GridCellStocks.resize(NumFunctionalGroups);
     }
     //----------------------------------------------------------------------------------------------
     void setSize(int NumFunctionalGroups) {
-        GridCellStocks.resize(NumFunctionalGroups);
+        //GridCellStocks.resize(NumFunctionalGroups);
     }
     //----------------------------------------------------------------------------------------------
  

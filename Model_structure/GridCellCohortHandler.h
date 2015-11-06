@@ -18,7 +18,7 @@ public:
     //----------------------------------------------------------------------------------------------
     //Methods
     //----------------------------------------------------------------------------------------------
-    vector<Cohort>& operator[](unsigned i) {
+    vector<Cohort>& operator[](const unsigned i) {
         return GridCellCohorts[i];
     }
     //----------------------------------------------------------------------------------------------
@@ -28,19 +28,26 @@ public:
     //----------------------------------------------------------------------------------------------
     /** \brief Create a new list of cohorts for the grid cell */
     GridCellCohortHandler() {
+        //MB cheat!
+        GridCellCohorts.resize(20);
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Create a new list of cohorts of specified length corresponding to the number of functional groups 
     @param NumFunctionalGroups The number of functional groups for which there will be cohorts in this grid cell */
     GridCellCohortHandler(int NumFunctionalGroups){
-        GridCellCohorts.resize(NumFunctionalGroups);
+        //GridCellCohorts.resize(NumFunctionalGroups);
     }
     //----------------------------------------------------------------------------------------------
     /** \brief If not setting the size in the constructor, this can be used instead
     @param NumFunctionalGroups The number of functional groups for which there will be cohorts in this grid cell */
     void setSize(int NumFunctionalGroups) {
-        GridCellCohorts.resize(NumFunctionalGroups);
+        //GridCellCohorts.resize(NumFunctionalGroups);
     }
+    //----------------------------------------------------------------------------------------------
+    /** \brief Gets the number of functional groups in this grid cell */
+    //unsigned count(unsigned l) {
+    //    return GridCellCohorts.count(l);
+    //}
     //----------------------------------------------------------------------------------------------
     /** \brief Gets the number of functional groups in this grid cell */
     unsigned size() {

@@ -49,7 +49,7 @@ public:
         // Get NPP from the cell environment
         double NPP = cellEnvironment["NPP"][currentMonth];
         
-        // If NPP is a mssing value then set to zero
+        // If NPP is a missing value then set to zero
         if (NPP == cellEnvironment["Missing Value"][0]) NPP = 0.0;
 
         // Check that this is an ocean cell

@@ -31,7 +31,7 @@ public:
     @param partial Thread-locked variables 
     @param iteroparous Whether the acting cohort is iteroparous, as opposed to semelparous 
     @param currentMonth The current model month */
-    virtual void RunReproductionEvents(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort,
+    virtual void RunReproductionEvents(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, Cohort& actingCohort,
             map<string, vector<double> >& cellEnvironment, map<string, map<string, double> >& deltas, FunctionalGroupDefinitions&
             madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, unsigned currentTimestep, ProcessTracker& trackProcesses,
             ThreadLockedParallelVariables& partial, bool iteroparous, unsigned currentMonth) {
@@ -48,7 +48,7 @@ public:
     @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param currentTimestep The current model time step 
     @param trackProcesses An instance of ProcessTracker to hold diagnostics for reproduction */
-    virtual void RunReproductiveMassAssignment(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort, map<string, vector<double>>&cellEnvironment, map<string, map<string, double> >& deltas, FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, unsigned currentTimestep, ProcessTracker& trackProcesses) {
+    virtual void RunReproductiveMassAssignment(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, Cohort& actingCohort, map<string, vector<double>>&cellEnvironment, map<string, map<string, double> >& deltas, FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, unsigned currentTimestep, ProcessTracker& trackProcesses) {
         ;
     }
     //----------------------------------------------------------------------------------------------       

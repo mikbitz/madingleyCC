@@ -118,7 +118,6 @@ public:
 
     double GetBiologicalPropertyOneFunctionalGroup(string propertyName, int functionalGroup) {
         transform(propertyName.begin(), propertyName.end(), propertyName.begin(), ::tolower);
-
         return FunctionalGroupProperties[propertyName][functionalGroup];
     }
     //----------------------------------------------------------------------------------------------

@@ -10,11 +10,8 @@
  * \brief the IEcologicalProcessWithinGridCells header file
  */
 
-//
-//namespace Madingley
-//{
 /** \brief Interface for ecological process code */
-//C++ virtual class acts as an interface
+
 
 class IEcologicalProcessWithinGridCell {
 public:
@@ -36,13 +33,13 @@ public:
      */
     virtual void RunEcologicalProcess(GridCellCohortHandler& gridCellCohorts,
             GridCellStockHandler& gridCellStocks,
-            vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment,
+            Cohort& actingCohort, map<string, vector<double> >& cellEnvironment,
             map<string, map<string, double>>&deltas,
             FunctionalGroupDefinitions& madingleyCohortHandler,
             FunctionalGroupDefinitions& madingleyStockHandler,
             unsigned currentTimestep,
             ThreadLockedParallelVariables& partial,
-            string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
+            unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
         ;
     }
     //----------------------------------------------------------------------------------------------
@@ -62,5 +59,5 @@ public:
         ;
     }
 };
-//}
+
 #endif

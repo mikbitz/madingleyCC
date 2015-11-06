@@ -24,7 +24,7 @@ public:
 
     //----------------------------------------------------------------------------------------------
      /** \brief Run the dispersal implementation */
-    virtual bool RunDispersal(vector<Cohort>& disperseMonkeys, vector<unsigned>& cellIndex, ModelGrid& gridForDispersal, Cohort& cohortToDisperse, int actingCohortFunctionalGroup, int actingCohortNumber, unsigned currentMonth) {
+    virtual bool RunDispersal(vector<Cohort>& disperseMonkeys, ModelGrid& gridForDispersal, Cohort& cohortToDisperse,unsigned currentMonth) {
         ;
     }
     //----------------------------------------------------------------------------------------------
@@ -75,10 +75,11 @@ public:
             }
             // try to get a cell - only use it if realm is the same as the origin cell.
             
-            vector<unsigned> FreshCell = madingleyGrid.getNewCell(latIndex, lonIndex, signv, signu);
+            vector<unsigned> FreshCell = madingleyGrid.getNewCellIndices(latIndex, lonIndex, signv, signu);
+            bool s;
             if ((FreshCell[0]<9999999) &&
-                (madingleyGrid.InternalGrid[latIndex    ][lonIndex    ].CellEnvironment["Realm"][0] == 
-                 madingleyGrid.InternalGrid[FreshCell[0]][FreshCell[1]].CellEnvironment["Realm"][0]) )
+                (madingleyGrid.getCellRef(latIndex,lonIndex,s).CellEnvironment["Realm"][0] == 
+                 madingleyGrid.getCellRef(FreshCell[0],FreshCell[1],s).CellEnvironment["Realm"][0]) )
                     DestinationCell=FreshCell;
         }
 

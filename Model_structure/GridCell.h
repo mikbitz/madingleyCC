@@ -29,15 +29,37 @@ public:
     std::default_random_engine RandomNumberGenerator;
     /** \brief  Instance of the class to perform general functions*/
     UtilityFunctions Utilities;
-    // Optimal prey body size, as a ratio of predator body size
-    //double OptimalPreyBodySizeRatio;
     //----------------------------------------------------------------------------------------------
     //Methods
     //----------------------------------------------------------------------------------------------
     
     //----------------------------------------------------------------------------------------------
-    //default constructor - just to get C++ compile working at the moment
-    GridCell() { ;  }
+    //default constructor - just to get grid set up initially
+    GridCell() {;}
+    //----------------------------------------------------------------------------------------------
+    void setCellCoords(float latitude, unsigned latIndex, float longitude, unsigned lonIndex, float latCellSize, float lonCellSize,
+             double missingValue){
+        // set values for this grid cell
+        // Also standardise missing values
+    
+            // Set the grid cell values of latitude, longitude and missing value as specified
+        Latitude = latitude;
+        Longitude = longitude;
+
+        //Add the latitude and longitude
+
+        CellEnvironment["Latitude"].push_back(latitude);
+        CellEnvironment["Longitude"].push_back(longitude);
+        
+        // Add the grid cell area (in km2) to the cell environment with an initial value of 0
+        // Calculate the area of this grid cell
+        // Add it to the cell environment
+        CellEnvironment["Cell Area"].push_back(Utilities.CalculateGridCellArea(latitude, lonCellSize, latCellSize));
+
+        //Add the latitude and longitude indices
+        CellEnvironment["LatIndex"].push_back(latIndex);
+        CellEnvironment["LonIndex"].push_back(lonIndex);
+    }    
     //----------------------------------------------------------------------------------------------
     /** \brief Constructor for a grid cell; creates cell and reads in environmental data
     @param latitude The latitude of the grid cell 
@@ -54,9 +76,9 @@ public:
     @param nextCohortID The unique ID number to assign to the next cohort created 
     @param tracking Whether process-tracking is enabled 
     @param specificLocations Whether the model is being run for specific locations */
-    GridCell(float latitude, unsigned latIndex, float longitude, unsigned lonIndex, float latCellSize, float lonCellSize,
-            map<string, EnviroData>& dataLayers, double missingValue, FunctionalGroupDefinitions& cohortFunctionalGroups,
-            FunctionalGroupDefinitions& stockFunctionalGroups, map<string, double>& globalDiagnostics) {
+    void SetCellValue(float latitude, unsigned latIndex, float longitude, unsigned lonIndex, float latCellSize, float lonCellSize,
+             double missingValue) {
+
 
         // bool to track when environmental data are missing
         bool EnviroMissingValue;
@@ -104,53 +126,16 @@ public:
         // Add delta respiratory CO2 pool to deltas sorted list
         Deltas["respiratoryCO2pool"] = DeltaRespiratoryCO2Pool;
 
-        // Set the grid cell values of latitude, longitude and missing value as specified
-        Latitude = latitude;
-        Longitude = longitude;
-
-        //Add the latitude and longitude
-
-        CellEnvironment["Latitude"].push_back(latitude);
-        CellEnvironment["Longitude"].push_back(longitude);
-
-        // Add an organic matter pool to the cell environment to track organic biomass not held by animals or plants with an initial value of 0
-        CellEnvironment["Organic Pool"].push_back(0.0);
-
-        // Add a repsiratory CO2 pool to the cell environment with an initial value of 0
-        CellEnvironment["Respiratory CO2 Pool"].push_back(0.0);
-
-        // Add the grid cell area (in km2) to the cell environment with an initial value of 0
-        // Calculate the area of this grid cell
-        // Add it to the cell environment
-        CellEnvironment["Cell Area"].push_back(Utilities.CalculateGridCellArea(latitude, lonCellSize, latCellSize));
-
-        //Add the latitude and longitude indices
-        CellEnvironment["LatIndex"].push_back(latIndex);
-        CellEnvironment["LonIndex"].push_back(lonIndex);
 
 
         // Add the missing value of data in the grid cell to the cell environment
 
         CellEnvironment["Missing Value"].push_back(missingValue);
+        // Add an organic matter pool to the cell environment to track organic biomass not held by animals or plants with an initial value of 0
+        CellEnvironment["Organic Pool"].push_back(0.0);
 
-        // Loop through environmental data layers and extract values for this grid cell
-        // Also standardise missing values
-
-        // Loop over variables in the list of environmental data
-        for (auto Layer : dataLayers) {
-            // Initialise the temporary vector of values to be equal to the number of time intervals in the environmental variable
-            vector<double> tempVector(Layer.second.NumTimes);
-            //Loop over the time intervals in the environmental variable
-            for (int hh = 0; hh < Layer.second.NumTimes; hh++) {
-                // Add the value of the environmental variable at this time interval to the temporary vector
-                tempVector[hh] = Layer.second.GetValue(Latitude, Longitude, (unsigned) hh, EnviroMissingValue, latCellSize, lonCellSize);
-                // If the environmental variable is a missing value, then change the value to equal the standard missing value for this cell
-                if (EnviroMissingValue)
-                    tempVector[hh] = missingValue;
-            }
-            // Add the values of the environmental variables to the cell environment, with the name of the variable as the key
-            CellEnvironment[Layer.first] = tempVector;
-        }
+        // Add a repsiratory CO2 pool to the cell environment with an initial value of 0
+        CellEnvironment["Respiratory CO2 Pool"].push_back(0.0);
 
         if (CellEnvironment.count("LandSeaMask") != 0) {
             if (CellEnvironment["LandSeaMask"][0] == 0) {
@@ -264,8 +249,8 @@ public:
         CellEnvironment["Breeding Season"] = BreedingSeason;
 
         // Initialise the grid cell cohort and stock handlers
-        GridCellCohorts.setSize(cohortFunctionalGroups.GetNumberOfFunctionalGroups());
-        GridCellStocks.setSize(stockFunctionalGroups.GetNumberOfFunctionalGroups());
+        //GridCellCohorts.setSize(cohortFunctionalGroups.GetNumberOfFunctionalGroups());
+        //GridCellStocks.setSize(stockFunctionalGroups.GetNumberOfFunctionalGroups());
 
     }
     //----------------------------------------------------------------------------------------------
@@ -327,7 +312,7 @@ public:
         }
         if (TotalNPP == 0) {
             // Loop over months and calculate seasonality
-            // If there is no NPP value then asign a uniform flat seasonality
+            // If there is no NPP value then assign a uniform flat seasonality
             for (int i = 0; i < 12; i++) {
                 NPPSeasonalityValues[i] = 1.0 / 12.0;
             }
@@ -405,6 +390,24 @@ public:
         }
     }
     //----------------------------------------------------------------------------------------------
-    
+    //Apply any function to all cohorts in the cell
+    template <typename F>
+    void ask(F f) {
+    // Loop through functional groups, and perform dispersal according to cohort type and status
+        for (int  FG=0; FG < GridCellCohorts.size(); FG++) {
+            // Work through the list of cohorts - be sure to work backward to get order of deletion right later
+            for (Cohort& c : GridCellCohorts[FG]) {
+                f(c);
+            }
+        }
+    }
+    //----------------------------------------------------------------------------------------------
+    double Realm(){
+     return CellEnvironment["Realm"][0];
+    }
+    //----------------------------------------------------------------------------------------------
+    bool isMarine(){
+        return (CellEnvironment["Realm"][0]==2.0);
+    }
 };
 #endif

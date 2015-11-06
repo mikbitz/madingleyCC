@@ -61,13 +61,13 @@ public:
     @param currentMonth The current model month 
      */
     void RunEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
-            vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&deltas,
+            Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&deltas,
             FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
             unsigned currentTimeStep, ProcessTracker& processTracker, ThreadLockedParallelVariables& partial,
-             string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
+            unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
 
         // Holds the reproductive strategy of a cohort
-        bool _Iteroparous = madingleyCohortDefinitions.GetTraitNames("reproductive strategy", actingCohort[0]) == "iteroparity";
+        bool _Iteroparous = madingleyCohortDefinitions.GetTraitNames("reproductive strategy", actingCohort.FunctionalGroupIndex) == "iteroparity";
 
         // Assign mass to reproductive potential
         Implementations["reproduction basic"]->RunReproductiveMassAssignment(gridCellCohorts, gridCellStocks, actingCohort, cellEnvironment, deltas,

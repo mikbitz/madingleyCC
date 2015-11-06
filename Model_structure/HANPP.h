@@ -28,7 +28,8 @@ public:
         if (humanNPPExtraction == "hanpp") {
             // Loop over stocks in the grid cell and calculate the total biomass of all stocks
             double TotalAutotrophBiomass = 0.0;
-            for (auto stockFunctionalGroup : gridCellStocks.GridCellStocks) {
+            for (auto& stockFunctionalGrouping : gridCellStocks.GridCellStocks) {
+                vector<Stock> stockFunctionalGroup=stockFunctionalGrouping.second;
                 for (int i = 0; i < stockFunctionalGroup.size(); i++) {
                     TotalAutotrophBiomass += stockFunctionalGroup[i].TotalBiomass;
                 }

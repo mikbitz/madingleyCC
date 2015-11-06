@@ -196,14 +196,13 @@ public:
     @param TargetCohortThreshold The target threshold to reduce the number of cohorts to 
     @return The number of cohorts that have been merged
      */
-    int MergeToReachThresholdFast(GridCellCohortHandler gridCellCohorts, int TotalNumberOfCohorts, int TargetCohortThreshold) {
+    int MergeToReachThresholdFast(GridCellCohortHandler& gridCellCohorts, int TotalNumberOfCohorts, int TargetCohortThreshold) {
 
         // A list of shortest distances between pairs of cohorts
         vector<tuple<double, int, vector<int>>> ShortestDistances;
 
         // Vector of lists of shortest distances in each functional group
         vector<vector < tuple<double, int, vector<int>>>> ShortestDistancesPerFunctionalGroup(gridCellCohorts.size());
-
         // How many cohorts to remove to hit the threshold
         int NumberToRemove = TotalNumberOfCohorts - TargetCohortThreshold;
 
@@ -241,8 +240,7 @@ public:
 
                 // The value to which to compare
                 int ValueToCompareTo = cc;
-
-                ShortestDistancesPerFunctionalGroup[ff].push_back(Holdingvector[0]);
+                if (Holdingvector.size()>0)ShortestDistancesPerFunctionalGroup[ff].push_back(Holdingvector[0]);
 
                 // Only add to main list those that are valid. Note that this doesn't catch everything (because we don't yet know the full ordering), 
                 // but clears out a lot of redundant information from the list

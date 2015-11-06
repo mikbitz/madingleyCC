@@ -99,12 +99,12 @@ public:
     @param cellEnvironment The environment in the current grid cell 
     @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
     @param madingleyStockDefinitions The functional group definitions for stocks  in the model */
-    void GetEatingPotentialTerrestrial(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions) {
+    void GetEatingPotentialTerrestrial(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions) {
         // Set the total biomass eaten by the acting cohort to zero
         TotalBiomassEatenByCohort = 0.0;
 
         // Get the individual body mass of the acting cohort
-        BodyMassHerbivore = gridCellCohorts[actingCohort].IndividualBodyMass;
+        BodyMassHerbivore = actingCohort.IndividualBodyMass;
 
         // Set the total number of units to handle all potential biomass eaten to zero
         TimeUnitsToHandlePotentialFoodItems = 0.0;
@@ -145,12 +145,12 @@ public:
     @param cellEnvironment The environment in the current grid cell 
     @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
     @param madingleyStockDefinitions The functional group definitions for stocks  in the model */
-    void GetEatingPotentialMarine(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions) {
+    void GetEatingPotentialMarine(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions) {
         // Set the total biomass eaten by the acting cohort to zero
         TotalBiomassEatenByCohort = 0.0;
 
         // Get the individual body mass of the acting cohort
-        BodyMassHerbivore = gridCellCohorts[actingCohort].IndividualBodyMass;
+        BodyMassHerbivore = actingCohort.IndividualBodyMass;
 
         // Set the total number of units to handle all potential biomass eaten to zero
         TimeUnitsToHandlePotentialFoodItems = 0.0;
@@ -196,7 +196,7 @@ public:
     @param trackProcesses An instance of ProcessTracker to hold diagnostics for herbivory 
     @param currentTimestep The current model time step 
     @param outputDetail The level of output detail being used in this model run */
-    void RunEating(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double> >& deltas, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, ProcessTracker& trackProcesses, unsigned currentTimestep,  string outputDetail, MadingleyModelInitialisation& initialisation) {
+    void RunEating(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double> >& deltas, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, ProcessTracker& trackProcesses, unsigned currentTimestep,  string outputDetail, MadingleyModelInitialisation& initialisation) {
 
         EdibleScaling = 1.0;
         if (cellEnvironment["Realm"][0] == 1.0) EdibleScaling = 0.1;
@@ -210,7 +210,7 @@ public:
 
                 // Calculate the biomass actually eaten from this stock by the acting cohort
                 BiomassesEaten[FunctionalGroup][i] = CalculateBiomassesEaten(PotentialBiomassesEaten[FunctionalGroup][i],
-                        TimeUnitsToHandlePotentialFoodItems, gridCellCohorts[actingCohort].CohortAbundance, EdibleMass);
+                        TimeUnitsToHandlePotentialFoodItems, actingCohort.CohortAbundance, EdibleMass);
 
                 // Remove the biomass eaten from the autotroph stock
                 gridCellStocks[FunctionalGroup][i].TotalBiomass -= BiomassesEaten[FunctionalGroup][i];
@@ -218,11 +218,11 @@ public:
 
                 // Check that the biomass eaten is not a negative value
                 if (BiomassesEaten[FunctionalGroup][i] < 0) {
-                    cout << "Herbivory negative for this herbivore cohort " << actingCohort[0] << " " << actingCohort[1] << endl;
+                    cout << "Herbivory negative for this herbivore cohort " << actingCohort.FunctionalGroupIndex << " " << actingCohort.ID << endl;
                     exit(1);
                 }
                 // Add the biomass eaten and assimilated by an individual to the delta biomass for the acting cohort
-                deltas["biomass"]["herbivory"] += BiomassesEaten[FunctionalGroup][i] * AssimilationEfficiency / gridCellCohorts[actingCohort].CohortAbundance;
+                deltas["biomass"]["herbivory"] += BiomassesEaten[FunctionalGroup][i] * AssimilationEfficiency / actingCohort.CohortAbundance;
 
                 // Move the biomass eaten but not assimilated by an individual into the organic matter pool
                 deltas["organicpool"]["herbivory"] += BiomassesEaten[FunctionalGroup][i] * (1 - AssimilationEfficiency);
@@ -233,7 +233,7 @@ public:
             assert(deltas["biomass"]["herbivory"] >= 0 && "Delta biomass from herbviory is negative");
 
             // Calculate the total biomass eaten by the acting (herbivore) cohort
-            TotalBiomassEatenByCohort = deltas["biomass"]["herbivory"] * gridCellCohorts[actingCohort].CohortAbundance;
+            TotalBiomassEatenByCohort = deltas["biomass"]["herbivory"] * actingCohort.CohortAbundance;
 
 
 

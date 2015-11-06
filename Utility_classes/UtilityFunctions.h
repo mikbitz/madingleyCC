@@ -122,12 +122,13 @@ public:
         //C++ can only use intergers or enums in a switch, so make a map to convert.
         map<string, int> units;
 
-        units["year" ] = 0;
-        units["month" ] = 1;
+        units["year"] = 0;
+        units["month"] = 1;
         units["bimonth"] = 2;
-        units["week" ] = 3;
-        units["day" ] = 4;
-        units["second" ] = 5;
+        units["week"] = 3;
+        units["day"] = 4;
+        units["second"] = 5;
+        
         // Determine which combination of time units is being requested and return the appropriate scaling factor
         switch (units[fromUnit]) {
             case 0:// "year":

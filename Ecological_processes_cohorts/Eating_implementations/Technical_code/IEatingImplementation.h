@@ -52,7 +52,7 @@ public:
     @param cellEnvironment The environment in the current grid cell 
     @param madingleyCohortDefinitions The definitions for cohorts in the model 
     @param madingleyStockDefinitions The definitions for stocks in the model  */
-    virtual void GetEatingPotentialMarine(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort,
+    virtual void GetEatingPotentialMarine(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, Cohort& actingCohort,
             map<string, vector<double>>&cellEnvironment, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions&
             madingleyStockDefinitions) {
         ;
@@ -65,7 +65,7 @@ public:
     @param cellEnvironment The environment in the current grid cell 
     @param madingleyCohortDefinitions The definitions for cohorts in the model 
     @param madingleyStockDefinitions The definitions for stocks in the model  */
-    virtual void GetEatingPotentialTerrestrial(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, vector<int>& actingCohort,
+    virtual void GetEatingPotentialTerrestrial(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, Cohort& actingCohort,
             map<string, vector<double> >& cellEnvironment, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions&
             madingleyStockDefinitions) {
         ;
@@ -83,12 +83,12 @@ public:
     @param currentTimestep The current model time step 
     @param outputDetail The level of output detail being used in this model run  */
     virtual void RunEating(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
-            vector<int>& actingCohort, map<string, vector< double > >& cellEnvironment,
+            Cohort& actingCohort, map<string, vector< double > >& cellEnvironment,
             map<string, map<string, double>>&deltas,
             FunctionalGroupDefinitions& madingleyCohortDefinitions,
             FunctionalGroupDefinitions& madingleyStockDefinitions,
             ProcessTracker& trackProcesses, unsigned currentTimestep,
-             string outputDetail, MadingleyModelInitialisation& initialisation) {
+            MadingleyModelInitialisation& initialisation) {
         ;
     }
     //----------------------------------------------------------------------------------------------

@@ -60,53 +60,39 @@ class Dispersal  {
     @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
     @param madingleyStockDefinitions The functional group definitions for stocks in the model 
     @param currentMonth The current model month */
-    void RunCrossGridCellEcologicalProcess(vector<unsigned>& cellIndex, ModelGrid& gridForDispersal,  FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, unsigned currentMonth) {
+    void RunCrossGridCellEcologicalProcess(GridCell& g, ModelGrid& gridForDispersal,  FunctionalGroupDefinitions& madingleyCohortDefinitions,  unsigned currentMonth) {
 
-        // Get the lat and lon indices
-        unsigned ii = cellIndex[0];
-        unsigned jj = cellIndex[1];
-
-        // A boolean to check that the environmental layer exists
-        bool varExists;
-
-        // Check to see if the cell is marine
-        double CellRealm = gridForDispersal.GetEnviroLayer("Realm", 0, ii, jj, varExists);
-
-        // Go through all of the cohorts in turn and see if they disperse
-        GridCellCohortHandler& WorkingGridCellCohorts = gridForDispersal.GetGridCellCohorts(ii, jj);
-
-        // Loop through functional groups, and perform dispersal according to cohort type and status
-        for (int FG = 0; FG < WorkingGridCellCohorts.size(); FG++) {
-            // Work through the list of cohorts - be sure to work backward to get order of deletion right later
-            for (Cohort& c : WorkingGridCellCohorts[FG]) {
+        g.ask([&](Cohort& c){
                 // Check to see if the cell is marine and the cohort type is planktonic
                 bool dispersed=false;
                 
-                if (CellRealm == 2.0 &&
+                if (g.isMarine() &&
                         ((madingleyCohortDefinitions.GetTraitNames("Mobility", c.FunctionalGroupIndex) == "planktonic") || (c.IndividualBodyMass <= PlanktonThreshold))) {
                     // Run advective dispersal
                     AdvectiveDispersalImplementation->RunDispersal(disperseMonkeys, gridForDispersal, c, currentMonth);
                 }   // Otherwise, if mature do responsive dispersal
-                else if (c.MaturityTimeStep < std::numeric_limits<unsigned>::max()) {
+                else if (c.isMature()) {
                      //Run responsive dispersal
                     ResponsiveDispersalImplementation->RunDispersal(disperseMonkeys, gridForDispersal, c, currentMonth);
                 }    // If the cohort is immature, run diffusive dispersal
                 else {
                     DiffusiveDispersalImplementation->RunDispersal(disperseMonkeys, gridForDispersal, c,  currentMonth);
                 }
-            }
-        }
+            
+        });
         // IF THE CELL IS MARINE, RUN ADVECTIVE DISPERSAL FOR THE PHYTOPLANKTON STOCK AS WELL IN v1
     }
     //----------------------------------------------------------------------------------------------
     void UpdateCrossGridCellEcology(ModelGrid& gridForDispersal, unsigned& dispersalCounter){
         dispersalCounter = disperseMonkeys.size();
         //do removals first as this currently depends closely on the order of cohorts in the grid
+        //dispersals have been created in increasing order of index, so first reverse
+        reverse(disperseMonkeys.begin(),disperseMonkeys.end());
         for (auto& c: disperseMonkeys){
-         gridForDispersal.DeleteGridCellIndividualCohort(c);
+            gridForDispersal.DeleteGridCellIndividualCohort(c);
         }
-        for (auto& c: disperseMonkeys){
-         gridForDispersal.AddNewCohortToGridCell(c);
+        for (auto& c: disperseMonkeys){ 
+            gridForDispersal.AddNewCohortToGridCell(c);
         }
         disperseMonkeys.clear();
     }

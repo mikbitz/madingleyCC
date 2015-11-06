@@ -44,7 +44,7 @@ public:
     @param tracker An instance of ProcessTracker to hold diagnostics for reproduction 
     @param partial Thread-locked variables */
     void RunReproduction(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
-            vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&
+            Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&
             deltas, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
             unsigned currentTimestep, ProcessTracker& tracker, ThreadLockedParallelVariables& partial) {
         // Check that the abundance in the cohort to produce is greater than or equal to zero
@@ -55,7 +55,7 @@ public:
                 madingleyCohortDefinitions);
 
         // Update cohort abundance in case juvenile mass has been altered
-        OffspringCohortAbundance = (OffspringCohortAbundance * gridCellCohorts[actingCohort].JuvenileMass) /
+        OffspringCohortAbundance = (OffspringCohortAbundance * actingCohort.JuvenileMass) /
                 OffspringProperties[0];
 
         //Create the offspring cohort
@@ -70,14 +70,14 @@ public:
         gridCellCohorts[actingCohort[0]].push_back(OffspringCohort);
 
         // If the cohort has never been merged with another cohort, then add it to the tracker for output as diagnostics
-//        if ((!gridCellCohorts[actingCohort].Merged) && tracker.TrackProcesses)
+//        if ((!actingCohort.Merged) && tracker.TrackProcesses)
 //            tracker.RecordNewCohort((unsigned) cellEnvironment["LatIndex"][0],
 //                (unsigned) cellEnvironment["LonIndex"][0], currentTimestep, OffspringCohortAbundance,
-//                gridCellCohorts[actingCohort].AdultMass, gridCellCohorts[actingCohort].FunctionalGroupIndex);
+//                actingCohort.AdultMass, actingCohort.FunctionalGroupIndex);
 
         // Subtract all of the reproductive potential mass of the parent cohort, which has been used to generate the new
         // cohort, from the delta reproductive potential mass
-        deltas["reproductivebiomass"]["reproduction"] -= (gridCellCohorts[actingCohort].IndividualReproductivePotentialMass);
+        deltas["reproductivebiomass"]["reproduction"] -= (actingCohort.IndividualReproductivePotentialMass);
 
     }
     //----------------------------------------------------------------------------------------------  
@@ -97,14 +97,14 @@ public:
             unsigned currentTimestep, ProcessTracker tracker) {
         // If this is the first time reproductive potential mass has been assigned for this cohort, 
         // then set the maturity time step for this cohort as the current model time step
-        if (gridCellCohorts[actingCohort].MaturityTimeStep == std::numeric_limits<unsigned>::max()) {
-            gridCellCohorts[actingCohort].MaturityTimeStep = currentTimestep;
+        if (actingCohort.MaturityTimeStep == std::numeric_limits<unsigned>::max()) {
+            actingCohort.MaturityTimeStep = currentTimestep;
 
             // Track the generation length for this cohort
-            //if ((!gridCellCohorts[actingCohort].Merged) && tracker.TrackProcesses)
+            //if ((!actingCohort.Merged) && tracker.TrackProcesses)
             //    tracker.TrackMaturity((unsigned)cellEnvironment["LatIndex"][0], (unsigned)cellEnvironment["LonIndex"][0],
-            //        currentTimestep, gridCellCohorts[actingCohort].BirthTimeStep, gridCellCohorts[actingCohort].JuvenileMass,
-            //        gridCellCohorts[actingCohort].AdultMass, gridCellCohorts[actingCohort].FunctionalGroupIndex);
+            //        currentTimestep, actingCohort.BirthTimeStep, actingCohort.JuvenileMass,
+            //        actingCohort.AdultMass, actingCohort.FunctionalGroupIndex);
         }
 
         // Assign the specified mass to reproductive potential mass and remove it from individual biomass

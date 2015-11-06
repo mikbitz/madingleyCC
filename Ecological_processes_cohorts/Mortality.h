@@ -75,10 +75,10 @@ public:
     @param outputDetail The level output detail being used for the current model run 
     @param currentMonth The current model month */
     void RunEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
-            vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&deltas,
+            Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&deltas,
             FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
-            unsigned currentTimeStep, ProcessTracker& processTracker, ThreadLockedParallelVariables& partial,
-             string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
+            unsigned currentTimeStep, ThreadLockedParallelVariables& partial,
+            unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
 
         // Variables to hold the mortality rates
         double MortalityRateBackground;
@@ -104,7 +104,7 @@ public:
             // Add the delta biomass to net biomass
             BodyMassIncludingChangeThisTimeStep += Biomass.second;
         }
-        BodyMassIncludingChangeThisTimeStep = min(gridCellCohorts[actingCohort].AdultMass, BodyMassIncludingChangeThisTimeStep + gridCellCohorts[actingCohort].IndividualBodyMass);
+        BodyMassIncludingChangeThisTimeStep = min(actingCohort.AdultMass, BodyMassIncludingChangeThisTimeStep + actingCohort.IndividualBodyMass);
 
         // Temporary variable to hold net reproductive biomass change of individuals in this cohort as a result of other ecological processes
         ReproductiveMassIncludingChangeThisTimeStep = 0.0;
@@ -115,45 +115,35 @@ public:
             ReproductiveMassIncludingChangeThisTimeStep += Biomass.second;
         }
 
-        ReproductiveMassIncludingChangeThisTimeStep += gridCellCohorts[actingCohort].IndividualReproductivePotentialMass;
+        ReproductiveMassIncludingChangeThisTimeStep += actingCohort.IndividualReproductivePotentialMass;
 
         // Check to see if the cohort has already been killed by predation etc
         if (BodyMassIncludingChangeThisTimeStep <= 1.e-15) //MB a small number ! maybe should be larger?
         {
             // If individual body mass is not greater than zero, then all individuals become extinct
-            MortalityTotal = gridCellCohorts[actingCohort].CohortAbundance;
+            MortalityTotal = actingCohort.CohortAbundance;
         } else {
             // Calculate background mortality rate
-            MortalityRateBackground = Implementations["basic background mortality"]->CalculateMortalityRate(gridCellCohorts,
-                    actingCohort, BodyMassIncludingChangeThisTimeStep, deltas, currentTimeStep);
+            MortalityRateBackground = Implementations["basic background mortality"]->CalculateMortalityRate(
+                    actingCohort, BodyMassIncludingChangeThisTimeStep,  currentTimeStep);
 
             // If the cohort has matured, then calculate senescence mortality rate, otherwise set rate to zero
-            if (gridCellCohorts[actingCohort].MaturityTimeStep != std::numeric_limits<unsigned>::max()) {
-                MortalityRateSenescence = Implementations["basic senescence mortality"]->CalculateMortalityRate(gridCellCohorts,
-                        actingCohort, BodyMassIncludingChangeThisTimeStep, deltas, currentTimeStep);
+            if (actingCohort.MaturityTimeStep != std::numeric_limits<unsigned>::max()) {
+                MortalityRateSenescence = Implementations["basic senescence mortality"]->CalculateMortalityRate(
+                        actingCohort, BodyMassIncludingChangeThisTimeStep,  currentTimeStep);
             } else {
                 MortalityRateSenescence = 0.0;
             }
 
             // Calculate the starvation mortality rate based on individual body mass and maximum body mass ever
             // achieved by this cohort
-            MortalityRateStarvation = Implementations["basic starvation mortality"]->CalculateMortalityRate(gridCellCohorts, actingCohort, BodyMassIncludingChangeThisTimeStep, deltas, currentTimeStep);
+            MortalityRateStarvation = Implementations["basic starvation mortality"]->CalculateMortalityRate(actingCohort, BodyMassIncludingChangeThisTimeStep,  currentTimeStep);
 
             // Calculate the number of individuals that suffer mortality this time step from all sources of mortality
             MortalityTotal = (1 - exp(-MortalityRateBackground - MortalityRateSenescence -
-                    MortalityRateStarvation)) * gridCellCohorts[actingCohort].CohortAbundance;
+                    MortalityRateStarvation)) * actingCohort.CohortAbundance;
         }
-        //
-        //            // If the process tracker is on and output detail is set to high and this cohort has not been merged yet, then record
-        //            // the number of individuals that have died
-        //            if (trackProcesses.TrackProcesses && (outputDetail == "high") && (!gridCellCohorts[actingCohort].Merged))
-        //            {
-        //                trackProcesses.RecordMortality((unsigned)cellEnvironment["LatIndex"][0], (unsigned)cellEnvironment["LonIndex"][0],gridCellCohorts[actingCohort].BirthTimeStep, 
-        //                    currentTimestep, gridCellCohorts[actingCohort].IndividualBodyMass, gridCellCohorts[actingCohort].AdultMass, 
-        //                    gridCellCohorts[actingCohort].FunctionalGroupIndex,
-        //                    gridCellCohorts[actingCohort].CohortID[0], MortalityTotal, "sen/bg/starv");
-        //            }
-        //
+
         // Remove individuals that have died from the delta abundance for this cohort
         deltas["abundance"]["mortality"] = -MortalityTotal;
 

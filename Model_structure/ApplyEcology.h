@@ -2,6 +2,8 @@
 #define APPLYECOLOGY_H
 #include <ProcessTracker.h>
 #include <assert.h>
+
+#include "Cohort.h"
 /** \file ApplyEcology.h
  * \brief the ApplyEcology header file
  */
@@ -22,7 +24,7 @@ public:
     @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param currentTimestep The current model time step 
     @param tracker A process tracker */
-    void UpdateAllEcology(GridCellCohortHandler& gridCellCohorts, vector<int>& actingCohort, map<string, vector<double>>&cellEnvironment, map<string, map<string, double>>&
+    void UpdateAllEcology(GridCellCohortHandler& gridCellCohorts, Cohort& actingCohort, map<string, vector<double>>&cellEnvironment, map<string, map<string, double>>&
             deltas, unsigned currentTimestep) {
         // Apply cohort abundance changes
         UpdateAbundance(gridCellCohorts, actingCohort, deltas);
@@ -36,7 +38,7 @@ public:
     @param gridCellCohorts The cohorts in the current grid cell 
     @param actingCohort The location of the acting cohort in the jagged array of grid cell cohorts 
     @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell */
-    void UpdateAbundance(GridCellCohortHandler& gridCellCohorts, vector<int>& actingCohort, map<string, map<string, double>>&deltas) {
+    void UpdateAbundance(GridCellCohortHandler& gridCellCohorts, Cohort& actingCohort, map<string, map<string, double>>&deltas) {
         // Extract the abundance deltas from the sorted list of all deltas
         map<string, double> deltaAbundance = deltas["abundance"];
 
@@ -49,12 +51,12 @@ public:
             NetAbundanceChange += d.second;
         }
         // Check that cohort abundance will not become negative
-        assert((gridCellCohorts[actingCohort].CohortAbundance + NetAbundanceChange) >= 0 && "Cohort abundance < 0");
+        assert((actingCohort.CohortAbundance + NetAbundanceChange) >= 0 && "Cohort abundance < 0");
 
         //Loop over all keys in the abundance deltas sorted list
         for (auto d : deltaAbundance) {
             // Update the abundance of the acting cohort
-            gridCellCohorts[actingCohort].CohortAbundance += d.second;
+            actingCohort.CohortAbundance += d.second;
             // Reset the current delta abundance to zero
             d.second = 0.0;
         }
@@ -68,7 +70,7 @@ public:
     @param currentTimestep The current model time step 
     @param tracker A process tracker 
     @param cellEnvironment The cell environment */
-    void UpdateBiomass(GridCellCohortHandler& gridCellCohorts, vector<int>& actingCohort, map<string, map<string, double>>&deltas,
+    void UpdateBiomass(GridCellCohortHandler& gridCellCohorts, Cohort& actingCohort, map<string, map<string, double>>&deltas,
             unsigned currentTimestep,  map<string, vector<double>>&cellEnvironment) {
         // Extract the biomass deltas from the sorted list of all deltas
         map<string, double> deltaBiomass = deltas["biomass"];
@@ -81,15 +83,14 @@ public:
             // Update net biomass change
             NetBiomass += d.second;
         }
-        //cout<<"oower "<<NetBiomass<<endl;
         double BiomassCheck = 0.0;
         bool NetToBeApplied = true;
         // If cohort abundance is greater than zero, then check that the calculated net biomass will not make individual body mass become negative
-        if (gridCellCohorts[actingCohort].CohortAbundance > 0) {
+        if (actingCohort.CohortAbundance > 0) {
 
-            BiomassCheck = gridCellCohorts[actingCohort].IndividualBodyMass + NetBiomass;
+            BiomassCheck = actingCohort.IndividualBodyMass + NetBiomass;
             if (BiomassCheck < 0) {
-                cout << "Biomass going negative, acting cohort: " << actingCohort[0] << ", " << actingCohort[1];
+                cout << "Biomass going negative, acting cohort: " << actingCohort.FunctionalGroupIndex << ", " << actingCohort.ID;
                 exit(1);
             }
         }
@@ -98,27 +99,27 @@ public:
         for (auto d : deltaBiomass) {
             // If cohort abundance is zero, then set cohort individual body mass to zero and reset the biomass delta to zero, 
             // otherwise update cohort individual body mass and reset the biomass delta to zero
-            if (gridCellCohorts[actingCohort].CohortAbundance == 0) {
-                gridCellCohorts[actingCohort].IndividualBodyMass = 0.0;
+            if (actingCohort.CohortAbundance == 0) {
+                actingCohort.IndividualBodyMass = 0.0;
                 d.second = 0.0;
             } else {
                 if (NetToBeApplied) {
-                    gridCellCohorts[actingCohort].IndividualBodyMass = gridCellCohorts[actingCohort].IndividualBodyMass + NetBiomass;
+                    actingCohort.IndividualBodyMass = actingCohort.IndividualBodyMass + NetBiomass;
                     NetToBeApplied = false;
                 }
 
-                //gridCellCohorts[actingCohort].IndividualBodyMass += deltaBiomass[key];
+                //actingCohort.IndividualBodyMass += deltaBiomass[key];
                 d.second = 0.0;
             }
         }
 
         // Check that individual body mass is still greater than zero
-        assert(gridCellCohorts[actingCohort].IndividualBodyMass >= 0 && "biomass < 0");
+        assert(actingCohort.IndividualBodyMass >= 0 && "biomass < 0");
 
         // If the current individual body mass is the largest that has been achieved by this cohort, then update the maximum achieved
         // body mass tracking variable for the cohort
-        if (gridCellCohorts[actingCohort].IndividualBodyMass > gridCellCohorts[actingCohort].MaximumAchievedBodyMass)
-            gridCellCohorts[actingCohort].MaximumAchievedBodyMass = gridCellCohorts[actingCohort].IndividualBodyMass;
+        if (actingCohort.IndividualBodyMass > actingCohort.MaximumAchievedBodyMass)
+            actingCohort.MaximumAchievedBodyMass = actingCohort.IndividualBodyMass;
 
         // Extract the reproductive biomass deltas from the sorted list of all deltas
         map<string, double> deltaReproductiveBiomass = deltas["reproductivebiomass"];
@@ -136,11 +137,11 @@ public:
         for (auto d : deltaReproductiveBiomass) {
             // If cohort abundance is zero, then set cohort reproductive body mass to zero and reset the biomass delta to zero, 
             // otherwise update cohort reproductive body mass and reset the biomass delta to zero
-            if (gridCellCohorts[actingCohort].CohortAbundance == 0) {
-                gridCellCohorts[actingCohort].IndividualReproductivePotentialMass = 0.0;
+            if (actingCohort.CohortAbundance == 0) {
+                actingCohort.IndividualReproductivePotentialMass = 0.0;
                 d.second = 0.0;
             } else {
-                gridCellCohorts[actingCohort].IndividualReproductivePotentialMass += d.second;
+                actingCohort.IndividualReproductivePotentialMass += d.second;
                 d.second = 0.0;
             }
         }

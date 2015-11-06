@@ -71,36 +71,23 @@ public:
     @param outputDetail The level of output detail being used for the current model run 
     @param currentMonth The current model month  */
     void RunEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
-            vector<int>& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&deltas,
+            Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&deltas,
             FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
-            unsigned currentTimestep, ProcessTracker& trackProcesses, ThreadLockedParallelVariables& partial,
-             string outputDetail, unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
+            unsigned currentTimestep, ThreadLockedParallelVariables& partial,
+            unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
         double Realm = cellEnvironment["Realm"][0];
-        if (madingleyCohortDefinitions.GetTraitNames("Heterotroph/Autotroph", gridCellCohorts[actingCohort].FunctionalGroupIndex) == "heterotroph") {
-            if (madingleyCohortDefinitions.GetTraitNames("Endo/Ectotherm", gridCellCohorts[actingCohort].FunctionalGroupIndex) == "endotherm") {
+        if (madingleyCohortDefinitions.GetTraitNames("Heterotroph/Autotroph", actingCohort.FunctionalGroupIndex) == "heterotroph") {
+            if (madingleyCohortDefinitions.GetTraitNames("Endo/Ectotherm", actingCohort.FunctionalGroupIndex) == "endotherm") {
 
-                Implementations["basic endotherm"]->RunMetabolism(gridCellCohorts, gridCellStocks, actingCohort, cellEnvironment, deltas, madingleyCohortDefinitions, madingleyStockDefinitions, currentTimestep, currentMonth);
+                Implementations["basic endotherm"]->RunMetabolism(  actingCohort, cellEnvironment, deltas, currentTimestep, currentMonth);
             } else {
-                Implementations["basic ectotherm"]->RunMetabolism(gridCellCohorts, gridCellStocks, actingCohort, cellEnvironment, deltas, madingleyCohortDefinitions, madingleyStockDefinitions, currentTimestep, currentMonth);
+                Implementations["basic ectotherm"]->RunMetabolism(  actingCohort, cellEnvironment, deltas, currentTimestep, currentMonth);
 
             }
 
         }
-        // If the process tracker is on and output detail is set to high and this cohort has not been merged yet, then record
-        // the number of individuals that have died
-        /*          if (trackProcesses.TrackProcesses && (outputDetail == "high"))
-                  {
 
-                      trackProcesses.TrackTimestepMetabolism((unsigned)cellEnvironment["LatIndex"][0],
-                                                      (unsigned)cellEnvironment["LonIndex"][0],
-                                                      currentTimestep,
-                                                      gridCellCohorts[actingCohort].IndividualBodyMass,
-                                                      actingCohort[0],
-                                                      cellEnvironment["Temperature"][currentMonth],
-                                                      deltas["biomass"]["metabolism"]);
-
-                  }
-         */    }
+    }
     //----------------------------------------------------------------------------------------------
 };
 #endif

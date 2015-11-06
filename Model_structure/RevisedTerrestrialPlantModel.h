@@ -321,20 +321,6 @@ public:
         // Add the leaf wet matter to the acting stock
         gridCellStocks[actingStock].TotalBiomass += max(-gridCellStocks[actingStock].TotalBiomass, WetMatterIncrement);
 
-        // If the processer tracker is enabled and output detail is high and the model is being run for specific locations, then track the biomass gained through primary production
-        //            if (tracker.TrackProcesses && (outputDetail == "high") && specificLocations)
-        //            {
-        //                tracker.TrackPrimaryProductionTrophicFlow((unsigned)cellEnvironment["LatIndex"][0], (unsigned)cellEnvironment["LonIndex"][0],
-        //                    max(-gridCellStocks[actingStock].TotalBiomass, WetMatterIncrement));
-        // 
-        //            }
-
-        //            if (globalTracker.TrackProcesses)
-        //            {
-        //                globalTracker.RecordNPP((unsigned)cellEnvironment["LatIndex"][0], (unsigned)cellEnvironment["LonIndex"][0],
-        //                    ConvertToLeafWetMass(NPP, cellEnvironment["Cell Area"][0]) * 
-        //                    Utilities.ConvertTimeUnits(GlobalModelTimeStepUnit, "month")/cellEnvironment["Cell Area"][0]);
-        //            }
         // Calculate fractional leaf mortality
         double LeafMortFrac = 1 - exp(-TimeStepLeafMortRate);
 

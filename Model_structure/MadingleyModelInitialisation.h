@@ -9,6 +9,19 @@
 #include <EnviroData.h>
 #include <MassBinsHandler.h>
 #include <sstream>
+#include <ModelGrid.h>
+#include <Stopwatch.h>
+#include <cstdlib>
+
+
+#include <Logger.h>
+#include <NcGridCell.h>
+#include <FileReader.h>
+#include <FileWriter.h>
+#include <Convertor.h>
+#include <Constants.h>
+#include <DataGrid.h>
+
 /**
  \ file *MadingleyModelInitialisation.h
  \brief The MadingleyModelInitialisation header file
@@ -74,6 +87,7 @@ public:
     bool LiveOutputs;
     /** Whether or not to track trophic level biomass and flow information specific to the marine realm */
     bool TrackMarineSpecifics;
+    StopWatch InitializationTimer;
     /** \brief Information from the initialization file  */
     map<string, string> InitialisationFileStrings;
     /** \brief The functional group definitions of cohorts in the model */
@@ -90,6 +104,10 @@ public:
     MassBinsHandler ModelMassBins;
     /** Instance of Utilities for timestep conversions */
     UtilityFunctions Utilities;
+    /** \brief An instance of the simple random number generator class */
+    std::default_random_engine RandomNumberGenerator;
+    /** track cohort ID number*/
+    long long NextCohortID;
 
     //----------------------------------------------------------------------------------------------
     //Methods
@@ -99,19 +117,53 @@ public:
     /** \brief Reads the initialization file to get information for the set of simulations to be run
      @param initialisationFile The name of the initialization file with information on the simulations to be run
      @param outputPath The path to folder in which outputs will be stored */
-    MadingleyModelInitialisation(string initialisationFile, string outputPath) {
-        //            // Write to console
+    MadingleyModelInitialisation(string initialisationFile, 
+                                 string outputPath,
+                                 long long& NC,
+                                 double& TC,
+                                 double& TS,
+                                 ModelGrid& Grid) {
+        //Write to console
         cout << "Initializing model...\n" << endl;
         //set default value of cohort random draw properties
         DrawRandomly = true;
         //set default dispersal
         DispersalOnly = false;
-        //defaults for process tracking
-        TrackProcesses = false;
-        TrackGlobalProcesses = false;
+        NextCohortID=0;
 
-        // Read the intialisation files and copy them to the output directory
-        ReadAndCopyInitialisationFiles(initialisationFile, outputPath);
+        // Read the intialisation files and store values
+        ReadInitialisationFiles(initialisationFile, outputPath);
+        
+        //Switched order so we create cell list first then initialise cells using list rather than grid.
+        unsigned NumLatCells = (unsigned) ((TopLatitude - BottomLatitude) / CellSize);
+        unsigned NumLonCells = (unsigned) ((RightmostLongitude - LeftmostLongitude) / CellSize);
+        
+        Grid.SetUpGrid(BottomLatitude, LeftmostLongitude, TopLatitude, RightmostLongitude,
+                CellSize, CellSize);
+        //read and store environmental inputs in the grid.
+        ReadEnvironmentalLayers(InitialisationFileStrings["Environmental"], outputPath,Grid);
+        //set remaining grid cell attributes.
+        Grid.setCellValues();
+        
+        // Set up the cohorts and stocks
+         InitializationTimer.Start();
+
+        cout << "Seeding grid cell stocks and cohorts:" << endl;
+        long totalCohorts=0,totalStocks=0;
+        Grid.ask([&](GridCell & c) {
+
+            totalCohorts+= SeedGridCellCohorts(c);
+            totalStocks += SeedGridCellStocks(c);
+            });
+
+        cout << "Total cohorts initialised: " << totalCohorts << endl;
+        cout << "Total stocks created " << totalStocks << endl;
+        cout << "" << endl;
+        NC=NextCohortID;
+        TC=totalCohorts;
+        TS=totalStocks;
+        InitializationTimer.Stop();
+        cout << "Time required: " << InitializationTimer.GetElapsedTimeSecs() << endl;
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Reads in all initialisation files and copies them to the output directory for future reference 
@@ -119,8 +171,7 @@ public:
      @param outputPath The path to folder in which outputs will be stored
      //        /// <todo>Need to adjust this file to deal with incorrect inputs, extra columns etc by throwing an error</todo>
      //        /// <todo>Also need to strip leading spaces</todo>*/
-    void ReadAndCopyInitialisationFiles(string initialisationFile, string outputPath) {
-        NumTimeSteps = 5;
+    void ReadInitialisationFiles(string initialisationFile, string outputPath) {
         cout << "Reading initialisation parameters file..." << endl;
         ifstream infile(initialisationFile.c_str());
         if (infile.is_open()) {
@@ -189,15 +240,11 @@ public:
                 if (param == "cohort functional group definitions file") InitialisationFileStrings["CohortFunctional"] = val;
                 if (param == "stock functional group definitions file") InitialisationFileStrings["StockFunctional"] = val;
                 if (param == "specific location file") InitialisationFileStrings["Locations"] = val;
-                if (param == "environmental data file") InitialisationFileStrings["Environmental"] = val;
+                if (param == "environmental data file") InitialisationFileStrings["Environmental"] = data[1];
 
                 //read in mass bins : use data[1] so that filename isn't lower-cased
                 if (param == "mass bin filename") ModelMassBins.SetUpMassBins(data[1], outputPath);
 
-                //Read environmental data layers
-                if (param == "environmental data file") {
-                    ReadEnvironmentalLayers(data[1], outputPath);
-                }
                 if (param == "cohort functional group definitions file") {
                     cout << "Reading functional group definitions..." << endl;
                     CohortFunctionalGroupDefinitions = FunctionalGroupDefinitions(data[1], outputPath);
@@ -217,12 +264,13 @@ public:
         }
 
         assert(CellRarefaction >= 1 && "Cell rarefaction cannot be less than 1");
+
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Reads the environmental layers listed in the specified file containing a list of environmental layers
      @param environmentalLayerFile The name of the file containing the list of environmental layers
      @param outputPath The path to folder in which outputs will be stored */
-    void ReadEnvironmentalLayers(string environmentalLayerFile, string outputPath) {
+    void ReadEnvironmentalLayers(string environmentalLayerFile, string outputPath, ModelGrid& Grid) {
 
         cout << "Reading in environmental data:" << endl;
         ifstream infile(environmentalLayerFile.c_str());
@@ -320,11 +368,231 @@ public:
             }
             Filenames[ii] = Filenames[ii] + Extensions[ii];
             // Read in and store the environmental data
+
             EnviroStack[LayerName[ii]] = EnviroData(Filenames[ii], DatasetNames[ii], FileTypes[ii], Resolutions[ii], MethodUnits[ii]);
         }
-        cout << endl;
+        double degreeResolution = 10;
+std::string mInputBaseDirectory = "../netCDFdata/";
 
+
+Types::FileReaderPointer mFileReader;
+            mFileReader = new FileReader( );
+
+    for( unsigned int variableIndex = 0; variableIndex < Constants::cNumberOfInputFiles; ++variableIndex ) {
+        std::string inputFilePath = mInputBaseDirectory + Convertor::Get( )->NumberToString( degreeResolution ) + "deg/" + Constants::cInputFileNames[ variableIndex ];
+        mFileReader->ReadNetCDFFile( inputFilePath, variableIndex );
     }
-    //----------------------------------------------------------------------------------------------    
+    
+    Logger::Get( )->LogString( "Finished reading netcdf!" );
+        cout << endl;
+        // Loop over variables in the list of environmental data
+
+        for (auto Layer : EnviroStack) {
+            Grid.ask([&](GridCell & c) {
+                // Initialise the temporary vector of values to be equal to the number of time intervals in the environmental variable
+                vector<double> tempVector(Layer.second.NumTimes);
+                //Loop over the time intervals in the environmental variable
+                for (int tm = 0; tm < Layer.second.NumTimes; tm++) {
+                    // Add the value of the environmental variable at this time interval to the temporary vector
+                    bool MissingValue=false;
+                    int lo=c.CellEnvironment["LonIndex"][0];
+                    int la=c.CellEnvironment["LatIndex"][0];
+                    tempVector[tm] = 0;//Layer.second.GetValue(c.Latitude, c.Longitude, (unsigned) tm, MissingValue, CellSize, CellSize);
+                    if (Layer.first=="LandSeaMask")
+                      if(DataGrid::Get()->GetGridCell(lo,la)->IsOcean())
+                      {tempVector[tm]=0;}
+                      else
+                      {tempVector[tm]=1;}
+                    //cout<<Layer.first<<endl;
+                    if (Layer.first=="SST")
+                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetSST(tm);
+                    if (Layer.first=="vVel")
+                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetVSpeed(tm);
+                    if (Layer.first=="uVel")
+                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetUSpeed(tm);
+                    if (Layer.first=="AWC")
+                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetWaterCapacity(tm);
+                    if (Layer.first=="OceanNPP")
+                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetOceanNPP(tm);
+                    if (Layer.first=="LandNPP")
+                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetNPP(tm);
+                    if (Layer.first=="LandDTR")
+                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetDiurnalTemperatureRange(tm);
+                    if (Layer.first=="FrostDays")
+                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetGroundFrostFrequency(tm);
+                    if (Layer.first=="Temperature")
+                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetNearSurfaceTemperature(tm);
+                    if (Layer.first=="Precipitation")
+                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetPrecipitation(tm);
+                    // If the environmental variable is a missing value, then change the value to equal the standard missing value for this cell
+                    if (MissingValue || tempVector[tm]<=-9990)
+                            tempVector[tm] = 0.;//-9999;
+                    }
+
+                c.CellEnvironment[Layer.first] = tempVector;
+            });
+        }
+    }
+    //----------------------------------------------------------------------------------------------
+
+    /** \brief  Seed grid cells with cohorts, as specified in the model input files
+    @param g A reference to a grid cell 
+     */
+    long SeedGridCellCohorts(GridCell& gcl) {
+        long totalCohorts=0;
+        // Set the seed for the random number generator from the system time
+        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+        if (DrawRandomly) RandomNumberGenerator.seed(seed);
+        else RandomNumberGenerator.seed(1000);
+
+
+        unsigned NumCohortsThisCell = 0;
+        // Define local variables
+        double CohortJuvenileMass;
+        double CohortAdultMassRatio;
+        double CohortAdultMass;
+        double ExpectedLnAdultMassRatio;
+        double TotalNewBiomass = 0.0;
+        double OptimalPreyBodySizeRatio;
+
+
+        //Variable for altering the juvenile to adult mass ratio for marine cells when handling certain functional groups eg baleen whales
+        double Scaling = 0.0;
+
+        for (int FunctionalGroup : CohortFunctionalGroupDefinitions.AllFunctionalGroupsIndex) {
+             int N= CohortFunctionalGroupDefinitions.GetBiologicalPropertyOneFunctionalGroup("Initial number of GridCellCohorts", FunctionalGroup);
+            if ((CohortFunctionalGroupDefinitions.GetTraitNames("Realm", FunctionalGroup) == "terrestrial" && gcl.CellEnvironment["Realm"][0] == 1.0) ||
+                (CohortFunctionalGroupDefinitions.GetTraitNames("Realm", FunctionalGroup) == "marine" && gcl.CellEnvironment["Realm"][0] == 2.0)) {
+
+                NumCohortsThisCell += N;
+            }
+        }
+        if (NumCohortsThisCell > 0);
+        {
+            //Loop over all functional groups in the model
+            for (int FunctionalGroup : CohortFunctionalGroupDefinitions.AllFunctionalGroupsIndex) {
+                // If it is a functional group that corresponds to the current realm, then seed cohorts
+                if ((CohortFunctionalGroupDefinitions.GetTraitNames("Realm", FunctionalGroup) == "terrestrial" && !gcl.isMarine()) ||
+                    (CohortFunctionalGroupDefinitions.GetTraitNames("Realm", FunctionalGroup) == "marine" && gcl.isMarine())) {
+                    // Get the minimum and maximum possible body masses for organisms in each functional group
+                    double MassMinimum = CohortFunctionalGroupDefinitions.GetBiologicalPropertyOneFunctionalGroup("minimum mass", FunctionalGroup);
+                    double MassMaximum = CohortFunctionalGroupDefinitions.GetBiologicalPropertyOneFunctionalGroup("maximum mass", FunctionalGroup);
+
+                    double ProportionTimeActive = CohortFunctionalGroupDefinitions.GetBiologicalPropertyOneFunctionalGroup("proportion suitable time active", FunctionalGroup);
+
+                    // Loop over the initial number of cohorts
+                    unsigned NumberOfCohortsInThisFunctionalGroup = 1;
+
+                    NumberOfCohortsInThisFunctionalGroup = CohortFunctionalGroupDefinitions.GetBiologicalPropertyOneFunctionalGroup("initial number of gridcellcohorts", FunctionalGroup);
+
+                    for (unsigned jj = 0; jj < NumberOfCohortsInThisFunctionalGroup; jj++) {
+
+
+                        // Draw adult mass from a log-normal distribution with mean -6.9 and standard deviation 10.0,
+                        // within the bounds of the minimum and maximum body masses for the functional group
+                        std::uniform_real_distribution<double> randomNumber(0.0, 1.0);
+                        CohortAdultMass = pow(10, (randomNumber(RandomNumberGenerator) * (log10(MassMaximum) - log10(50 * MassMinimum)) + log10(50 * MassMinimum)));
+
+                        // Terrestrial and marine organisms have different optimal prey/predator body mass ratios
+                        if (!gcl.isMarine()) {
+                            // Optimal prey body size 10%
+                            std::normal_distribution<double> randomNumber(0.1, 0.02);
+                            OptimalPreyBodySizeRatio = max(0.01, randomNumber(RandomNumberGenerator));
+                        } else {
+                            if (CohortFunctionalGroupDefinitions.GetTraitNames("Diet", FunctionalGroup) == "allspecial") {
+                                // Note that for this group
+                                // it is actually (despite the name) not an optimal prey body size ratio, but an actual body size.
+                                // This is because it is invariant as the predator (filter-feeding baleen whale) grows.
+                                // See also the predation classes.
+                                std::normal_distribution<double> randomNumber(0.0001, 0.1);
+                                OptimalPreyBodySizeRatio = max(0.00001, randomNumber(RandomNumberGenerator));
+                            } else {
+                                // Optimal prey body size for marine organisms is 10%
+                                std::normal_distribution<double> randomNumber(0.1, 0.02);
+                                OptimalPreyBodySizeRatio = max(0.01, randomNumber(RandomNumberGenerator));
+                            }
+
+                        }
+
+                        // Draw from a log-normal distribution with mean 10.0 and standard deviation 5.0, then add one to obtain 
+                        // the ratio of adult to juvenile body mass, and then calculate juvenile mass based on this ratio and within the
+                        // bounds of the minimum and maximum body masses for this functional group
+                        if (!gcl.isMarine()) {
+                            do {
+                                ExpectedLnAdultMassRatio = 2.24 + 0.13 * log(CohortAdultMass);
+                                std::lognormal_distribution<double> randomNumber(ExpectedLnAdultMassRatio, 0.5);
+                                CohortAdultMassRatio = 1.0 + randomNumber(RandomNumberGenerator);
+                                CohortJuvenileMass = CohortAdultMass * 1.0 / CohortAdultMassRatio;
+                            } while (CohortAdultMass <= CohortJuvenileMass || CohortJuvenileMass < MassMinimum);
+                        }// In the marine realm, have a greater difference between the adult and juvenile body masses, on average
+                        else {
+                            unsigned Counter = 0;
+                            Scaling = 0.2;
+                            // Use the scaling to deal with baleen whales not having such a great difference
+                            do {
+
+                                ExpectedLnAdultMassRatio = 2.5 + Scaling * log(CohortAdultMass);
+                                std::lognormal_distribution<double> randomNumber(ExpectedLnAdultMassRatio, 0.5);
+                                CohortAdultMassRatio = 1.0 + 10 * randomNumber(RandomNumberGenerator);
+                                CohortJuvenileMass = CohortAdultMass * 1.0 / CohortAdultMassRatio;
+                                Counter++;
+                                if (Counter > 10) {
+                                    Scaling -= 0.01;
+                                    Counter = 0;
+                                }
+                            } while (CohortAdultMass <= CohortJuvenileMass || CohortJuvenileMass < MassMinimum);
+                        }
+
+
+                        double NewBiomass = (3300 / NumCohortsThisCell) * 100 * 3000 *
+                                pow(0.6, (log10(CohortJuvenileMass))) * (gcl.CellEnvironment["Cell Area"][0]);
+                        TotalNewBiomass += NewBiomass;
+                        double NewAbund = 0.0;
+
+                        NewAbund = NewBiomass / CohortJuvenileMass;
+
+
+                        // Initialise the new cohort with the relevant properties
+
+                        Cohort NewCohort(gcl, FunctionalGroup, CohortJuvenileMass, CohortAdultMass, CohortJuvenileMass, NewAbund,
+                                OptimalPreyBodySizeRatio, 0, ProportionTimeActive, NextCohortID);
+
+                        // Add the new cohort to the list of grid cell cohorts
+                        gcl.GridCellCohorts[FunctionalGroup].push_back(NewCohort);
+
+                        // Increment the variable tracking the total number of cohorts in the model
+                        totalCohorts++;
+
+                    }
+                }
+            }
+        }
+        return totalCohorts;
+    }
+    //----------------------------------------------------------------------------------------------
+
+    /** \brief    Seed grid cell with stocks, as specified in the model input files
+
+    @param gcl The grid cell  */
+    long SeedGridCellStocks(GridCell& gcl) {
+        long totalStocks=0;
+        // Loop over all stock functional groups in the model
+        for (int FunctionalGroup : StockFunctionalGroupDefinitions.AllFunctionalGroupsIndex) {
+
+            // Initialise the new stock with the relevant properties
+            bool success;
+            Stock NewStock(StockFunctionalGroupDefinitions,FunctionalGroup, gcl.CellEnvironment, success);
+            // Add the new stock to the list of grid cell stocks
+            if (success) {
+                gcl.GridCellStocks[FunctionalGroup].push_back(NewStock);
+
+                totalStocks++;
+            }
+        }
+        return totalStocks;
+    }
+    //----------------------------------------------------------------------------------------------
+
 };
 #endif
+

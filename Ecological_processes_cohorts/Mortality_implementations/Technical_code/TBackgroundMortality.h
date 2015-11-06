@@ -36,7 +36,7 @@ public:
     @param currentTimestep The current model time step 
     @return The rate of individuals in the cohort that die from background mortality
      */
-    double CalculateMortalityRate(GridCellCohortHandler& gridCellCohorts, vector<int>& actingCohort, double bodyMassIncludingChangeThisTimeStep, map<string, map<string, double> >& deltas, unsigned currentTimestep) {
+    double CalculateMortalityRate( Cohort& actingCohort, double bodyMassIncludingChangeThisTimeStep,  unsigned currentTimestep) {
         // Convert from mortality rate per mortality formulation time step to mortality rate per model time step
         return MortalityRate * DeltaT;
     }
