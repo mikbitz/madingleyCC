@@ -62,21 +62,20 @@ public:
      */
     void RunEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
             Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&deltas,
-            FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
             unsigned currentTimeStep, ProcessTracker& processTracker, ThreadLockedParallelVariables& partial,
-            unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
+            unsigned currentMonth, MadingleyModelInitialisation& params) {
 
         // Holds the reproductive strategy of a cohort
-        bool _Iteroparous = madingleyCohortDefinitions.GetTraitNames("reproductive strategy", actingCohort.FunctionalGroupIndex) == "iteroparity";
+        bool _Iteroparous = params.CohortFunctionalGroupDefinitions.GetTraitNames("reproductive strategy", actingCohort.FunctionalGroupIndex) == "iteroparity";
 
         // Assign mass to reproductive potential
         Implementations["reproduction basic"]->RunReproductiveMassAssignment(gridCellCohorts, gridCellStocks, actingCohort, cellEnvironment, deltas,
-                madingleyCohortDefinitions, madingleyStockDefinitions, currentTimeStep, processTracker);
+                params.CohortFunctionalGroupDefinitions, params.StockFunctionalGroupDefinitions, currentTimeStep, processTracker);
 
         // Run reproductive events. Note that we can't skip juveniles here as they could conceivably grow to adulthood and get enough biomass to reproduce in a single time step
         // due to other ecological processes
         Implementations["reproduction basic"]->RunReproductionEvents(gridCellCohorts, gridCellStocks, actingCohort, cellEnvironment,
-                deltas, madingleyCohortDefinitions, madingleyStockDefinitions, currentTimeStep, processTracker, partial, _Iteroparous, currentMonth);
+                deltas, params.CohortFunctionalGroupDefinitions, params.StockFunctionalGroupDefinitions, currentTimeStep, processTracker, partial, _Iteroparous, currentMonth);
     }
     //----------------------------------------------------------------------------------------------
 };

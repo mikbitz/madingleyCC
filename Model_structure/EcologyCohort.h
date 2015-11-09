@@ -74,32 +74,27 @@ public:
     @param partial Thread-locked local variables 
     @param outputDetail The level of output detail being used for this model run 
     @param currentMonth The current model month */
-    void RunWithinCellEcology(GridCell& gcl, Cohort& actingCohort,
-            FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, unsigned currentTimestep, 
-            ThreadLockedParallelVariables& partial,  unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
+    void RunWithinCellEcology(GridCell& gcl, Cohort& actingCohort, unsigned currentTimestep, 
+            ThreadLockedParallelVariables& partial,  unsigned currentMonth, MadingleyModelInitialisation& params) {
 
         // RUN EATING
         EatingFormulations["Basic eating"]->RunEcologicalProcess(gcl.GridCellCohorts, gcl.GridCellStocks, actingCohort, gcl.CellEnvironment,
-                gcl.Deltas, madingleyCohortDefinitions, madingleyStockDefinitions, currentTimestep, partial,
-                currentMonth, initialisation);
+                gcl.Deltas,  currentTimestep, partial,currentMonth, params);
 
 
         // RUN METABOLISM - THIS TIME TAKE THE METABOLIC LOSS TAKING INTO ACCOUNT WHAT HAS BEEN INGESTED THROUGH EATING
         MetabolismFormulations["Basic metabolism"]->RunEcologicalProcess(gcl.GridCellCohorts,gcl.GridCellStocks, actingCohort,
-                gcl.CellEnvironment, gcl.Deltas, madingleyCohortDefinitions, madingleyStockDefinitions, currentTimestep, partial,
-                currentMonth, initialisation);
+                gcl.CellEnvironment, gcl.Deltas,  currentTimestep, partial,currentMonth, params);
 
 
         // RUN REPRODUCTION - TAKING INTO ACCOUNT NET BIOMASS CHANGES RESULTING FROM EATING AND METABOLISING
         ReproductionFormulations["Basic reproduction"]->RunEcologicalProcess(gcl.GridCellCohorts, gcl.GridCellStocks, actingCohort,
-                gcl.CellEnvironment, gcl.Deltas, madingleyCohortDefinitions, madingleyStockDefinitions, currentTimestep, partial,
-                currentMonth, initialisation);
+                gcl.CellEnvironment, gcl.Deltas, currentTimestep, partial,currentMonth, params);
 
 
         // RUN MORTALITY - TAKING INTO ACCOUNT NET BIOMASS CHANGES RESULTING FROM EATING, METABOLISM AND REPRODUCTION
         MortalityFormulations["Basic mortality"]->RunEcologicalProcess(gcl.GridCellCohorts, gcl.GridCellStocks, actingCohort,
-                gcl.CellEnvironment, gcl.Deltas, madingleyCohortDefinitions, madingleyStockDefinitions, currentTimestep, partial,
-                currentMonth, initialisation);
+                gcl.CellEnvironment, gcl.Deltas,  currentTimestep, partial, currentMonth, params);
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Update the properties of the acting cohort and of the environmental biomass pools after running the ecological processes for a cohort
@@ -112,9 +107,7 @@ public:
     @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param currentTimestep The current model time step 
     @param tracker A process tracker */
-    void UpdateEcology(GridCell& gcl, Cohort& actingCohort,
-            FunctionalGroupDefinitions&
-            madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, unsigned currentTimestep) {
+    void UpdateEcology(GridCell& gcl, Cohort& actingCohort, unsigned currentTimestep) {
         // Apply the results of within-cell ecological processes
         ApplyEcologicalProcessResults.UpdateAllEcology(gcl.GridCellCohorts, actingCohort, gcl.CellEnvironment, gcl.Deltas, currentTimestep);
     }

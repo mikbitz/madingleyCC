@@ -31,19 +31,19 @@ class Dispersal  {
         Dispersal(){;}
     //----------------------------------------------------------------------------------------------
     /** \brief Setup for dispersal assigns pointers to current possible dispersal methods*/
-    void setup(bool DrawRandomly, string globalModelTimeStepUnit, double PlanktonDispersalThreshold) {
+    void setup(MadingleyModelInitialisation& params) {
 
         // Assign advective dispersal implementation
-        AdvectiveDispersalImplementation = new AdvectiveDispersal(globalModelTimeStepUnit, DrawRandomly);
+        AdvectiveDispersalImplementation = new AdvectiveDispersal(params.GlobalModelTimeStepUnit, params.DrawRandomly);
 
         // Assign diffusive dispersal implementation 
-        DiffusiveDispersalImplementation = new DiffusiveDispersal(globalModelTimeStepUnit, DrawRandomly);
+        DiffusiveDispersalImplementation = new DiffusiveDispersal(params.GlobalModelTimeStepUnit, params.DrawRandomly);
 
         // Assign responsive dispersal implementation 
-        ResponsiveDispersalImplementation = new ResponsiveDispersal(globalModelTimeStepUnit, DrawRandomly);
+        ResponsiveDispersalImplementation = new ResponsiveDispersal(params.GlobalModelTimeStepUnit, params.DrawRandomly);
 
         // Get the weight threshold below which organisms are dispersed planktonically
-        PlanktonThreshold = PlanktonDispersalThreshold;
+        PlanktonThreshold = params.PlanktonDispersalThreshold;
     }
     //----------------------------------------------------------------------------------------------
     /** \brief tidy up pointers */
@@ -60,14 +60,14 @@ class Dispersal  {
     @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
     @param madingleyStockDefinitions The functional group definitions for stocks in the model 
     @param currentMonth The current model month */
-    void RunCrossGridCellEcologicalProcess(GridCell& g, ModelGrid& gridForDispersal,  FunctionalGroupDefinitions& madingleyCohortDefinitions,  unsigned currentMonth) {
+    void RunCrossGridCellEcologicalProcess(GridCell& g, ModelGrid& gridForDispersal,  MadingleyModelInitialisation& params,  unsigned currentMonth) {
 
         g.ask([&](Cohort& c){
                 // Check to see if the cell is marine and the cohort type is planktonic
                 bool dispersed=false;
                 
                 if (g.isMarine() &&
-                        ((madingleyCohortDefinitions.GetTraitNames("Mobility", c.FunctionalGroupIndex) == "planktonic") || (c.IndividualBodyMass <= PlanktonThreshold))) {
+                        ((params.CohortFunctionalGroupDefinitions.GetTraitNames("Mobility", c.FunctionalGroupIndex) == "planktonic") || (c.IndividualBodyMass <= PlanktonThreshold))) {
                     // Run advective dispersal
                     AdvectiveDispersalImplementation->RunDispersal(disperseMonkeys, gridForDispersal, c, currentMonth);
                 }   // Otherwise, if mature do responsive dispersal

@@ -67,7 +67,6 @@ public:
     @param adultBodyMass The mean mature adult body mass of individuals in the cohort 
     @param initialBodyMass The intial mean body mass of individuals in this cohort 
     @param initialAbundance The intial number of individuals in this cohort 
-    @param logOptimalPreyBodySizeRatio The optimal prey body mass (as a percentage of this cohorts mass) for individuals in this cohort 
     @param birthTimeStep The birth time step for this cohort 
     @param nextCohortID The unique ID to assign to the next cohort created
      * */

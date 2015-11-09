@@ -45,16 +45,14 @@ public:
 
     void RunWithinCellEcology(GridCellStockHandler& gridCellStocks, vector<int>& actingStock, map<string, vector<double>>&cellEnvironment,
             map<string, string>& environmentalDataUnits, string humanNPPExtraction, FunctionalGroupDefinitions& madingleyStockDefinitions,
-            unsigned currentTimeStep, string globalModelTimeStepUnit, unsigned currentMonth,
-            string outputDetail) {
+            unsigned currentTimeStep, string globalModelTimeStepUnit, unsigned currentMonth) {
         if (madingleyStockDefinitions.GetTraitNames("Realm", actingStock[0]) == "marine") {
             // Run the autotroph processor
             MarineNPPtoAutotrophStock.ConvertNPPToAutotroph(cellEnvironment, gridCellStocks, actingStock, environmentalDataUnits["LandNPP"],
-                    environmentalDataUnits["OceanNPP"], currentTimeStep, globalModelTimeStepUnit, outputDetail, currentMonth);
+                    environmentalDataUnits["OceanNPP"], currentTimeStep, globalModelTimeStepUnit, currentMonth);
         } else if (madingleyStockDefinitions.GetTraitNames("Realm", actingStock[0]) == "terrestrial") {
             // Run the dynamic plant model to update the leaf stock for this time step
-            DynamicPlantModel.UpdateLeafStock(cellEnvironment, gridCellStocks, actingStock, currentTimeStep, madingleyStockDefinitions.GetTraitNames("leaf strategy", actingStock[0]) == "deciduous", globalModelTimeStepUnit, currentMonth,
-                    outputDetail);
+            DynamicPlantModel.UpdateLeafStock(cellEnvironment, gridCellStocks, actingStock, currentTimeStep, madingleyStockDefinitions.GetTraitNames("leaf strategy", actingStock[0]) == "deciduous", globalModelTimeStepUnit, currentMonth);
             // Apply human appropriation of NPP
             HANPP.RemoveHumanAppropriatedMatter(cellEnvironment, humanNPPExtraction, gridCellStocks, actingStock, currentTimeStep, currentMonth);
 

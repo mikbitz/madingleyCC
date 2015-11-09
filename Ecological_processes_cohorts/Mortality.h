@@ -76,9 +76,8 @@ public:
     @param currentMonth The current model month */
     void RunEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
             Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&deltas,
-            FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
             unsigned currentTimeStep, ThreadLockedParallelVariables& partial,
-            unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
+            unsigned currentMonth, MadingleyModelInitialisation& params) {
 
         // Variables to hold the mortality rates
         double MortalityRateBackground;

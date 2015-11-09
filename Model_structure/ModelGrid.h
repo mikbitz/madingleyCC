@@ -434,6 +434,50 @@ public:
     bool SetEnviroLayer(string variableName, unsigned timeInterval, double setValue, unsigned latCellIndex, unsigned lonCellIndex) {
         return InternalGrid[latCellIndex][ lonCellIndex].SetEnviroLayer(variableName, timeInterval, setValue);
     }
+        //----------------------------------------------------------------------------------------------
+    /** \brief
+    Set the value of a specified environmental layer in an individual grid cell
+
+    @param variableName The name of the environmental layer 
+    @param timeInterval The time interval within the environmental variable to set (i.e. 0 if it is a yearly variable
+    or the month index - 0=Jan, 1=Feb etc. - for monthly variables) 
+    @param setValue The value to set 
+    @param latCellIndex The latitudinal cell index 
+    @param lonCellIndex The longitudinal cell index 
+    @return True if the value is set successfully, false otherwise
+     */
+    bool AddToEnviroLayer(string variableName, unsigned timeInterval, double setValue, unsigned latCellIndex, unsigned lonCellIndex) {
+        return InternalGrid[latCellIndex][ lonCellIndex].SetEnviroLayer(variableName, timeInterval, setValue);
+    }
+    //----------------------------------------------------------------------------------------------
+    /** \brief Return the value of a specified environmental layer from an individual grid cell    @param variableName The name of the environmental lyaer 
+    @param timeInterval The desired time interval within the environmental variable (i.e. 0 if it is a yearly variable
+    or the month index - 0=Jan, 1=Feb etc. - for monthly variables) 
+    @param latCellIndex The latitudinal cell index 
+    @param lonCellIndex The longitudinal cell index 
+    @param variableExists Returns false if the environmental layer does not exist, true if it does 
+    @returns The value of the environmental layer, or a missing value if the environmental layer does not exist
+     */
+    //MB NB returns a COPY of the value stored
+
+    double GetEnviroLayer(string variableName, unsigned timeInterval, Cohort& c, bool variableExists) {
+        return InternalGrid[c.origin[0]][c.origin[1]].GetEnviroLayer(variableName, timeInterval, variableExists);
+    }
+    //----------------------------------------------------------------------------------------------
+    /** \brief
+    Set the value of a specified environmental layer in an individual grid cell
+
+    @param variableName The name of the environmental layer 
+    @param timeInterval The time interval within the environmental variable to set (i.e. 0 if it is a yearly variable
+    or the month index - 0=Jan, 1=Feb etc. - for monthly variables) 
+    @param setValue The value to set 
+    @param latCellIndex The latitudinal cell index 
+    @param lonCellIndex The longitudinal cell index 
+    @return True if the value is set successfully, false otherwise
+     */
+    bool AddToEnviroLayer(string variableName, unsigned timeInterval, double setValue, Cohort& c) {
+        return InternalGrid[c.origin[0]][c.origin[1]].SetEnviroLayer(variableName, timeInterval, setValue);
+    }
     //----------------------------------------------------------------------------------------------
     /** \brief Set the value of a given delta type for the specified ecological process within the specified grid cell
     @param deltaType The type of delta value to set (e.g. 'biomass', 'abundance' etc.) 

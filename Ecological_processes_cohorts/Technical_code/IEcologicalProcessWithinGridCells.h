@@ -35,11 +35,9 @@ public:
             GridCellStockHandler& gridCellStocks,
             Cohort& actingCohort, map<string, vector<double> >& cellEnvironment,
             map<string, map<string, double>>&deltas,
-            FunctionalGroupDefinitions& madingleyCohortHandler,
-            FunctionalGroupDefinitions& madingleyStockHandler,
             unsigned currentTimestep,
             ThreadLockedParallelVariables& partial,
-            unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
+            unsigned currentMonth, MadingleyModelInitialisation& params) {
         ;
     }
     //----------------------------------------------------------------------------------------------

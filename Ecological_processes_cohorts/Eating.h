@@ -76,13 +76,11 @@ public:
             GridCellStockHandler& gridCellStocks, Cohort& actingCohort,
             map<string, vector<double> >& cellEnvironment,
             map<string, map<string, double> >& deltas,
-            FunctionalGroupDefinitions& madingleyCohortDefinitions,
-            FunctionalGroupDefinitions& madingleyStockDefinitions,
             unsigned currentTimestep, ProcessTracker& trackProcesses,
             ThreadLockedParallelVariables& partial,
-            unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
+            unsigned currentMonth, MadingleyModelInitialisation& params) {
         // Get the nutrition source (herbivory, carnivory or omnivory) of the acting cohort
-        string NutritionSource = madingleyCohortDefinitions.GetTraitNames("Nutrition source", actingCohort.FunctionalGroupIndex);
+        string NutritionSource = params.CohortFunctionalGroupDefinitions.GetTraitNames("Nutrition source", actingCohort.FunctionalGroupIndex);
         map<string, int> vores;
         vores["herbivore"] = 0;
         vores["carnivore"] = 1;
@@ -94,7 +92,7 @@ public:
 
                 // Get the assimilation efficiency for herbivory for this cohort from the functional group definitions
                 Implementations["revised herbivory"]->AssimilationEfficiency =
-                        madingleyCohortDefinitions.GetBiologicalPropertyOneFunctionalGroup
+                        params.CohortFunctionalGroupDefinitions.GetBiologicalPropertyOneFunctionalGroup
                         ("herbivory assimilation", actingCohort.FunctionalGroupIndex);
 
                 // Get the proportion of time spent eating for this cohort from the functional group definitions
@@ -104,19 +102,19 @@ public:
                 if (cellEnvironment["Realm"][0] == 2.0)
                     Implementations["revised herbivory"]->GetEatingPotentialMarine
                         (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, madingleyCohortDefinitions, madingleyStockDefinitions);
+                        cellEnvironment, params.CohortFunctionalGroupDefinitions, params.StockFunctionalGroupDefinitions);
                 else
 
                     Implementations["revised herbivory"]->GetEatingPotentialTerrestrial
                         (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, madingleyCohortDefinitions, madingleyStockDefinitions);
+                        cellEnvironment, params.CohortFunctionalGroupDefinitions, params.StockFunctionalGroupDefinitions);
 
                 // Run herbivory to apply changes in autotroph biomass from herbivory and add biomass eaten to the delta arrays
                 Implementations["revised herbivory"]->RunEating
                         (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, deltas, madingleyCohortDefinitions,
-                        madingleyStockDefinitions, trackProcesses,
-                        currentTimestep,  initialisation);
+                        cellEnvironment, deltas, params.CohortFunctionalGroupDefinitions,
+                        params.StockFunctionalGroupDefinitions, trackProcesses,
+                        currentTimestep,  params);
 
                 break;
 
@@ -124,7 +122,7 @@ public:
 
                 // Get the assimilation efficiency for predation for this cohort from the functional group definitions
                 Implementations["revised predation"]->AssimilationEfficiency =
-                        madingleyCohortDefinitions.GetBiologicalPropertyOneFunctionalGroup
+                        params.CohortFunctionalGroupDefinitions.GetBiologicalPropertyOneFunctionalGroup
                         ("carnivory assimilation", actingCohort.FunctionalGroupIndex);
 
                 Implementations["revised predation"]->ProportionTimeEating = actingCohort.ProportionTimeActive;
@@ -133,16 +131,16 @@ public:
                 if (cellEnvironment["Realm"][0] == 2.0)
                     Implementations["revised predation"]->GetEatingPotentialMarine
                         (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, madingleyCohortDefinitions, madingleyStockDefinitions);
+                        cellEnvironment, params.CohortFunctionalGroupDefinitions, params.StockFunctionalGroupDefinitions);
                 else
                     Implementations["revised predation"]->GetEatingPotentialTerrestrial
                         (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, madingleyCohortDefinitions, madingleyStockDefinitions);
+                        cellEnvironment, params.CohortFunctionalGroupDefinitions, params.StockFunctionalGroupDefinitions);
                 // Run predation to apply changes in prey biomass from predation and add biomass eaten to the delta arrays
                 Implementations["revised predation"]->RunEating
                         (gridCellCohorts, gridCellStocks, actingCohort, cellEnvironment, deltas,
-                        madingleyCohortDefinitions, madingleyStockDefinitions, trackProcesses,
-                        currentTimestep,  initialisation);
+                        params.CohortFunctionalGroupDefinitions, params.StockFunctionalGroupDefinitions, trackProcesses,
+                        currentTimestep,  params);
 
 
                 break;
@@ -151,12 +149,12 @@ public:
 
                 // Get the assimilation efficiency for predation for this cohort from the functional group definitions 
                 Implementations["revised predation"]->AssimilationEfficiency =
-                        madingleyCohortDefinitions.GetBiologicalPropertyOneFunctionalGroup
+                        params.CohortFunctionalGroupDefinitions.GetBiologicalPropertyOneFunctionalGroup
                         ("carnivory assimilation", actingCohort.FunctionalGroupIndex);
 
                 // Get the assimilation efficiency for herbivory for this cohort from the functional group definitions
                 Implementations["revised herbivory"]->AssimilationEfficiency =
-                        madingleyCohortDefinitions.GetBiologicalPropertyOneFunctionalGroup
+                        params.CohortFunctionalGroupDefinitions.GetBiologicalPropertyOneFunctionalGroup
                         ("herbivory assimilation", actingCohort.FunctionalGroupIndex);
 
                 // Get the proportion of time spent eating and assign to both the herbivory and predation implementations
@@ -168,25 +166,25 @@ public:
                 if (cellEnvironment["Realm"][0] == 2.0)
                     Implementations["revised herbivory"]->GetEatingPotentialMarine
                         (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, madingleyCohortDefinitions,
-                        madingleyStockDefinitions);
+                        cellEnvironment, params.CohortFunctionalGroupDefinitions,
+                        params.StockFunctionalGroupDefinitions);
                 else
                     Implementations["revised herbivory"]->GetEatingPotentialTerrestrial
                         (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, madingleyCohortDefinitions,
-                        madingleyStockDefinitions);
+                        cellEnvironment, params.CohortFunctionalGroupDefinitions,
+                        params.StockFunctionalGroupDefinitions);
 
                 // Calculate the potential biomass available from predation
                 if (cellEnvironment["Realm"][0] == 2.0)
                     Implementations["revised predation"]->GetEatingPotentialMarine
                         (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, madingleyCohortDefinitions,
-                        madingleyStockDefinitions);
+                        cellEnvironment, params.CohortFunctionalGroupDefinitions,
+                        params.StockFunctionalGroupDefinitions);
                 else
                     Implementations["revised predation"]->GetEatingPotentialTerrestrial
                         (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, madingleyCohortDefinitions,
-                        madingleyStockDefinitions);
+                        cellEnvironment, params.CohortFunctionalGroupDefinitions,
+                        params.StockFunctionalGroupDefinitions);
 
                 // Calculate the total handling time for all expected kills from predation and expected plant matter eaten in herbivory
                 TotalTimeToEatForOmnivores =
@@ -200,16 +198,16 @@ public:
                 // Run predation to update prey cohorts and delta biomasses for the acting cohort
                 Implementations["revised predation"]->RunEating
                         (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, deltas, madingleyCohortDefinitions,
-                        madingleyStockDefinitions, trackProcesses,
-                        currentTimestep, initialisation);
+                        cellEnvironment, deltas, params.CohortFunctionalGroupDefinitions,
+                        params.StockFunctionalGroupDefinitions, trackProcesses,
+                        currentTimestep, params);
 
                 // Run herbivory to update autotroph biomass and delta biomasses for the acting cohort
                 Implementations["revised herbivory"]->RunEating
                         (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, deltas, madingleyCohortDefinitions,
-                        madingleyStockDefinitions, trackProcesses,
-                        currentTimestep, initialisation);
+                        cellEnvironment, deltas, params.CohortFunctionalGroupDefinitions,
+                        params.StockFunctionalGroupDefinitions, trackProcesses,
+                        currentTimestep, params);
 
                 break;
 

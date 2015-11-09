@@ -72,12 +72,11 @@ public:
     @param currentMonth The current model month  */
     void RunEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
             Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&deltas,
-            FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
             unsigned currentTimestep, ThreadLockedParallelVariables& partial,
-            unsigned currentMonth, MadingleyModelInitialisation& initialisation) {
+            unsigned currentMonth, MadingleyModelInitialisation& params) {
         double Realm = cellEnvironment["Realm"][0];
-        if (madingleyCohortDefinitions.GetTraitNames("Heterotroph/Autotroph", actingCohort.FunctionalGroupIndex) == "heterotroph") {
-            if (madingleyCohortDefinitions.GetTraitNames("Endo/Ectotherm", actingCohort.FunctionalGroupIndex) == "endotherm") {
+        if (params.CohortFunctionalGroupDefinitions.GetTraitNames("Heterotroph/Autotroph", actingCohort.FunctionalGroupIndex) == "heterotroph") {
+            if (params.CohortFunctionalGroupDefinitions.GetTraitNames("Endo/Ectotherm", actingCohort.FunctionalGroupIndex) == "endotherm") {
 
                 Implementations["basic endotherm"]->RunMetabolism(  actingCohort, cellEnvironment, deltas, currentTimestep, currentMonth);
             } else {

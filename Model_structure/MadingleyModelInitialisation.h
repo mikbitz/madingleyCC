@@ -134,12 +134,11 @@ public:
         // Read the intialisation files and store values
         ReadInitialisationFiles(initialisationFile, outputPath);
         
-        //Switched order so we create cell list first then initialise cells using list rather than grid.
+        //Set up grid size
         unsigned NumLatCells = (unsigned) ((TopLatitude - BottomLatitude) / CellSize);
         unsigned NumLonCells = (unsigned) ((RightmostLongitude - LeftmostLongitude) / CellSize);
         
-        Grid.SetUpGrid(BottomLatitude, LeftmostLongitude, TopLatitude, RightmostLongitude,
-                CellSize, CellSize);
+        Grid.SetUpGrid(BottomLatitude, LeftmostLongitude, TopLatitude, RightmostLongitude,CellSize, CellSize);
         //read and store environmental inputs in the grid.
         ReadEnvironmentalLayers(InitialisationFileStrings["Environmental"], outputPath,Grid);
         //set remaining grid cell attributes.

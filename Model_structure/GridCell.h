@@ -368,6 +368,23 @@ public:
             return false;
         }
     }
+        //----------------------------------------------------------------------------------------------
+    /** \brief Sets the value in this grid cell of a specified environmental variable at a specified time interval
+    @param variableName The name of the environmental layer to set the value for 
+    @param timeInterval The index of the time interval to return data for (i.e. 0 if it is a yearly variable
+    or the month index - 0=Jan, 1=Feb etc. - for monthly variables) 
+    @param setValue Value to set 
+    @return Whether the variable was found in the cell environment*/
+    bool AddToEnviroLayer(string variableName, unsigned timeInterval, double addValue) {
+        // If the specified variable exists in the cell environment then set the specified value and return true; otherwise print an error message and return false
+        if (CellEnvironment.count(variableName)) {
+            CellEnvironment[variableName][timeInterval] += addValue;
+            return true;
+        } else {
+            cout << "Attempt to set environmental layer value failed: " << variableName << " does not exist" << endl;
+            return false;
+        }
+    }
     //----------------------------------------------------------------------------------------------
     /** \brief Sets the value in this grid cell of a delta of specified type and for a specified ecological process
     @param deltaType The type of delta to set the value for: 'biomass', 'abundance', 'reproductivebiomass', 'organicpool' or 'respiratoryCO2pool 
