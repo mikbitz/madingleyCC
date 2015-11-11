@@ -378,8 +378,7 @@ public:
     @param functionalGroup Cohort functional group 
      */
     void DeleteGridCellIndividualCohort(Cohort c) {
-      
-        vector<Cohort>& z=InternalGrid[c.origin[0]][c.origin[1]].GridCellCohorts[c.FunctionalGroupIndex];
+        vector<Cohort>& z=c.origin->GridCellCohorts[c.FunctionalGroupIndex];
         z.erase(z.begin() + c.positionInList);
         for (unsigned i=c.positionInList;i<z.size();i++)z[i].positionInList--;
     }
@@ -391,9 +390,9 @@ public:
     @param cohortToAdd The cohort object to add 
      */
     void AddNewCohortToGridCell(Cohort c) {
-        c.origin[0]=c.destination[0];c.origin[1]=c.destination[1];
-        c.positionInList=InternalGrid[c.destination[0]][ c.destination[1]].GridCellCohorts[c.FunctionalGroupIndex].size();
-        InternalGrid[c.destination[0]][ c.destination[1]].GridCellCohorts[c.FunctionalGroupIndex].push_back(c);
+        c.origin=c.destination;
+        c.positionInList=c.destination->GridCellCohorts[c.FunctionalGroupIndex].size();
+        c.destination->GridCellCohorts[c.FunctionalGroupIndex].push_back(c);
 
     }
     //----------------------------------------------------------------------------------------------
@@ -461,7 +460,7 @@ public:
     //MB NB returns a COPY of the value stored
 
     double GetEnviroLayer(string variableName, unsigned timeInterval, Cohort& c, bool variableExists) {
-        return InternalGrid[c.origin[0]][c.origin[1]].GetEnviroLayer(variableName, timeInterval, variableExists);
+        return c.origin->GetEnviroLayer(variableName, timeInterval, variableExists);
     }
     //----------------------------------------------------------------------------------------------
     /** \brief
@@ -476,19 +475,7 @@ public:
     @return True if the value is set successfully, false otherwise
      */
     bool AddToEnviroLayer(string variableName, unsigned timeInterval, double setValue, Cohort& c) {
-        return InternalGrid[c.origin[0]][c.origin[1]].SetEnviroLayer(variableName, timeInterval, setValue);
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Set the value of a given delta type for the specified ecological process within the specified grid cell
-    @param deltaType The type of delta value to set (e.g. 'biomass', 'abundance' etc.) 
-    @param ecologicalProcess The name of the ecological process to set the value of delta for 
-    @param setValue The value to set 
-    @param latCellIndex The latitudinal index of the cell 
-    @param lonCellIndex The longitudinal index of the cell 
-    @returns True if the value is set successfully, false otherwise
-     */
-    bool SetDeltas(string deltaType, string ecologicalProcess, double setValue, unsigned latCellIndex, unsigned lonCellIndex) {
-        return InternalGrid[latCellIndex][ lonCellIndex].SetDelta(deltaType, ecologicalProcess, setValue);
+        return c.origin->SetEnviroLayer(variableName, timeInterval, setValue);
     }
     //----------------------------------------------------------------------------------------------
     /** \brief
@@ -992,26 +979,6 @@ public:
         return InternalGrid[cellLatIndex][ cellLonIndex].CellEnvironment;
     }
     //----------------------------------------------------------------------------------------------
-    /** \brief
-    A method to return delta values for the specified delta type in a particular grid cell
-    @param deltaType The delta type to return 
-    @param cellLatIndex Latitude index of grid cell 
-    @param cellLonIndex Longitude index of grid cell 
-    @return A sorted list containing deltas
-     */
-    map<string, double>& GetCellDeltas(string deltaType, unsigned cellLatIndex, unsigned cellLonIndex) {
-        return InternalGrid[cellLatIndex][ cellLonIndex].Deltas[deltaType];
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief A method to return all delta values in a particular grid cell
-    @param cellLatIndex Latitude index of grid cell 
-    @param cellLonIndex Longitude index of grid cell 
-    @return A sorted list of sorted lists containing deltas
-     */
-    map<string, map<string, double>>&GetCellDeltas(unsigned cellLatIndex, unsigned cellLonIndex) {
-        return InternalGrid[cellLatIndex][ cellLonIndex].Deltas;
-    }
-    //----------------------------------------------------------------------------------------------
     /** \brief  Get a grid of values for an environmental data layer
     @param enviroVariable  The name of the environmental data layer 
     @param timeInterval The desired time interval within the environmental variable (i.e. 0 if it is a yearly variable
@@ -1122,6 +1089,26 @@ public:
                 Cell[0] = latCell + v;
                 Cell[1] = lnc;
                 
+        }
+        return Cell;
+    }
+        //----------------------------------------------------------------------------------------------
+/** \brief  Get the longitudinal and latitudinal indices of the cell of a viable cell to move to
+    @param  latCell The latitudinal index of the focal grid cell 
+    @param  lonCell The longitudinal index of the focal grid cell
+    @param  v latitudinal displacement
+    @param  u longitudinal displacement
+    @return The longitudinal and latitudinal cell indices of the cell that lies to the northwest of the focal grid cell
+    @remark Currently assumes wrapping in longitude
+     */
+    GridCell* getNewCell(GridCell* gcl, const int& v, const int& u) {
+        GridCell* Cell = 0;
+        unsigned latCell=gcl->LatIndex(), lonCell=gcl->LonIndex();
+        if (latCell + v >= 0 && latCell + v < NumLatCells) {
+            int lnc = lonCell + u;
+            while (lnc < 0)lnc += NumLonCells;
+            while (lnc >= NumLonCells)lnc -= NumLonCells;
+                Cell=&(InternalGrid[latCell + v][lnc]);
         }
         return Cell;
     }

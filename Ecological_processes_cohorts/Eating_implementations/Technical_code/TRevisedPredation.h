@@ -137,15 +137,15 @@ public:
     @param madingleyStockDefinitions The definitions for stocks in the model 
     \remarks This only works if: a) predation is initialised in every grid cell; and b) if parallelisation is done by latitudinal strips
     It is critical to run this every time step */
-    void InitializeEatingPerTimeStep(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions) {
+    void InitializeEatingPerTimeStep(GridCell& gcl, MadingleyModelInitialisation& params) {
         //Get the functional group indices of all heterotroph cohorts (i.e. potential prey)
-        FunctionalGroupIndicesToEat = madingleyCohortDefinitions.GetFunctionalGroupIndex("Heterotroph/Autotroph", "heterotroph", false);
+        FunctionalGroupIndicesToEat = params.CohortFunctionalGroupDefinitions.GetFunctionalGroupIndex("Heterotroph/Autotroph", "heterotroph", false);
         // Initialise the vector to hold the number of cohorts in each functional group at the start of the time step
-        NumberCohortsPerFunctionalGroupNoNewCohorts.resize(gridCellCohorts.size());
+        NumberCohortsPerFunctionalGroupNoNewCohorts.resize(gcl.GridCellCohorts.size());
 
         // Initialise the jagged arrays to hold the potential and actual numbers of prey eaten in each of the grid cell cohorts
-        AbundancesEaten.resize(gridCellCohorts.size());
-        PotentialAbundanceEaten.resize(gridCellCohorts.size());
+        AbundancesEaten.resize(gcl.GridCellCohorts.size());
+        PotentialAbundanceEaten.resize(gcl.GridCellCohorts.size());
         // Initialise the vector to identify carnivore cohorts
         CarnivoreFunctionalGroups.resize(FunctionalGroupIndicesToEat.size());
         OmnivoreFunctionalGroups.resize(FunctionalGroupIndicesToEat.size());
@@ -153,9 +153,9 @@ public:
 
         // Loop over rows in the jagged arrays, initialise each vector within the jagged arrays, and calculate the current number of cohorts in 
         // each functional group
-        for (int i = 0; i < gridCellCohorts.size(); i++) {
+        for (int i = 0; i < gcl.GridCellCohorts.size(); i++) {
             // Calculate the current number of cohorts in this functional group
-            int NumCohortsThisFG = gridCellCohorts[i].size();
+            int NumCohortsThisFG = gcl.GridCellCohorts[i].size();
             NumberCohortsPerFunctionalGroupNoNewCohorts[i] = NumCohortsThisFG;
             // Initialise the jagged arrays
             AbundancesEaten[i].resize(NumberCohortsPerFunctionalGroupNoNewCohorts[i]);
@@ -164,13 +164,13 @@ public:
 
         // Loop over functional groups that are potential prey and determine which are carnivores
         for (int FunctionalGroup : FunctionalGroupIndicesToEat)
-            CarnivoreFunctionalGroups[FunctionalGroup] = madingleyCohortDefinitions.GetTraitNames("Nutrition source", FunctionalGroup) == "carnivore";
+            CarnivoreFunctionalGroups[FunctionalGroup] = params.CohortFunctionalGroupDefinitions.GetTraitNames("Nutrition source", FunctionalGroup) == "carnivore";
 
         for (int FunctionalGroup : FunctionalGroupIndicesToEat)
-            OmnivoreFunctionalGroups[FunctionalGroup] = madingleyCohortDefinitions.GetTraitNames("Nutrition source", FunctionalGroup) == "omnivore";
+            OmnivoreFunctionalGroups[FunctionalGroup] = params.CohortFunctionalGroupDefinitions.GetTraitNames("Nutrition source", FunctionalGroup) == "omnivore";
 
         for (int FunctionalGroup : FunctionalGroupIndicesToEat)
-            PlanktonFunctionalGroups[FunctionalGroup] = madingleyCohortDefinitions.GetTraitNames("Mobility", FunctionalGroup) == "planktonic";
+            PlanktonFunctionalGroups[FunctionalGroup] = params.CohortFunctionalGroupDefinitions.GetTraitNames("Mobility", FunctionalGroup) == "planktonic";
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Calculate the potential number of prey that could be gained through predation on each cohort in the grid cell
@@ -180,9 +180,9 @@ public:
     @param cellEnvironment The environment in the current grid cell 
     @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
     @param madingleyStockDefinitions The functional group definitions for stocks  in the model  */
-    void GetEatingPotentialMarine(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions) {
+    void GetEatingPotentialMarine(GridCell& gcl,Cohort& actingCohort, MadingleyModelInitialisation& params) {
 
-        BinnedPreyDensities.resize(gridCellCohorts.size());
+        BinnedPreyDensities.resize(gcl.GridCellCohorts.size());
         for (auto& b : BinnedPreyDensities)b.resize(NumberOfBins);
 
         // Set the total eaten by the acting cohort to zero
@@ -203,7 +203,7 @@ public:
         PredatorAssimilationEfficiency = AssimilationEfficiency;
         PredatorNonAssimilation = (1 - AssimilationEfficiency);
 
-        DietIsAllSpecial = madingleyCohortDefinitions.GetTraitNames("Diet", actingCohort.FunctionalGroupIndex) == "allspecial";
+        DietIsAllSpecial = params.CohortFunctionalGroupDefinitions.GetTraitNames("Diet", actingCohort.FunctionalGroupIndex) == "allspecial";
 
         PredatorLogOptimalPreyBodySizeRatio = actingCohort.LogOptimalPreyBodySizeRatio;
 
@@ -222,7 +222,7 @@ public:
         PredatorAbundanceMultipliedByTimeEating = AbundancePredator * SpecificPredatorTimeUnitsEatingPerGlobalTimeStep;
 
         // Calculate the abundance of prey in each of the prey mass bins
-        PopulateBinnedPreyAbundance(gridCellCohorts, actingCohort, FunctionalGroupIndicesToEat, PredatorLogOptimalPreyBodySizeRatio);
+        PopulateBinnedPreyAbundance(gcl.GridCellCohorts, actingCohort, PredatorLogOptimalPreyBodySizeRatio);
 
         // Loop over potential prey functional groups
         for (int FunctionalGroup : FunctionalGroupIndicesToEat) {
@@ -232,21 +232,21 @@ public:
                 // Loop over cohorts within the functional group
                 for (int i = 0; i < NumberCohortsPerFunctionalGroupNoNewCohorts[FunctionalGroup]; i++) {
                     // Get the body mass of individuals in this cohort
-                    BodyMassPrey = gridCellCohorts[FunctionalGroup][i].IndividualBodyMass;
+                    BodyMassPrey = gcl.GridCellCohorts[FunctionalGroup][i].IndividualBodyMass;
 
                     // Get the bin number of this prey cohort
-                    PreyMassBinNumber = GetBinNumber(BodyMassPrey, BodyMassPredator, PredatorLogOptimalPreyBodySizeRatio);
+                    if (BodyMassPrey > 0)PreyMassBinNumber = GetBinNumber(BodyMassPrey, BodyMassPredator, PredatorLogOptimalPreyBodySizeRatio);
 
 
                     // Check whether 
                     // The prey cohort is within the feeding range of the predator
                     // the prey cohort still exists in the model (i.e. body mass > 0)   
                     // Currently having whales etc eat everything, but preferentially feed on very small things (i.e. filter feeders)
-                    if ((PlanktonFunctionalGroups[FunctionalGroup]) && (0 < PreyMassBinNumber) &&
-                            (PreyMassBinNumber < NumberOfBins) && (BodyMassPrey > 0)) {
+                    if ((BodyMassPrey > 0) && (PlanktonFunctionalGroups[FunctionalGroup]) && (0 < PreyMassBinNumber) &&
+                            (PreyMassBinNumber < NumberOfBins) ) {
                         // Calculate the potential abundance from this cohort eaten by the acting cohort
                         PotentialAbundanceEaten[FunctionalGroup][i] = CalculateExpectedNumberKilledMarine(
-                                gridCellCohorts[FunctionalGroup][i].CohortAbundance, BodyMassPrey, PreyMassBinNumber, FunctionalGroup,
+                                gcl.GridCellCohorts[FunctionalGroup][i].CohortAbundance, BodyMassPrey, PreyMassBinNumber, FunctionalGroup,
                                 BodyMassPredator, CarnivoreFunctionalGroups[FunctionalGroup], OmnivoreFunctionalGroups[FunctionalGroup],
                                 OmnivoreFunctionalGroups[actingCohort.FunctionalGroupIndex], PredatorLogOptimalPreyBodySizeRatio);
 
@@ -263,18 +263,18 @@ public:
                 // Loop over cohorts within the functional group
                 for (int i = 0; i < NumberCohortsPerFunctionalGroupNoNewCohorts[FunctionalGroup]; i++) {
                     // Get the body mass of individuals in this cohort
-                    BodyMassPrey = gridCellCohorts[FunctionalGroup][i].IndividualBodyMass;
+                    BodyMassPrey = gcl.GridCellCohorts[FunctionalGroup][i].IndividualBodyMass;
 
                     // Get the bin number of this prey cohort
-                    PreyMassBinNumber = GetBinNumber(BodyMassPrey, BodyMassPredator, PredatorLogOptimalPreyBodySizeRatio);
+                    if (BodyMassPrey > 0)PreyMassBinNumber = GetBinNumber(BodyMassPrey, BodyMassPredator, PredatorLogOptimalPreyBodySizeRatio);
 
                     // Check whether 
                     // The prey cohort is within the feeding range of the predator
                     // the prey cohort still exists in the model (i.e. body mass > 0)   
-                    if ((0 < PreyMassBinNumber) && (PreyMassBinNumber < NumberOfBins) && (BodyMassPrey > 0)) {
+                    if ((BodyMassPrey > 0) && (0 < PreyMassBinNumber) && (PreyMassBinNumber < NumberOfBins) ) {
                         // Calculate the potential abundance from this cohort eaten by the acting cohort
                         PotentialAbundanceEaten[FunctionalGroup][i] = CalculateExpectedNumberKilledMarine(
-                                gridCellCohorts[FunctionalGroup][i].CohortAbundance, BodyMassPrey, PreyMassBinNumber, FunctionalGroup,
+                                gcl.GridCellCohorts[FunctionalGroup][i].CohortAbundance, BodyMassPrey, PreyMassBinNumber, FunctionalGroup,
                                 BodyMassPredator, CarnivoreFunctionalGroups[FunctionalGroup], OmnivoreFunctionalGroups[FunctionalGroup],
                                 OmnivoreFunctionalGroups[actingCohort.FunctionalGroupIndex], PredatorLogOptimalPreyBodySizeRatio);
 
@@ -301,20 +301,22 @@ public:
     @param gridCellCohorts Cohorts in this grid cell 
     @param actingCohort The predator cohort 
     @param functionalGroupIndicesToEat The functional groups which this predator eats  */
-    void PopulateBinnedPreyAbundance(GridCellCohortHandler& gridCellCohorts, Cohort& actingCohort, vector<int>& functionalGroupIndicesToEat, double logOptimalPreyBodySizeRatio) {
+    void PopulateBinnedPreyAbundance(GridCellCohortHandler& gridCellCohorts, Cohort& actingCohort, double logOptimalPreyBodySizeRatio) {
         int BinNumber = 0;
 
         // Loop through prey functional groups
-        for (auto& fg : functionalGroupIndicesToEat) {
+        for (auto& fg : FunctionalGroupIndicesToEat) {
             for (auto& cohort : gridCellCohorts[fg]) {
                 // Calculate the difference between the actual body size ratio and the optimal ratio, 
                 // and then divide by the standard deviation in log ratio space to determine in 
                 // which bin to assign the prey item.
+                if (cohort.IndividualBodyMass>0){
                 BinNumber = GetBinNumber(cohort.IndividualBodyMass, actingCohort.IndividualBodyMass,
                         logOptimalPreyBodySizeRatio);
 
                 if ((0 < BinNumber) && (BinNumber < NumberOfBins)) {
                     BinnedPreyDensities[fg][ BinNumber] += cohort.CohortAbundance / CellAreaHectares;
+                }
                 }
             }
         }
@@ -340,11 +342,9 @@ public:
     @param cellEnvironment The environment in the current grid cell 
     @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
     @param madingleyStockDefinitions The functional group definitions for stocks  in the model  */
-    void GetEatingPotentialTerrestrial(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, Cohort& actingCohort,
-            map<string, vector<double> >& cellEnvironment, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions&
-            madingleyStockDefinitions) {
+    void GetEatingPotentialTerrestrial(GridCell& gcl,Cohort& actingCohort, MadingleyModelInitialisation& params) {
 
-        BinnedPreyDensities.resize(gridCellCohorts.size());
+        BinnedPreyDensities.resize(gcl.GridCellCohorts.size());
         for (auto& b : BinnedPreyDensities)b.resize(NumberOfBins);
 
         // Set the total eaten by the acting cohort to zero
@@ -381,7 +381,7 @@ public:
         PredatorLogOptimalPreyBodySizeRatio = actingCohort.LogOptimalPreyBodySizeRatio;
 
         // Calculate the abundance of prey in each of the prey mass bins
-        PopulateBinnedPreyAbundance(gridCellCohorts, actingCohort, FunctionalGroupIndicesToEat, PredatorLogOptimalPreyBodySizeRatio);
+        PopulateBinnedPreyAbundance(gcl.GridCellCohorts, actingCohort, PredatorLogOptimalPreyBodySizeRatio);
 
         // Loop over potential prey functional groups
         for (int FunctionalGroup : FunctionalGroupIndicesToEat) {
@@ -389,16 +389,16 @@ public:
             // Loop over cohorts within the functional group
             for (int i = 0; i < NumberCohortsPerFunctionalGroupNoNewCohorts[FunctionalGroup]; i++) {
                 // Get the body mass of individuals in this cohort
-                BodyMassPrey = gridCellCohorts[FunctionalGroup][i].IndividualBodyMass;
+                BodyMassPrey = gcl.GridCellCohorts[FunctionalGroup][i].IndividualBodyMass;
 
                 // Get the bin number of this prey cohort
-                PreyMassBinNumber = GetBinNumber(BodyMassPrey, BodyMassPredator, PredatorLogOptimalPreyBodySizeRatio);
+                if (BodyMassPrey > 0)PreyMassBinNumber = GetBinNumber(BodyMassPrey, BodyMassPredator, PredatorLogOptimalPreyBodySizeRatio);
 
                 // Check whether the prey cohort still exists in the model (i.e. body mass > 0)            
-                if ((0 < PreyMassBinNumber) && (PreyMassBinNumber < NumberOfBins) && (BodyMassPrey > 0)) {
+                if ((BodyMassPrey > 0) && (0 < PreyMassBinNumber) && (PreyMassBinNumber < NumberOfBins) ) {
                     // Calculate the potential abundance from this cohort eaten by the acting cohort
                     PotentialAbundanceEaten[FunctionalGroup][i] = CalculateExpectedNumberKilledTerrestrial(
-                            gridCellCohorts[FunctionalGroup][i].CohortAbundance, BodyMassPrey, PreyMassBinNumber, FunctionalGroup,
+                            gcl.GridCellCohorts[FunctionalGroup][i].CohortAbundance, BodyMassPrey, PreyMassBinNumber, FunctionalGroup,
                             BodyMassPredator, CarnivoreFunctionalGroups[FunctionalGroup], OmnivoreFunctionalGroups[FunctionalGroup],
                             OmnivoreFunctionalGroups[actingCohort.FunctionalGroupIndex], PredatorLogOptimalPreyBodySizeRatio);
 
@@ -420,18 +420,13 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Apply the changes from predation to prey cohorts, and update deltas for the predator cohort
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
+    @param gridCell The current grid cell 
     @param actingCohort The acting cohort 
     @param cellEnvironment The environment in the current grid cell 
-    @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
-    @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
-    @param madingleyStockDefinitions The functional group definitions for stocks in the model 
-    @param trackProcesses An instance of ProcessTracker to hold diagnostics for predation 
-    @param currentTimestep The current model time step 
-    @param outputDetail The level of output detail used in this model run  */
-    void RunEating(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&deltas, FunctionalGroupDefinitions& madingleyCohortDefinitions,
-            FunctionalGroupDefinitions& madingleyStockDefinitions, ProcessTracker& trackProcesses, unsigned currentTimestep, string outputDetail, MadingleyModelInitialisation& initialisation) {
+    @param currentTimestep The current model time step */
+    void RunEating(GridCell& gcl,Cohort& actingCohort, 
+            unsigned currentTimestep,
+            MadingleyModelInitialisation& params) {
         //            if (trackProcesses.TrackProcesses)
         //            {
         //                Track = (RandomNumberGenerator.GetUniform() > 0.975) ? true : false;
@@ -448,21 +443,21 @@ public:
             // Loop over cohorts within the functional group
             for (int i = 0; i < NumberCohortsPerFunctionalGroupNoNewCohorts[FunctionalGroup]; i++) {
                 // Get the individual body mass of this cohort
-                BodyMassPrey = gridCellCohorts[FunctionalGroup][i].IndividualBodyMass;
+                BodyMassPrey = gcl.GridCellCohorts[FunctionalGroup][i].IndividualBodyMass;
 
                 // Calculate the actual abundance of prey eaten from this cohort
-                if (gridCellCohorts[FunctionalGroup][i].CohortAbundance > 0) {
+                if (gcl.GridCellCohorts[FunctionalGroup][i].CohortAbundance > 0) {
 
 
                     // Calculate the actual abundance of prey eaten from this cohort
                     AbundancesEaten[FunctionalGroup][i] = CalculateAbundanceEaten(PotentialAbundanceEaten[FunctionalGroup][i], PredatorAbundanceMultipliedByTimeEating,
-                            TotalTimeUnitsToHandlePlusOne, gridCellCohorts[FunctionalGroup][i].CohortAbundance);
+                            TotalTimeUnitsToHandlePlusOne, gcl.GridCellCohorts[FunctionalGroup][i].CohortAbundance);
 
                 } else
                     AbundancesEaten[FunctionalGroup][i] = 0;
 
                 // Remove number of prey eaten from the prey cohort
-                gridCellCohorts[FunctionalGroup][i].CohortAbundance -= AbundancesEaten[FunctionalGroup][i];
+                gcl.GridCellCohorts[FunctionalGroup][i].CohortAbundance -= AbundancesEaten[FunctionalGroup][i];
 
 
                 // Check that the abundance eaten from this cohort is not negative
@@ -472,23 +467,23 @@ public:
                 // Create a temporary value to speed up the predation function
                 // This is equivalent to the body mass of the prey cohort including reproductive potential mass, times the abundance eaten of the prey cohort,
                 // divided by the abundance of the predator
-                TempDouble += (BodyMassPrey + gridCellCohorts[FunctionalGroup][i].IndividualReproductivePotentialMass) * AbundancesEaten[FunctionalGroup][i] / AbundancePredator;
+                TempDouble += (BodyMassPrey + gcl.GridCellCohorts[FunctionalGroup][i].IndividualReproductivePotentialMass) * AbundancesEaten[FunctionalGroup][i] / AbundancePredator;
 
 
             }
         }
 
         // Add the biomass eaten and assimilated by an individual to the delta biomass for the acting (predator) cohort
-        deltas["biomass"]["predation"] = TempDouble * PredatorAssimilationEfficiency;
+        Cohort::Deltas["biomass"]["predation"] = TempDouble * PredatorAssimilationEfficiency;
 
         // Move the biomass eaten but not assimilated by an individual into the organic matter pool
-        deltas["organicpool"]["predation"] = TempDouble * PredatorNonAssimilation * AbundancePredator;
+        Cohort::Deltas["organicpool"]["predation"] = TempDouble * PredatorNonAssimilation * AbundancePredator;
 
         // Check that the delta biomass from eating for the acting cohort is not negative
-        assert(deltas["biomass"]["predation"] >= 0 && "Predation yields negative biomass");
+        assert(Cohort::Deltas["biomass"]["predation"] >= 0 && "Predation yields negative biomass");
 
         // Calculate the total biomass eaten by the acting (predator) cohort
-        TotalBiomassEatenByCohort = deltas["biomass"]["predation"] * AbundancePredator;
+        TotalBiomassEatenByCohort = Cohort::Deltas["biomass"]["predation"] * AbundancePredator;
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Calculate the potential number of individuals in a prey cohort eaten by an acting predator cohort given the number of prey detections

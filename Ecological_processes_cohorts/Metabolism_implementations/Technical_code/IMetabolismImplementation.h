@@ -20,13 +20,12 @@ public:
     @param gridCellStocks The stocks in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param cellEnvironment The environment in the current grid cell 
-    @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
     @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param currentTimestep The current model time step 
     @param currentMonth The current month in the model */
     virtual void RunMetabolism(  Cohort& actingCohort,
-            map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&deltas,
+            map<string, vector<double> >& cellEnvironment, 
             unsigned currentTimestep, unsigned currentMonth) {
         ;
     }

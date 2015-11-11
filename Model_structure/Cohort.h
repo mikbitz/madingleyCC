@@ -1,6 +1,9 @@
 #ifndef COHORT_H
 #define COHORT_H
 #include <vector>
+#include <map>
+#include <string>
+using namespace std;
 class GridCell;
 
 /** \file Cohort.h
@@ -34,7 +37,6 @@ public:
     /** \brief The index of the functional group that the cohort belongs to */
     unsigned FunctionalGroupIndex;
     unsigned positionInList;
-    unsigned origin[2],destination[2];
     /** \brief Whether this cohort has ever been merged with another cohort */
     bool Merged;
     /** \brief The proportion of the timestep for which this cohort is active */
@@ -42,6 +44,10 @@ public:
     /** \brief The optimal prey body size for individuals in this cohort */
     double LogOptimalPreyBodySizeRatio;
     long long ID;
+    GridCell* origin, *destination;
+    static map<string, map<string, double>> Deltas;
+    static vector<Cohort> newCohorts;
+    
     //----------------------------------------------------------------------------------------------
     //Methods
     //----------------------------------------------------------------------------------------------
@@ -70,8 +76,10 @@ public:
     @param birthTimeStep The birth time step for this cohort 
     @param nextCohortID The unique ID to assign to the next cohort created
      * */
-    Cohort(Cohort& , unsigned p, double , double , double , double , unsigned , long long& ) ;
+    Cohort(Cohort& , double , double , double , double , unsigned , long long& ) ;
     //----------------------------------------------------------------------------------------------
     bool isMature();
+    static void zeroDeltas();
 };
+
 #endif

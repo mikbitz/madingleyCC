@@ -39,7 +39,10 @@ public:
 
     //----------------------------------------------------------------------------------------------
     /** \brief Initalise the ecological processes */
-    void InitializeEcology(double cellArea, string globalModelTimeStepUnit, bool drawRandomly) {
+    EcologyCohort(GridCell& gcl, MadingleyModelInitialisation& params) {
+        double cellArea= gcl.CellEnvironment["Cell Area"][0];
+        string globalModelTimeStepUnit= params.GlobalModelTimeStepUnit;
+        bool drawRandomly= params.DrawRandomly;
         // Declare and attach eating formulations
         Eating *EatingFormulation = new Eating(cellArea, globalModelTimeStepUnit);
         EatingFormulations["Basic eating"] = EatingFormulation;
@@ -52,6 +55,10 @@ public:
         // Declare and attach mortality formulations
         Reproduction *ReproductionFormulation = new Reproduction(globalModelTimeStepUnit, drawRandomly);
         ReproductionFormulations["Basic reproduction"] = ReproductionFormulation;
+         // Initialise eating formulations - has to be redone every step?
+        EatingFormulations["Basic eating"]->InitializeEcologicalProcess(gcl,params, "revised predation");
+
+        EatingFormulations["Basic eating"]->InitializeEcologicalProcess(gcl,params, "revised herbivory");
     }
     //----------------------------------------------------------------------------------------------
     ~EcologyCohort() {
@@ -66,7 +73,6 @@ public:
     @param gridCellStocks The stocks in the current grid cell 
     @param actingCohort The acting cohort 
     @param cellEnvironment The environment in the current grid cell 
-    @param deltas A sorted list of deltas to track changes in abundances and biomasses during the ecological processes 
     @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
     @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param currentTimestep The current model time step 
@@ -78,38 +84,33 @@ public:
             ThreadLockedParallelVariables& partial,  unsigned currentMonth, MadingleyModelInitialisation& params) {
 
         // RUN EATING
-        EatingFormulations["Basic eating"]->RunEcologicalProcess(gcl.GridCellCohorts, gcl.GridCellStocks, actingCohort, gcl.CellEnvironment,
-                gcl.Deltas,  currentTimestep, partial,currentMonth, params);
+        EatingFormulations["Basic eating"]->RunEcologicalProcess(
+                            gcl,actingCohort,currentTimestep, partial,currentMonth, params);
 
 
         // RUN METABOLISM - THIS TIME TAKE THE METABOLIC LOSS TAKING INTO ACCOUNT WHAT HAS BEEN INGESTED THROUGH EATING
-        MetabolismFormulations["Basic metabolism"]->RunEcologicalProcess(gcl.GridCellCohorts,gcl.GridCellStocks, actingCohort,
-                gcl.CellEnvironment, gcl.Deltas,  currentTimestep, partial,currentMonth, params);
+        MetabolismFormulations["Basic metabolism"]->RunEcologicalProcess(
+                            gcl,actingCohort,currentTimestep, partial,currentMonth, params);
 
 
         // RUN REPRODUCTION - TAKING INTO ACCOUNT NET BIOMASS CHANGES RESULTING FROM EATING AND METABOLISING
-        ReproductionFormulations["Basic reproduction"]->RunEcologicalProcess(gcl.GridCellCohorts, gcl.GridCellStocks, actingCohort,
-                gcl.CellEnvironment, gcl.Deltas, currentTimestep, partial,currentMonth, params);
+        ReproductionFormulations["Basic reproduction"]->RunEcologicalProcess(
+                            gcl,actingCohort,currentTimestep, partial,currentMonth, params);
 
 
         // RUN MORTALITY - TAKING INTO ACCOUNT NET BIOMASS CHANGES RESULTING FROM EATING, METABOLISM AND REPRODUCTION
-        MortalityFormulations["Basic mortality"]->RunEcologicalProcess(gcl.GridCellCohorts, gcl.GridCellStocks, actingCohort,
-                gcl.CellEnvironment, gcl.Deltas,  currentTimestep, partial, currentMonth, params);
+        MortalityFormulations["Basic mortality"]->RunEcologicalProcess(
+                            gcl,actingCohort,currentTimestep, partial,currentMonth, params);
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Update the properties of the acting cohort and of the environmental biomass pools after running the ecological processes for a cohort
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
+    @param gridCell The current grid cell 
     @param actingCohort The acting cohort 
-    @param cellEnvironment The environment of the current grid cell 
-    @param deltas The sorted list of deltas for the current grid cell 
-    @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
-    @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param currentTimestep The current model time step 
-    @param tracker A process tracker */
+    */
     void UpdateEcology(GridCell& gcl, Cohort& actingCohort, unsigned currentTimestep) {
         // Apply the results of within-cell ecological processes
-        ApplyEcologicalProcessResults.UpdateAllEcology(gcl.GridCellCohorts, actingCohort, gcl.CellEnvironment, gcl.Deltas, currentTimestep);
+        ApplyEcologicalProcessResults.UpdateAllEcology(gcl, actingCohort, currentTimestep);
     }
     //----------------------------------------------------------------------------------------------
 };

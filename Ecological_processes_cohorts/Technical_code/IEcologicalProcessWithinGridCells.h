@@ -21,7 +21,6 @@ public:
     @param gridCellStocks The stocks in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param cellEnvironment The environment in the current grid cell 
-    @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param madingleyCohortHandler The definitions of cohort functional groups in the model 
     @param madingleyStockHandler The definitions of stock functional groups in the model 
     @param currentTimestep The current model time step 
@@ -31,14 +30,12 @@ public:
     @param currentMonth The current model month 
     @param initialisation The instance of the MadingleyModelInitialisation class for this simulation 
      */
-    virtual void RunEcologicalProcess(GridCellCohortHandler& gridCellCohorts,
-            GridCellStockHandler& gridCellStocks,
-            Cohort& actingCohort, map<string, vector<double> >& cellEnvironment,
-            map<string, map<string, double>>&deltas,
+    virtual void RunEcologicalProcess(GridCell& gcl,
+            Cohort& actingCohort, 
             unsigned currentTimestep,
             ThreadLockedParallelVariables& partial,
             unsigned currentMonth, MadingleyModelInitialisation& params) {
-        ;
+       cout<<"Top level IEcologicalWithinGridCell RunEcologicalProcess process called: should be virtual so this is probably not what you want!"<<endl ;
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Initialises an implementation of the ecological process
@@ -48,7 +45,7 @@ public:
     @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param implementationKey The name of the specific implementation of this process to initialize 
      */
-    virtual void InitializeEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, string implementationKey) {
+    virtual void InitializeEcologicalProcess(GridCell& gcl, MadingleyModelInitialisation& params, string implementationKey) {
         ;
     }
     //----------------------------------------------------------------------------------------------

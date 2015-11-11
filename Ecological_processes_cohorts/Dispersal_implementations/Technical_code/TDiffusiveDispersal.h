@@ -64,10 +64,10 @@ public:
         // A double to indicate whether or not the cohort has dispersed, and if it has dispersed, where to
         double CohortDispersed = 0;
 
-        vector<unsigned> DestinationCell = CalculateDispersalProbability(gridForDispersal, cohortToDisperse.origin[0], cohortToDisperse.origin[1], DispersalSpeed);
-        if (DestinationCell[0] < 999999) {
+        CalculateDispersalProbability(gridForDispersal, cohortToDisperse, DispersalSpeed);
+        if (cohortToDisperse.origin!=cohortToDisperse.destination){
             // Update the delta array of cohorts
-            relocate(disperseMonkeys, cohortToDisperse, DestinationCell);
+            disperseMonkeys.push_back(cohortToDisperse);
 
             }
         return false;
@@ -93,11 +93,11 @@ public:
     The fifth element is the u velocity modified by the random diffusion component
     The sixth element is the v velocity modified by the random diffusion component
     Note that the second, third, and fourth elements are always positive; thus, they do not indicate 'direction' in terms of dispersal.*/
-    vector <unsigned> CalculateDispersalProbability(ModelGrid& madingleyGrid, unsigned latIndex, unsigned lonIndex, double dispersalSpeed) {
+    GridCell* CalculateDispersalProbability(ModelGrid& madingleyGrid,Cohort& c, double dispersalSpeed) {
         // Check that the u speed and v speed are not greater than the cell length. If they are, then rescale them; this limits the max velocity
         // so that cohorts cannot be advected more than one grid cell per time step
-        double LatCellLength = madingleyGrid.CellHeightsKm[latIndex];
-        double LonCellLength = madingleyGrid.CellWidthsKm[latIndex];
+        double LatCellLength = madingleyGrid.CellHeightsKm[c.origin->LatIndex()];
+        double LonCellLength = madingleyGrid.CellWidthsKm[c.origin->LatIndex()];
 
         // Pick a direction at random
         std::uniform_real_distribution<double> randomNumber(0.0, 1.0);
@@ -107,8 +107,8 @@ public:
         // Calculate the u and v components given the dispersal speed
         double uSpeed = dispersalSpeed * cos(RandomDirection);
         double vSpeed = dispersalSpeed * sin(RandomDirection);
-        return newCell(madingleyGrid,uSpeed,vSpeed,LatCellLength,LonCellLength,latIndex,lonIndex);
-
+        GridCell* destination=newCell(madingleyGrid,uSpeed,vSpeed,LatCellLength,LonCellLength,c.origin);
+        if (destination!=0 && destination->Realm()==c.origin->Realm())c.destination=destination;
     }
     //----------------------------------------------------------------------------------------------
 };

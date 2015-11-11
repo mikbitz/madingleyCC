@@ -28,7 +28,6 @@ public:
     //----------------------------------------------------------------------------------------------
     /** \brief Constructor for Eating: fills the list of available implementations of eating */
     Eating(double cellArea, string globalModelTimeStepUnit) {
-
         // Add the revised herbivory implementation to the list of implementations
         RevisedHerbivory *RevisedHerbivoryImplementation = new RevisedHerbivory(cellArea, globalModelTimeStepUnit);
         Implementations["revised herbivory"] = RevisedHerbivoryImplementation;
@@ -50,13 +49,9 @@ public:
     @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param implementationKey The name of the implementation of eating to initialize 
     \remarks Eating needs to be initialized every time step */
-    void InitializeEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
-            FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
-            string implementationKey) {
-
+    void InitializeEcologicalProcess(GridCell& gcl, MadingleyModelInitialisation& params, string implementationKey) {
         // Initialize the implementation of the eating process
-        Implementations[implementationKey]->InitializeEatingPerTimeStep(gridCellCohorts, gridCellStocks,
-                madingleyCohortDefinitions, madingleyStockDefinitions);
+        Implementations[implementationKey]->InitializeEatingPerTimeStep(gcl,params);
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Run eating 
@@ -64,7 +59,6 @@ public:
     @param gridCellStocks The stocks in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param cellEnvironment The environment in the current grid cell 
-    @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
     @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param currentTimestep The current model time step 
@@ -72,13 +66,11 @@ public:
     @param partial Thread-locked variables 
     @param outputDetail The level of output detail being used for the current model run 
     @param currentMonth The current model month  */
-    void RunEcologicalProcess(GridCellCohortHandler& gridCellCohorts,
-            GridCellStockHandler& gridCellStocks, Cohort& actingCohort,
-            map<string, vector<double> >& cellEnvironment,
-            map<string, map<string, double> >& deltas,
-            unsigned currentTimestep, ProcessTracker& trackProcesses,
+    void RunEcologicalProcess(GridCell& gcl,
+            Cohort& actingCohort, 
+            unsigned currentTimestep,
             ThreadLockedParallelVariables& partial,
-            unsigned currentMonth, MadingleyModelInitialisation& params) {
+            unsigned currentMonth, MadingleyModelInitialisation& params){
         // Get the nutrition source (herbivory, carnivory or omnivory) of the acting cohort
         string NutritionSource = params.CohortFunctionalGroupDefinitions.GetTraitNames("Nutrition source", actingCohort.FunctionalGroupIndex);
         map<string, int> vores;
@@ -86,7 +78,7 @@ public:
         vores["carnivore"] = 1;
         vores["omnivore" ] = 2;
 
-        //            // Switch to the appropriate eating process(es) given the cohort's nutrition source
+        // Switch to the appropriate eating process(es) given the cohort's nutrition source
         switch (vores[NutritionSource]) {
             case 0://"herbivore":
 
@@ -99,22 +91,17 @@ public:
                 Implementations["revised herbivory"]->ProportionTimeEating = actingCohort.ProportionTimeActive;
 
                 // Calculate the potential biomass available from herbivory
-                if (cellEnvironment["Realm"][0] == 2.0)
+                if (gcl.isMarine())
                     Implementations["revised herbivory"]->GetEatingPotentialMarine
-                        (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, params.CohortFunctionalGroupDefinitions, params.StockFunctionalGroupDefinitions);
+                        (gcl, actingCohort,params);
                 else
 
                     Implementations["revised herbivory"]->GetEatingPotentialTerrestrial
-                        (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, params.CohortFunctionalGroupDefinitions, params.StockFunctionalGroupDefinitions);
+                        (gcl, actingCohort,params);
 
                 // Run herbivory to apply changes in autotroph biomass from herbivory and add biomass eaten to the delta arrays
                 Implementations["revised herbivory"]->RunEating
-                        (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, deltas, params.CohortFunctionalGroupDefinitions,
-                        params.StockFunctionalGroupDefinitions, trackProcesses,
-                        currentTimestep,  params);
+                        (gcl,actingCohort,currentTimestep,  params);
 
                 break;
 
@@ -128,19 +115,15 @@ public:
                 Implementations["revised predation"]->ProportionTimeEating = actingCohort.ProportionTimeActive;
 
                 // Calculate the potential biomass available from predation
-                if (cellEnvironment["Realm"][0] == 2.0)
+                if (gcl.isMarine())
                     Implementations["revised predation"]->GetEatingPotentialMarine
-                        (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, params.CohortFunctionalGroupDefinitions, params.StockFunctionalGroupDefinitions);
+                        (gcl, actingCohort,params);
                 else
                     Implementations["revised predation"]->GetEatingPotentialTerrestrial
-                        (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, params.CohortFunctionalGroupDefinitions, params.StockFunctionalGroupDefinitions);
+                        (gcl, actingCohort,params);
                 // Run predation to apply changes in prey biomass from predation and add biomass eaten to the delta arrays
                 Implementations["revised predation"]->RunEating
-                        (gridCellCohorts, gridCellStocks, actingCohort, cellEnvironment, deltas,
-                        params.CohortFunctionalGroupDefinitions, params.StockFunctionalGroupDefinitions, trackProcesses,
-                        currentTimestep,  params);
+                        (gcl,actingCohort, currentTimestep,  params);
 
 
                 break;
@@ -163,28 +146,20 @@ public:
                 Implementations["revised herbivory"]->ProportionTimeEating = actingCohort.ProportionTimeActive;
 
                 // Calculate the potential biomass available from herbivory
-                if (cellEnvironment["Realm"][0] == 2.0)
+                if (gcl.isMarine())
                     Implementations["revised herbivory"]->GetEatingPotentialMarine
-                        (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, params.CohortFunctionalGroupDefinitions,
-                        params.StockFunctionalGroupDefinitions);
+                        (gcl, actingCohort,params);
                 else
                     Implementations["revised herbivory"]->GetEatingPotentialTerrestrial
-                        (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, params.CohortFunctionalGroupDefinitions,
-                        params.StockFunctionalGroupDefinitions);
+                        (gcl, actingCohort,params);
 
                 // Calculate the potential biomass available from predation
-                if (cellEnvironment["Realm"][0] == 2.0)
+                if (gcl.isMarine())
                     Implementations["revised predation"]->GetEatingPotentialMarine
-                        (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, params.CohortFunctionalGroupDefinitions,
-                        params.StockFunctionalGroupDefinitions);
+                        (gcl, actingCohort,params);
                 else
                     Implementations["revised predation"]->GetEatingPotentialTerrestrial
-                        (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, params.CohortFunctionalGroupDefinitions,
-                        params.StockFunctionalGroupDefinitions);
+                        (gcl, actingCohort,params);
 
                 // Calculate the total handling time for all expected kills from predation and expected plant matter eaten in herbivory
                 TotalTimeToEatForOmnivores =
@@ -197,17 +172,11 @@ public:
 
                 // Run predation to update prey cohorts and delta biomasses for the acting cohort
                 Implementations["revised predation"]->RunEating
-                        (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, deltas, params.CohortFunctionalGroupDefinitions,
-                        params.StockFunctionalGroupDefinitions, trackProcesses,
-                        currentTimestep, params);
+                        (gcl,actingCohort,currentTimestep, params);
 
                 // Run herbivory to update autotroph biomass and delta biomasses for the acting cohort
                 Implementations["revised herbivory"]->RunEating
-                        (gridCellCohorts, gridCellStocks, actingCohort,
-                        cellEnvironment, deltas, params.CohortFunctionalGroupDefinitions,
-                        params.StockFunctionalGroupDefinitions, trackProcesses,
-                        currentTimestep, params);
+                        (gcl,actingCohort,currentTimestep, params);
 
                 break;
 
@@ -220,8 +189,8 @@ public:
 
         }
         // Check that the biomasses from predation and herbivory in the deltas is a number
-        assert(!std::isnan(deltas["biomass"]["predation"]) && "BiomassFromEating is NaN");
-        assert(!std::isnan(deltas["biomass"]["herbivory"]) && "BiomassFromEating is NaN");
+        assert(!std::isnan(Cohort::Deltas["biomass"]["predation"]) && "BiomassFromEating is NaN");
+        assert(!std::isnan(Cohort::Deltas["biomass"]["herbivory"]) && "BiomassFromEating is NaN");
 
     }
     //----------------------------------------------------------------------------------------------

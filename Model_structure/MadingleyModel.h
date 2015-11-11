@@ -106,8 +106,8 @@ public:
         bool varExists;
         Dispersals = 0;         
         /// Run the model
-        //for (unsigned hh = 0; hh < params.NumTimeSteps; hh += 1) {
-        for (unsigned hh = 0; hh < 2; hh += 1) {
+        for (unsigned hh = 0; hh < params.NumTimeSteps; hh += 1) {
+        //for (unsigned hh = 0; hh < 2; hh += 1) {
             cout << "Running time step " << hh + 1 << "..." << endl;
             // Start the timer
             TimeStepTimer.Start();
@@ -159,14 +159,14 @@ public:
         // Instantiate a class to hold thread locked global diagnostic variables
         ThreadLockedParallelVariables singleThreadDiagnostics(0, 0, 0, NextCohortID);
 
-        EcosystemModelGrid.ask([&](GridCell& c) {
+        EcosystemModelGrid.ask([&](GridCell& gcl) {
 
             // Create a temporary internal copy of the grid cell stocks
-            GridCellStockHandler& WorkingGridCellStocks = EcosystemModelGrid.GetGridCellStocks(c.CellEnvironment["LatIndex"][0], c.CellEnvironment["LonIndex"][0]);
+            GridCellStockHandler& WorkingGridCellStocks = EcosystemModelGrid.GetGridCellStocks(gcl.LatIndex(), gcl.LonIndex());
 
-            RunWithinCellStockEcology(c, WorkingGridCellStocks);
+            RunWithinCellStockEcology(gcl, WorkingGridCellStocks);
  
-            RunWithinCellCohortEcology(c, singleThreadDiagnostics);
+            RunWithinCellCohortEcology(gcl, singleThreadDiagnostics);
         });
         // Update the variable tracking cohort unique IDs
         NextCohortID = singleThreadDiagnostics.NextCohortIDThreadLocked;
@@ -175,9 +175,9 @@ public:
         GlobalDiagnosticVariables["NumberOfCohortsProduced"] = singleThreadDiagnostics.Productions;
         GlobalDiagnosticVariables["NumberOfCohortsInModel"] = GlobalDiagnosticVariables["NumberOfCohortsInModel"] + singleThreadDiagnostics.Productions - singleThreadDiagnostics.Extinctions;
         GlobalDiagnosticVariables["NumberOfCohortsCombined"] = singleThreadDiagnostics.Combinations;
-        cout<<"Extinctions this step "<<GlobalDiagnosticVariables["NumberOfCohortsExtinct"]<<endl ;
-        cout<<"Productions "<<GlobalDiagnosticVariables["NumberOfCohortsProduced"]<<endl ;
-        cout<<"Combinations"<<GlobalDiagnosticVariables["NumberOfCohortsCombined"]<<endl ;
+        cout<<"Extinctions this step "<<singleThreadDiagnostics.Extinctions - singleThreadDiagnostics.Combinations<<endl ;
+        cout<<"Productions "<<singleThreadDiagnostics.Productions<<endl ;
+        cout<<"Combinations"<<singleThreadDiagnostics.Combinations<<endl ;
         cout<<"Total Cohorts remaining "<<GlobalDiagnosticVariables["NumberOfCohortsInModel"]<<endl ;
 
     }
@@ -189,8 +189,8 @@ public:
      * NB - acting on a copy here? needed of parallelity? Depends if you write to the grid cell pools...
      */
     void RunWithinCellStockEcology(GridCell& gcl, GridCellStockHandler& workingGridCellStocks) {
-        unsigned latCellIndex= gcl.CellEnvironment["LatIndex"][0];
-        unsigned lonCellIndex= gcl.CellEnvironment["LonIndex"][0];
+        unsigned latCellIndex= gcl.LatIndex();
+        unsigned lonCellIndex= gcl.LonIndex();
         // Create a local instance of the stock ecology class
         EcologyStock MadingleyEcologyStock;
         //The location of the acting stock
@@ -222,22 +222,12 @@ public:
     */
     void RunWithinCellCohortEcology(GridCell& gcl, ThreadLockedParallelVariables& partial) {
         // Local instances of classes
-        EcologyCohort MadingleyEcologyCohort;
+        // Initialize ecology for stocks and cohorts - needed fresh every timestep?
 
-        // Initialize ecology for stocks and cohorts
-        MadingleyEcologyCohort.InitializeEcology(gcl.CellEnvironment["Cell Area"][0],params.GlobalModelTimeStepUnit, params.DrawRandomly);
+        EcologyCohort MadingleyEcologyCohort(gcl,params);
+
         Activity CohortActivity;
         
-        // Diagnostic biological variables don't need to be reset every cohort, but rather every grid cell
-        int EcosystemModelParallelTempval1=0,EcosystemModelParallelTempval2 = 0;
-
-        // Initialise eating formulations - has to be redone ecery step?
-        MadingleyEcologyCohort.EatingFormulations["Basic eating"]->InitializeEcologicalProcess(gcl.GridCellCohorts, gcl.GridCellStocks,
-                params.CohortFunctionalGroupDefinitions, params.StockFunctionalGroupDefinitions, "revised predation");
-
-        MadingleyEcologyCohort.EatingFormulations["Basic eating"]->InitializeEcologicalProcess(gcl.GridCellCohorts, gcl.GridCellStocks
-                , params.CohortFunctionalGroupDefinitions, params.StockFunctionalGroupDefinitions, "revised herbivory");
-
         // Loop over randomly ordered gridCellCohorts to implement biological functions
         //if (DrawRandomly) {
         // Randomly order the cohort indices
@@ -245,26 +235,20 @@ public:
         //} else {
         //    RandomCohortOrder = Utilities.NonRandomlyOrderedCohorts(TotalCohortNumber, CurrentTimeStep);
         //}
-        //MB need to put back random ordering
+        //MB need to put back random ordering - NB apply ecology may set bodymass of a cohort to zero!
         gcl.ask([&](Cohort& c){
-
             // Perform all biological functions except dispersal (which is cross grid cell)
             if (gcl.GridCellCohorts[c.FunctionalGroupIndex].size() != 0 && c.CohortAbundance > params.ExtinctionThreshold) {
-                // Calculate number of cohorts in this functional group in this grid cell before running ecology
-                EcosystemModelParallelTempval1 = gcl.GridCellCohorts[c.FunctionalGroupIndex].size();
 
-                CohortActivity.AssignProportionTimeActive(c, gcl.CellEnvironment, params.CohortFunctionalGroupDefinitions, CurrentTimeStep, CurrentMonth);
+                CohortActivity.AssignProportionTimeActive(gcl,c, CurrentTimeStep, CurrentMonth, params);
 
                 // Run ecology
                 MadingleyEcologyCohort.RunWithinCellEcology(gcl,c,CurrentTimeStep, partial,  CurrentMonth, params);
 
                 // Update the properties of the acting cohort
                 MadingleyEcologyCohort.UpdateEcology(gcl, c, CurrentTimeStep);
-
-                // Add newly produced cohorts to the tracking variable
-                EcosystemModelParallelTempval2 += gcl.GridCellCohorts[c.FunctionalGroupIndex].size() - EcosystemModelParallelTempval1;
-
-
+                Cohort::zeroDeltas();
+                
                 // Check that the mass of individuals in this cohort is still >= 0 after running ecology
                 assert(c.IndividualBodyMass >= 0.0 && "Biomass < 0 for this cohort");
             }
@@ -272,10 +256,9 @@ public:
             // Check that the mass of individuals in this cohort is still >= 0 after running ecology
             if (gcl.GridCellCohorts[c.FunctionalGroupIndex].size() > 0)assert(c.IndividualBodyMass >= 0.0 && "Biomass < 0 for this cohort");
         });
-
-
-        // Update diagnostics of productions
-        partial.Productions += EcosystemModelParallelTempval2;
+        for (auto& c: Cohort::newCohorts)EcosystemModelGrid.AddNewCohortToGridCell(c);
+        partial.Productions+=Cohort::newCohorts.size();
+        Cohort::newCohorts.clear();
 
         RunExtinction(gcl, partial);
 
@@ -285,12 +268,7 @@ public:
 
             //Run extinction a second time to remove those cohorts that have been set to zero abundance when merging
             RunExtinction(gcl, partial);
-        } else
-        partial.Combinations = 0;
-
-        // Write out the updated cohort numbers after all ecological processes have occurred
-        //MB this is changed!
-        //EcosystemModelGrid.SetGridCellCohorts(gcl.GridCellCohorts, latCellIndex, lonCellIndex);
+        }
     }
 
     //----------------------------------------------------------------------------------------------

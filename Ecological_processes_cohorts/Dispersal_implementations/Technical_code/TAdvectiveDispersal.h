@@ -69,26 +69,16 @@ public:
     @param currentMonth The current model month 
      */
     bool RunDispersal(vector<Cohort>& disperseMonkeys,  ModelGrid& gridForDispersal, Cohort& cohortToDisperse , const unsigned& currentMonth) {
-        // A double to indicate whether or not the cohort has dispersed, and if it has dispersed, where to
-        double CohortDispersed = 0;
 
-        // An array to hold the present cohort location for the intermediate steps that occur before the final dispersal this time step
-        vector<unsigned> destination = {cohortToDisperse.origin[0], cohortToDisperse.origin[1]};
-
-        vector<unsigned>currentCell=destination;
         // Loop through a number of times proportional to the rescaled dispersal
         for (int mm = 0; mm < AdvectionTimeStepsPerModelTimeStep; mm++) {
             // Get the probability of dispersal and return a candidate cell
-            currentCell = CalculateDispersalProbability(gridForDispersal, destination[0], destination[1], currentMonth);
-
-                if (currentCell[0] < 999999) {
-                    destination = currentCell;
-                }
+            CalculateDispersalProbability(gridForDispersal, cohortToDisperse, currentMonth);
         }
-        // Update the dipersal deltas for this cohort, if necessary
-        if ((cohortToDisperse.origin[0] != destination[0]) || (cohortToDisperse.origin[1] != destination[1])) {
-                relocate(disperseMonkeys,cohortToDisperse,destination);//stores a copy of the cohort
-            
+
+        // Update the dispersal for this cohort, if necessary
+        if (cohortToDisperse.origin != cohortToDisperse.destination) {
+            disperseMonkeys.push_back(cohortToDisperse);
             return true;
         }
         return false;
@@ -116,7 +106,7 @@ public:
     The fifth element is the distance travelled in the u direction (u velocity modified by the random diffusion component)
     The sixth element is the distance travelled in the v direction (v velocity modified by the random diffusion component)
     Note that the second, third, and fourth elements are always positive; thus, they do not indicate 'direction' in terms of dispersal.*/
-    const vector<unsigned> CalculateDispersalProbability(ModelGrid& madingleyGrid, const unsigned& latIndex,const unsigned& lonIndex,const unsigned& currentMonth) {
+    GridCell* CalculateDispersalProbability(ModelGrid& madingleyGrid, Cohort& c,const unsigned& currentMonth) {
         // Advective speed in u (longitudinal) direction
         double uAdvectiveSpeed;
 
@@ -145,10 +135,10 @@ public:
         bool varExists;
 
         // Get the u speed and the v speed from the cell data
-        uAdvectiveSpeed = madingleyGrid.GetEnviroLayer("uVel", currentMonth, latIndex, lonIndex, varExists);
+        uAdvectiveSpeed = madingleyGrid.GetEnviroLayer("uVel", currentMonth, c.destination->LatIndex(), c.destination->LonIndex(), varExists);
         assert(uAdvectiveSpeed > -9999);
 
-        vAdvectiveSpeed = madingleyGrid.GetEnviroLayer("vVel", currentMonth, latIndex, lonIndex, varExists);
+        vAdvectiveSpeed = madingleyGrid.GetEnviroLayer("vVel", currentMonth, c.destination->LatIndex(), c.destination->LonIndex(), varExists);
         assert(vAdvectiveSpeed > -9999);
 
         // Calculate the diffusive movement speed, with a direction chosen at random
@@ -160,14 +150,13 @@ public:
         
         // Check that the u distance travelled and v distance travelled are not greater than the cell length
 
-        LatCellLength = madingleyGrid.CellHeightsKm[latIndex];
-        LonCellLength = madingleyGrid.CellWidthsKm[latIndex];
+        LatCellLength = madingleyGrid.CellHeightsKm[c.origin->LatIndex()];
+        LonCellLength = madingleyGrid.CellWidthsKm[c.origin->LatIndex()];
         if (abs(uDistanceTravelled) > LonCellLength) cout<<"BIG U "<<uAdvectiveSpeed<<endl;
         assert(abs(uDistanceTravelled) <= LonCellLength && "u velocity greater than cell width");
         assert(abs(vDistanceTravelled) <= LatCellLength && "v velocity greater than cell width");
-
-        return newCell(madingleyGrid,uDistanceTravelled,vDistanceTravelled,LatCellLength,LonCellLength,latIndex,lonIndex);
-
+        GridCell* destination= newCell(madingleyGrid,uDistanceTravelled,vDistanceTravelled,LatCellLength,LonCellLength,c.origin);
+        if (destination!=0 && destination->Realm()==c.origin->Realm())c.destination=destination;
     }
     //----------------------------------------------------------------------------------------------
     /** \brief    Get a randomly directed diffusion vector. This is derived from the LTRANS model formulation, which itself is derived from Visser 1997 (MEPS)

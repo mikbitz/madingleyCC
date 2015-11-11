@@ -50,9 +50,7 @@ public:
     @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
     @param madingleyStockDefinitions The definitions for stock  functional groups in the model 
     @param implementationKey The name of the implementation of metabolism to initialize  */
-    void InitializeEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
-            FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
-            string implementationKey) {
+    void InitializeEcologicalProcess(GridCell& gcl, MadingleyModelInitialisation& params, string implementationKey) {
 
     }
     //----------------------------------------------------------------------------------------------
@@ -61,7 +59,6 @@ public:
     @param gridCellStocks The stocks in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param cellEnvironment The environment in the current grid cell 
-    @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
     @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param currentTimestep The current model time step 
@@ -70,17 +67,18 @@ public:
     @param specificLocations Whether the model is being run for specific locations 
     @param outputDetail The level of output detail being used for the current model run 
     @param currentMonth The current model month  */
-    void RunEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
-            Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&deltas,
-            unsigned currentTimestep, ThreadLockedParallelVariables& partial,
+    void RunEcologicalProcess(GridCell& gcl,
+            Cohort& actingCohort, 
+            unsigned currentTimestep,
+            ThreadLockedParallelVariables& partial,
             unsigned currentMonth, MadingleyModelInitialisation& params) {
-        double Realm = cellEnvironment["Realm"][0];
+        double Realm = gcl.CellEnvironment["Realm"][0];
         if (params.CohortFunctionalGroupDefinitions.GetTraitNames("Heterotroph/Autotroph", actingCohort.FunctionalGroupIndex) == "heterotroph") {
             if (params.CohortFunctionalGroupDefinitions.GetTraitNames("Endo/Ectotherm", actingCohort.FunctionalGroupIndex) == "endotherm") {
 
-                Implementations["basic endotherm"]->RunMetabolism(  actingCohort, cellEnvironment, deltas, currentTimestep, currentMonth);
+                Implementations["basic endotherm"]->RunMetabolism(  actingCohort, gcl.CellEnvironment, currentTimestep, currentMonth);
             } else {
-                Implementations["basic ectotherm"]->RunMetabolism(  actingCohort, cellEnvironment, deltas, currentTimestep, currentMonth);
+                Implementations["basic ectotherm"]->RunMetabolism(  actingCohort, gcl.CellEnvironment, currentTimestep, currentMonth);
 
             }
 

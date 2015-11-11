@@ -19,11 +19,10 @@ public:
     @param gridCellCohorts The cohorts in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param bodyMassIncludingChangeThisTimeStep The body mass that individuals in this cohort will have at the end of this time step 
-    @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param currentTimestep The current model time step 
     @return The number of individuals lost to a cohort through mortality*/
     virtual double CalculateMortalityRate( Cohort& actingCohort, double bodyMassIncludingChangeThisTimeStep,  unsigned currentTimestep) {
-        ;
+        cout<<"If this got called you ended up in a virtual function! IMortalityImplementation CalculateMortalityRate";
     }
 };
 //}

@@ -162,6 +162,7 @@ public:
         TC=totalCohorts;
         TS=totalStocks;
         InitializationTimer.Stop();
+        Cohort::zeroDeltas();
         cout << "Time required: " << InitializationTimer.GetElapsedTimeSecs() << endl;
     }
     //----------------------------------------------------------------------------------------------
@@ -387,15 +388,15 @@ Types::FileReaderPointer mFileReader;
         // Loop over variables in the list of environmental data
 
         for (auto Layer : EnviroStack) {
-            Grid.ask([&](GridCell & c) {
+            Grid.ask([&](GridCell & gcl) {
                 // Initialise the temporary vector of values to be equal to the number of time intervals in the environmental variable
                 vector<double> tempVector(Layer.second.NumTimes);
                 //Loop over the time intervals in the environmental variable
                 for (int tm = 0; tm < Layer.second.NumTimes; tm++) {
                     // Add the value of the environmental variable at this time interval to the temporary vector
                     bool MissingValue=false;
-                    int lo=c.CellEnvironment["LonIndex"][0];
-                    int la=c.CellEnvironment["LatIndex"][0];
+                    int lo=gcl.LonIndex();
+                    int la=gcl.LatIndex();
                     tempVector[tm] = 0;//Layer.second.GetValue(c.Latitude, c.Longitude, (unsigned) tm, MissingValue, CellSize, CellSize);
                     if (Layer.first=="LandSeaMask")
                       if(DataGrid::Get()->GetGridCell(lo,la)->IsOcean())
@@ -428,7 +429,7 @@ Types::FileReaderPointer mFileReader;
                             tempVector[tm] = 0.;//-9999;
                     }
 
-                c.CellEnvironment[Layer.first] = tempVector;
+                gcl.CellEnvironment[Layer.first] = tempVector;
             });
         }
     }
@@ -552,7 +553,6 @@ Types::FileReaderPointer mFileReader;
 
 
                         // Initialise the new cohort with the relevant properties
-
                         Cohort NewCohort(gcl, FunctionalGroup, CohortJuvenileMass, CohortAdultMass, CohortJuvenileMass, NewAbund,
                                 OptimalPreyBodySizeRatio, 0, ProportionTimeActive, NextCohortID);
 

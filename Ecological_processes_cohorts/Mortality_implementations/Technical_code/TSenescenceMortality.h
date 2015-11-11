@@ -32,7 +32,6 @@ public:
     /** \brief Calculate the rate of individuals in a cohort that die from senescence mortality in a model time step 
     @param gridCellCohorts The cohorts in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
-    @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param currentTimestep The current model time step 
     @return The rate of individuals in the cohort that die from senescence mortality*/
     double CalculateMortalityRate( Cohort& actingCohort, double bodyMassIncludingChangeThisTimeStep,  unsigned currentTimestep) {

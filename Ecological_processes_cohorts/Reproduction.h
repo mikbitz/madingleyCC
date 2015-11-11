@@ -41,8 +41,7 @@ public:
     @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param implementationKey The name of the reproduction implementation to initialize 
      */
-    void InitializeEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, string implementationKey) {
-
+    void InitializeEcologicalProcess(GridCell& gcl, MadingleyModelInitialisation& params, string implementationKey){
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Run reproduction
@@ -50,7 +49,6 @@ public:
     @param gridCellStocks The stocks in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param cellEnvironment The environment in the current grid cell 
-    @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
     @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param currentTimeStep The current model time step 
@@ -60,22 +58,21 @@ public:
     @param outputDetail The level of output detail being used for this model run 
     @param currentMonth The current model month 
      */
-    void RunEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
-            Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&deltas,
-            unsigned currentTimeStep, ProcessTracker& processTracker, ThreadLockedParallelVariables& partial,
+    void RunEcologicalProcess(GridCell& gcl,
+            Cohort& actingCohort, 
+            unsigned currentTimestep,
+            ThreadLockedParallelVariables& partial,
             unsigned currentMonth, MadingleyModelInitialisation& params) {
 
         // Holds the reproductive strategy of a cohort
         bool _Iteroparous = params.CohortFunctionalGroupDefinitions.GetTraitNames("reproductive strategy", actingCohort.FunctionalGroupIndex) == "iteroparity";
 
         // Assign mass to reproductive potential
-        Implementations["reproduction basic"]->RunReproductiveMassAssignment(gridCellCohorts, gridCellStocks, actingCohort, cellEnvironment, deltas,
-                params.CohortFunctionalGroupDefinitions, params.StockFunctionalGroupDefinitions, currentTimeStep, processTracker);
+        Implementations["reproduction basic"]->RunReproductiveMassAssignment(gcl, actingCohort, currentTimestep, params);
 
         // Run reproductive events. Note that we can't skip juveniles here as they could conceivably grow to adulthood and get enough biomass to reproduce in a single time step
         // due to other ecological processes
-        Implementations["reproduction basic"]->RunReproductionEvents(gridCellCohorts, gridCellStocks, actingCohort, cellEnvironment,
-                deltas, params.CohortFunctionalGroupDefinitions, params.StockFunctionalGroupDefinitions, currentTimeStep, processTracker, partial, _Iteroparous, currentMonth);
+        Implementations["reproduction basic"]->RunReproductionEvents(gcl, actingCohort, currentTimestep, partial, _Iteroparous, currentMonth,params);
     }
     //----------------------------------------------------------------------------------------------
 };

@@ -23,7 +23,6 @@ public:
     @param gridCellStocks The stocks in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param cellEnvironment The environment in the current grid cell 
-    @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
     @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param currentTimestep The current model time step 
@@ -31,11 +30,10 @@ public:
     @param partial Thread-locked variables 
     @param iteroparous Whether the acting cohort is iteroparous, as opposed to semelparous 
     @param currentMonth The current model month */
-    virtual void RunReproductionEvents(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, Cohort& actingCohort,
-            map<string, vector<double> >& cellEnvironment, map<string, map<string, double> >& deltas, FunctionalGroupDefinitions&
-            madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, unsigned currentTimestep, ProcessTracker& trackProcesses,
-            ThreadLockedParallelVariables& partial, bool iteroparous, unsigned currentMonth) {
-        ;
+    virtual void RunReproductionEvents(GridCell& gcl, Cohort& actingCohort,
+            unsigned currentTimestep,ThreadLockedParallelVariables& partial, 
+            bool iteroparous, unsigned currentMonth, MadingleyModelInitialisation& params) {
+        cout<<"IReproductionImplementation RunReproductionEvents should be virtual: you probably don't want to be here"<<endl;
     }
     //----------------------------------------------------------------------------------------------       
     /** \brief Assigns surplus body mass to reproductive potential mass
@@ -43,13 +41,13 @@ public:
     @param gridCellStocks The stocks in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param cellEnvironment The environment in the current grid cell 
-    @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
     @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param currentTimestep The current model time step 
     @param trackProcesses An instance of ProcessTracker to hold diagnostics for reproduction */
-    virtual void RunReproductiveMassAssignment(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, Cohort& actingCohort, map<string, vector<double>>&cellEnvironment, map<string, map<string, double> >& deltas, FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, unsigned currentTimestep, ProcessTracker& trackProcesses) {
-        ;
+    virtual void RunReproductiveMassAssignment(GridCell& gcl, Cohort& actingCohort, unsigned currentTimestep, MadingleyModelInitialisation& params) {
+          cout<<"IReproductionImplementation RunReproductiveMassAssignment should be virtual: you probably don't want to be here"<<endl;
+
     }
     //----------------------------------------------------------------------------------------------       
 };

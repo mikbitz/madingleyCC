@@ -54,9 +54,7 @@ public:
     @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
     @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param implementationKey The name of the implementation of mortality to initialize */
-    void InitializeEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
-            FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
-            string implementationKey) {
+    void InitializeEcologicalProcess(GridCell& gcl, MadingleyModelInitialisation& params, string implementationKey) {
 
     }
     //----------------------------------------------------------------------------------------------
@@ -65,7 +63,6 @@ public:
     @param gridCellStocks The stocks in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param cellEnvironment The environment in the current grid cell 
-    @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
     @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param currentTimestep The current model time step 
@@ -74,9 +71,10 @@ public:
     @param specificLocations Whether the model is being run for specific locations 
     @param outputDetail The level output detail being used for the current model run 
     @param currentMonth The current model month */
-    void RunEcologicalProcess(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
-            Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double>>&deltas,
-            unsigned currentTimeStep, ThreadLockedParallelVariables& partial,
+    void RunEcologicalProcess(GridCell& gcl,
+            Cohort& actingCohort, 
+            unsigned currentTimestep,
+            ThreadLockedParallelVariables& partial,
             unsigned currentMonth, MadingleyModelInitialisation& params) {
 
         // Variables to hold the mortality rates
@@ -99,7 +97,7 @@ public:
         BodyMassIncludingChangeThisTimeStep = 0.0;
 
         // Loop over all items in the biomass deltas
-        for (auto Biomass : deltas["biomass"]) {
+        for (auto Biomass : Cohort::Deltas["biomass"]) {
             // Add the delta biomass to net biomass
             BodyMassIncludingChangeThisTimeStep += Biomass.second;
         }
@@ -108,8 +106,8 @@ public:
         // Temporary variable to hold net reproductive biomass change of individuals in this cohort as a result of other ecological processes
         ReproductiveMassIncludingChangeThisTimeStep = 0.0;
 
-        // Loop over all items in the biomass deltas
-        for (auto Biomass : deltas["reproductivebiomass"]) {
+        // Loop over all items in the biomass Cohort::Deltas
+        for (auto Biomass : Cohort::Deltas["reproductivebiomass"]) {
             // Add the delta biomass to net biomass
             ReproductiveMassIncludingChangeThisTimeStep += Biomass.second;
         }
@@ -124,19 +122,19 @@ public:
         } else {
             // Calculate background mortality rate
             MortalityRateBackground = Implementations["basic background mortality"]->CalculateMortalityRate(
-                    actingCohort, BodyMassIncludingChangeThisTimeStep,  currentTimeStep);
+                    actingCohort, BodyMassIncludingChangeThisTimeStep,  currentTimestep);
 
             // If the cohort has matured, then calculate senescence mortality rate, otherwise set rate to zero
             if (actingCohort.MaturityTimeStep != std::numeric_limits<unsigned>::max()) {
                 MortalityRateSenescence = Implementations["basic senescence mortality"]->CalculateMortalityRate(
-                        actingCohort, BodyMassIncludingChangeThisTimeStep,  currentTimeStep);
+                        actingCohort, BodyMassIncludingChangeThisTimeStep,  currentTimestep);
             } else {
                 MortalityRateSenescence = 0.0;
             }
 
             // Calculate the starvation mortality rate based on individual body mass and maximum body mass ever
             // achieved by this cohort
-            MortalityRateStarvation = Implementations["basic starvation mortality"]->CalculateMortalityRate(actingCohort, BodyMassIncludingChangeThisTimeStep,  currentTimeStep);
+            MortalityRateStarvation = Implementations["basic starvation mortality"]->CalculateMortalityRate(actingCohort, BodyMassIncludingChangeThisTimeStep,  currentTimestep);
 
             // Calculate the number of individuals that suffer mortality this time step from all sources of mortality
             MortalityTotal = (1 - exp(-MortalityRateBackground - MortalityRateSenescence -
@@ -144,11 +142,11 @@ public:
         }
 
         // Remove individuals that have died from the delta abundance for this cohort
-        deltas["abundance"]["mortality"] = -MortalityTotal;
+        Cohort::Deltas["abundance"]["mortality"] = -MortalityTotal;
 
         // Add the biomass of individuals that have died to the delta biomass in the organic pool (including reproductive 
         // potential mass, and mass gained through eating, and excluding mass lost through metabolism)
-        deltas["organicpool"]["mortality"] = MortalityTotal * (BodyMassIncludingChangeThisTimeStep + ReproductiveMassIncludingChangeThisTimeStep);
+        Cohort::Deltas["organicpool"]["mortality"] = MortalityTotal * (BodyMassIncludingChangeThisTimeStep + ReproductiveMassIncludingChangeThisTimeStep);
     }
     //----------------------------------------------------------------------------------------------
 };

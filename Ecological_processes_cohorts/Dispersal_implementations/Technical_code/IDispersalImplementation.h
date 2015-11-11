@@ -28,13 +28,7 @@ public:
         ;
     }
     //----------------------------------------------------------------------------------------------
-    void relocate(vector<Cohort>&disperseMonkeys, Cohort& cohortToDisperse,  const vector<unsigned>& destination) {
-            cohortToDisperse.destination[0] = destination[0];
-            cohortToDisperse.destination[1] = destination[1];
-            disperseMonkeys.push_back(cohortToDisperse);
-    }
-    //----------------------------------------------------------------------------------------------
-    vector<unsigned> newCell(ModelGrid& madingleyGrid,double& uSpeed,double& vSpeed,double & LatCellLength,double & LonCellLength,const unsigned& latIndex,const unsigned& lonIndex){
+    GridCell* newCell(ModelGrid& madingleyGrid,double& uSpeed,double& vSpeed,double & LatCellLength,double & LonCellLength,GridCell* c){
         // Calculate the area of the grid cell that is now outside in the diagonal direction
         double AreaOutsideBoth = abs(uSpeed * vSpeed);
 
@@ -45,16 +39,15 @@ public:
         double AreaOutsideV = abs(vSpeed * LonCellLength) - AreaOutsideBoth;
 
         // Get the cell area, in kilometres squared
-        double CellArea = madingleyGrid.GetCellEnvironment(latIndex, lonIndex)["Cell Area"][0];
+        double CellArea = c->CellArea();
 
         // Convert areas to a probability
         double DispersalProbability = (AreaOutsideU + AreaOutsideV + AreaOutsideBoth) / CellArea;
 
         // Check that we don't have any issues
-        assert(DispersalProbability <= 1 && "Dispersal probability should always be <= 1");
-
-       vector<unsigned> DestinationCell= {9999999, 9999999};
-
+        if (DispersalProbability>1)cout<<"Bad Dispersal Probability "<<DispersalProbability<<endl;
+        //assert(DispersalProbability <= 1 && "Dispersal probability should always be <= 1");
+       GridCell* DestinationCell= 0;
         // Check to see in which axis the cohort disperses
 
         // Note that the values in the dispersal array are the proportional area moved outside the grid cell in each direction; we simply compare the random draw to this
@@ -74,15 +67,12 @@ public:
                 }
             }
             // try to get a cell - only use it if realm is the same as the origin cell.
+   
+            GridCell* FreshCell = madingleyGrid.getNewCell(c, signv, signu);
             
-            vector<unsigned> FreshCell = madingleyGrid.getNewCellIndices(latIndex, lonIndex, signv, signu);
-            bool s;
-            if ((FreshCell[0]<9999999) &&
-                (madingleyGrid.getCellRef(latIndex,lonIndex,s).CellEnvironment["Realm"][0] == 
-                 madingleyGrid.getCellRef(FreshCell[0],FreshCell[1],s).CellEnvironment["Realm"][0]) )
+            if ((FreshCell!=0) && (FreshCell->Realm() == c->Realm()) )
                     DestinationCell=FreshCell;
         }
-
         return DestinationCell;
     }
     //----------------------------------------------------------------------------------------------

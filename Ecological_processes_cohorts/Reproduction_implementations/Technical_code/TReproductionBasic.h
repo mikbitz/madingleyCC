@@ -59,7 +59,6 @@ public:
     @param gridCellStocks The stocks in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param cellEnvironment The environment of the current grid cell 
-    @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param madingleyCohortDefinitions The definitions of cohort functional groups in the model 
     @param madingleyStockDefinitions The definitions of stock functional groups in the model 
     @param currentTimestep The current model time step 
@@ -67,10 +66,9 @@ public:
     @param partial Thread-locked variables 
     @param iteroparous Whether the acting cohort is iteroparous, as opposed to semelparous 
     @param currentMonth The current model month */
-    void RunReproductionEvents(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
-            Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double> >&
-            deltas, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
-            unsigned currentTimestep, ProcessTracker& tracker, ThreadLockedParallelVariables& partial, bool iteroparous, unsigned currentMonth) {
+    void RunReproductionEvents(GridCell& gcl, Cohort& actingCohort,
+            unsigned currentTimestep,ThreadLockedParallelVariables& partial, 
+            bool iteroparous, unsigned currentMonth, MadingleyModelInitialisation& params) {
         // Adult non-reproductive biomass lost by semelparous organisms
         double AdultMassLost;
 
@@ -96,7 +94,7 @@ public:
         // Calculate the biomass of an individual in this cohort including changes this time step from other ecological processes  
         BodyMassIncludingChangeThisTimeStep = 0.0;
 
-        for (auto Biomass : deltas["biomass"]) {
+        for (auto& Biomass : Cohort::Deltas["biomass"]) {
             // Add the delta biomass to net biomass
             BodyMassIncludingChangeThisTimeStep += Biomass.second;
 
@@ -107,18 +105,18 @@ public:
         // Calculate the reproductive biomass of an individual in this cohort including changes this time step from other ecological processes  
         ReproductiveMassIncludingChangeThisTimeStep = 0.0;
 
-        for (auto ReproBiomass : deltas["reproductivebiomass"]) {
+        for (auto& ReproBiomass : Cohort::Deltas["reproductivebiomass"]) {
             // Add the delta reproductive biomass to net biomass
             ReproductiveMassIncludingChangeThisTimeStep += ReproBiomass.second;
         }
 
         ReproductiveMassIncludingChangeThisTimeStep += actingCohort.IndividualReproductivePotentialMass;
-
+        if (actingCohort.IndividualBodyMass> 1.e-200){
         // Get the current ratio of total individual mass (including reproductive potential) to adult body mass
         CurrentMassRatio = (BodyMassIncludingChangeThisTimeStep + ReproductiveMassIncludingChangeThisTimeStep) / actingCohort.AdultMass;
 
         // Must have enough mass to hit reproduction threshold criterion, and either (1) be in breeding season, or (2) be a marine cell (no breeding season in marine cells)
-        if ((CurrentMassRatio > MassRatioThreshold) && ((cellEnvironment["Breeding Season"][currentMonth] == 1.0) || ((cellEnvironment["Realm"][0] == 2.0)))) {
+        if ((CurrentMassRatio > MassRatioThreshold) && ((gcl.CellEnvironment["Breeding Season"][currentMonth] == 1.0) || (gcl.isMarine()))) {
             // Iteroparous and semelparous organisms have different strategies
             if (iteroparous) {
                 // Iteroparous organisms do not allocate any of their current non-reproductive biomass to reproduction
@@ -140,26 +138,25 @@ public:
             assert(OffspringCohortAbundance >= 0.0 && "Offspring abundance < 0");
 
             // Get the adult and juvenile masses of the offspring cohort
-            OffspringJuvenileAndAdultBodyMasses = GetOffspringCohortProperties( actingCohort, madingleyCohortDefinitions);
+            OffspringJuvenileAndAdultBodyMasses = GetOffspringCohortProperties( actingCohort, params.CohortFunctionalGroupDefinitions);
 
             // Update cohort abundance in case juvenile mass has been altered through 'evolution'
             OffspringCohortAbundance = (OffspringCohortAbundance * actingCohort.JuvenileMass) / OffspringJuvenileAndAdultBodyMasses[0];
 
             // Create the offspring cohort
-            unsigned p=gridCellCohorts[actingCohort.FunctionalGroupIndex].size();
-            
-            Cohort OffspringCohort(actingCohort,p,OffspringJuvenileAndAdultBodyMasses[0], OffspringJuvenileAndAdultBodyMasses[1], OffspringJuvenileAndAdultBodyMasses[0], OffspringCohortAbundance, currentTimestep, partial.NextCohortIDThreadLocked);
+             
+            Cohort OffspringCohort(actingCohort,OffspringJuvenileAndAdultBodyMasses[0], OffspringJuvenileAndAdultBodyMasses[1], OffspringJuvenileAndAdultBodyMasses[0], OffspringCohortAbundance, currentTimestep, partial.NextCohortIDThreadLocked);
 
             // Add the offspring cohort to the grid cell cohorts array
-            gridCellCohorts[actingCohort.FunctionalGroupIndex].push_back(OffspringCohort);
+            Cohort::newCohorts.push_back(OffspringCohort);
 
             // Subtract all of the reproductive potential mass of the parent cohort, which has been used to generate the new
             // cohort, from the delta reproductive potential mass and delta adult body mass
-            deltas["reproductivebiomass"]["reproduction"] -= ReproductiveMassIncludingChangeThisTimeStep;
-            deltas["biomass"]["reproduction"] -= AdultMassLost;
-
+            Cohort::Deltas["reproductivebiomass"]["reproduction"] -= ReproductiveMassIncludingChangeThisTimeStep;
+            Cohort::Deltas["biomass"]["reproduction"] -= AdultMassLost;
         } else {
             // Organism is not large enough, or it is not the breeding season, so take no action
+        }
         }
 
     }
@@ -174,10 +171,7 @@ public:
     @param madingleyStockDefinitions The definitions of stock functional groups in the model 
     @param currentTimestep The current model time step 
     @param tracker An instance of ProcessTracker to hold diagnostics for reproduction */
-    void RunReproductiveMassAssignment(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
-            Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double> >& deltas,
-            FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
-            unsigned currentTimestep, ProcessTracker& tracker) {
+    void RunReproductiveMassAssignment(GridCell& gcl, Cohort& actingCohort, unsigned currentTimestep, MadingleyModelInitialisation& params) {
         // Biomass per individual in each cohort to be assigned to reproductive potential
         double BiomassToAssignToReproductivePotential;
 
@@ -188,7 +182,7 @@ public:
         NetBiomassFromOtherEcologicalFunctionsThisTimeStep = 0.0;
 
         // Loop over all items in the biomass deltas
-        for (auto Biomass : deltas["biomass"]) {
+        for (auto Biomass : Cohort::Deltas["biomass"]) {
             // Add the delta biomass to net biomass
             NetBiomassFromOtherEcologicalFunctionsThisTimeStep += Biomass.second;
         }
@@ -207,17 +201,11 @@ public:
             // then set the maturity time step for this cohort as the current model time step
             if (actingCohort.MaturityTimeStep == std::numeric_limits<unsigned>::max()) {
                 actingCohort.MaturityTimeStep = currentTimestep;
-
-                // Track the generation length for this cohort
-                /*if (tracker.TrackProcesses && (!actingCohort.Merged))
-                    tracker.TrackMaturity((unsigned)cellEnvironment["LatIndex"][0], (unsigned)cellEnvironment["LonIndex"][0],
-                        currentTimestep, actingCohort.BirthTimeStep, actingCohort.JuvenileMass,
-                        actingCohort.AdultMass, actingCohort.FunctionalGroupIndex);*/
             }
 
             // Assign the specified mass to reproductive potential mass and remove it from individual biomass
-            deltas["reproductivebiomass"]["reproduction"] += BiomassToAssignToReproductivePotential;
-            deltas["biomass"]["reproduction"] -= BiomassToAssignToReproductivePotential;
+            Cohort::Deltas["reproductivebiomass"]["reproduction"] += BiomassToAssignToReproductivePotential;
+            Cohort::Deltas["biomass"]["reproduction"] -= BiomassToAssignToReproductivePotential;
 
         } else {
             // Cohort has not gained sufficient biomass to assign any to reproductive potential, so take no action

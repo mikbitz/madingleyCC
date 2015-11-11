@@ -87,9 +87,9 @@ public:
     @param madingleyStockDefinitions The definitions for stocks in the model 
     \remark This only works if: a) herbivory is initialised in every grid cell; and b) if parallelisation is done by latitudinal strips
     It is critical to run this every time step */
-    void InitializeEatingPerTimeStep(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions) {
+    void InitializeEatingPerTimeStep(GridCell& gcl, MadingleyModelInitialisation& params) {
         // Get the functional group indices of all autotroph stocks
-        FunctionalGroupIndicesToEat = madingleyStockDefinitions.GetFunctionalGroupIndex("Heterotroph/Autotroph", "Autotroph", false);
+        FunctionalGroupIndicesToEat = params.StockFunctionalGroupDefinitions.GetFunctionalGroupIndex("Heterotroph/Autotroph", "Autotroph", false);
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Calculate the potential biomass that could be gained through herbivory on each grid cell autotroph stock
@@ -99,7 +99,7 @@ public:
     @param cellEnvironment The environment in the current grid cell 
     @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
     @param madingleyStockDefinitions The functional group definitions for stocks  in the model */
-    void GetEatingPotentialTerrestrial(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions) {
+    void GetEatingPotentialTerrestrial(GridCell& gcl,Cohort& actingCohort, MadingleyModelInitialisation& params) {
         // Set the total biomass eaten by the acting cohort to zero
         TotalBiomassEatenByCohort = 0.0;
 
@@ -110,21 +110,21 @@ public:
         TimeUnitsToHandlePotentialFoodItems = 0.0;
 
         // Initialise the jagged arrays to hold the potential and actual biomass eaten in each of the grid cell autotroph stocks
-        BiomassesEaten.resize(gridCellStocks.size());
-        PotentialBiomassesEaten.resize(gridCellStocks.size());
+        BiomassesEaten.resize(gcl.GridCellStocks.size());
+        PotentialBiomassesEaten.resize(gcl.GridCellStocks.size());
 
         // Loop over rows in the jagged arrays and initialise each vector
-        for (int i = 0; i < gridCellStocks.size(); i++) {
-            BiomassesEaten[i].resize(gridCellStocks[i].size());
-            PotentialBiomassesEaten[i].resize(gridCellStocks[i].size());
+        for (int i = 0; i < gcl.GridCellStocks.size(); i++) {
+            BiomassesEaten[i].resize(gcl.GridCellStocks[i].size());
+            PotentialBiomassesEaten[i].resize(gcl.GridCellStocks[i].size());
         }
 
         // Loop over functional groups that can be eaten
         for (int FunctionalGroup : FunctionalGroupIndicesToEat) {
             // Loop over stocks within the functional group
-            for (int i = 0; i < gridCellStocks[FunctionalGroup].size(); i++) {
+            for (int i = 0; i < gcl.GridCellStocks[FunctionalGroup].size(); i++) {
                 // Get the mass from this stock that is available for eating (assumes only 10% is edible)
-                EdibleMass = gridCellStocks[FunctionalGroup][i].TotalBiomass * 0.1;
+                EdibleMass = gcl.GridCellStocks[FunctionalGroup][i].TotalBiomass * 0.1;
 
                 // Calculate the potential biomass eaten from this stock by the acting cohort
                 PotentialBiomassesEaten[FunctionalGroup][i] = CalculatePotentialBiomassEatenTerrestrial(EdibleMass, BodyMassHerbivore);
@@ -145,7 +145,7 @@ public:
     @param cellEnvironment The environment in the current grid cell 
     @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
     @param madingleyStockDefinitions The functional group definitions for stocks  in the model */
-    void GetEatingPotentialMarine(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions) {
+    void GetEatingPotentialMarine(GridCell& gcl,Cohort& actingCohort, MadingleyModelInitialisation& params) {
         // Set the total biomass eaten by the acting cohort to zero
         TotalBiomassEatenByCohort = 0.0;
 
@@ -156,22 +156,22 @@ public:
         TimeUnitsToHandlePotentialFoodItems = 0.0;
 
         // Initialise the jagged arrays to hold the potential and actual biomass eaten in each of the grid cell autotroph stocks
-        BiomassesEaten.resize(gridCellStocks.size());
-        PotentialBiomassesEaten.resize(gridCellStocks.size());
+        BiomassesEaten.resize(gcl.GridCellStocks.size());
+        PotentialBiomassesEaten.resize(gcl.GridCellStocks.size());
 
         // Loop over rows in the jagged arrays and initialise each vector
-        for (int i = 0; i < gridCellStocks.size(); i++) {
-            BiomassesEaten[i].resize(gridCellStocks[i].size());
-            PotentialBiomassesEaten[i].resize(gridCellStocks[i].size());
+        for (int i = 0; i < gcl.GridCellStocks.size(); i++) {
+            BiomassesEaten[i].resize(gcl.GridCellStocks[i].size());
+            PotentialBiomassesEaten[i].resize(gcl.GridCellStocks[i].size());
         }
 
         // Loop over functional groups that can be eaten
         for (int FunctionalGroup : FunctionalGroupIndicesToEat) {
             // Loop over stocks within the functional group
-            for (int i = 0; i < gridCellStocks[FunctionalGroup].size(); i++) {
+            for (int i = 0; i < gcl.GridCellStocks[FunctionalGroup].size(); i++) {
                 // Get the mass from this stock that is available for eating (assumes all marine autotrophic organisms are edible)
                 //EdibleMass = gridCellStocks[FunctionalGroup][i].TotalBiomass * 0.1;
-                EdibleMass = gridCellStocks[FunctionalGroup][i].TotalBiomass;
+                EdibleMass = gcl.GridCellStocks[FunctionalGroup][i].TotalBiomass;
 
                 // Calculate the potential biomass eaten from this stock by the acting cohort
                 PotentialBiomassesEaten[FunctionalGroup][i] = CalculatePotentialBiomassEatenMarine(EdibleMass, BodyMassHerbivore);
@@ -190,30 +190,31 @@ public:
     @param gridCellStocks The stocks in this grid cell 
     @param actingCohort The acting cohort 
     @param cellEnvironment The environmental conditions in this grid cell 
-    @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
     @param madingleyStockDefinitions The functional group definitions for stocks in the model 
     @param trackProcesses An instance of ProcessTracker to hold diagnostics for herbivory 
     @param currentTimestep The current model time step 
     @param outputDetail The level of output detail being used in this model run */
-    void RunEating(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, map<string, map<string, double> >& deltas, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions, ProcessTracker& trackProcesses, unsigned currentTimestep,  string outputDetail, MadingleyModelInitialisation& initialisation) {
+    void RunEating(GridCell& gcl,Cohort& actingCohort, 
+            unsigned currentTimestep,
+            MadingleyModelInitialisation& params) {
 
         EdibleScaling = 1.0;
-        if (cellEnvironment["Realm"][0] == 1.0) EdibleScaling = 0.1;
+        if (!gcl.isMarine()) EdibleScaling = 0.1;
 
         // Loop over autotroph functional groups that can be eaten
         for (int FunctionalGroup : FunctionalGroupIndicesToEat) {
             // Loop over stocks within the functional groups
-            for (int i = 0; i < gridCellStocks[FunctionalGroup].size(); i++) {
+            for (int i = 0; i < gcl.GridCellStocks[FunctionalGroup].size(); i++) {
                 // Get the mass from this stock that is available for eating (assumes only 10% is edible in the terrestrial realm)
-                EdibleMass = gridCellStocks[FunctionalGroup][i].TotalBiomass * EdibleScaling;
+                EdibleMass = gcl.GridCellStocks[FunctionalGroup][i].TotalBiomass * EdibleScaling;
 
                 // Calculate the biomass actually eaten from this stock by the acting cohort
                 BiomassesEaten[FunctionalGroup][i] = CalculateBiomassesEaten(PotentialBiomassesEaten[FunctionalGroup][i],
                         TimeUnitsToHandlePotentialFoodItems, actingCohort.CohortAbundance, EdibleMass);
 
                 // Remove the biomass eaten from the autotroph stock
-                gridCellStocks[FunctionalGroup][i].TotalBiomass -= BiomassesEaten[FunctionalGroup][i];
+                gcl.GridCellStocks[FunctionalGroup][i].TotalBiomass -= BiomassesEaten[FunctionalGroup][i];
 
 
                 // Check that the biomass eaten is not a negative value
@@ -222,18 +223,18 @@ public:
                     exit(1);
                 }
                 // Add the biomass eaten and assimilated by an individual to the delta biomass for the acting cohort
-                deltas["biomass"]["herbivory"] += BiomassesEaten[FunctionalGroup][i] * AssimilationEfficiency / actingCohort.CohortAbundance;
+                Cohort::Deltas["biomass"]["herbivory"] += BiomassesEaten[FunctionalGroup][i] * AssimilationEfficiency / actingCohort.CohortAbundance;
 
                 // Move the biomass eaten but not assimilated by an individual into the organic matter pool
-                deltas["organicpool"]["herbivory"] += BiomassesEaten[FunctionalGroup][i] * (1 - AssimilationEfficiency);
+                Cohort::Deltas["organicpool"]["herbivory"] += BiomassesEaten[FunctionalGroup][i] * (1 - AssimilationEfficiency);
 
             }
 
             // Check that the delta biomass from eating for the acting cohort is not negative
-            assert(deltas["biomass"]["herbivory"] >= 0 && "Delta biomass from herbviory is negative");
+            assert(Cohort::Deltas["biomass"]["herbivory"] >= 0 && "Delta biomass from herbviory is negative");
 
             // Calculate the total biomass eaten by the acting (herbivore) cohort
-            TotalBiomassEatenByCohort = deltas["biomass"]["herbivory"] * actingCohort.CohortAbundance;
+            TotalBiomassEatenByCohort = Cohort::Deltas["biomass"]["herbivory"] * actingCohort.CohortAbundance;
 
 
 

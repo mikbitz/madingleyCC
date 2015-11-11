@@ -41,7 +41,7 @@ public:
     @param gridCellStocks The stocks in the current grid cell 
     @param madingleyCohortDefinitions The definitions for cohorts in the model 
     @param madingleyStockDefinitions The definitions for stocks in the model  */
-    virtual void InitializeEatingPerTimeStep(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions) {
+    virtual void InitializeEatingPerTimeStep(GridCell& gcl,MadingleyModelInitialisation& params) {
         ;
     }
     //----------------------------------------------------------------------------------------------
@@ -52,9 +52,8 @@ public:
     @param cellEnvironment The environment in the current grid cell 
     @param madingleyCohortDefinitions The definitions for cohorts in the model 
     @param madingleyStockDefinitions The definitions for stocks in the model  */
-    virtual void GetEatingPotentialMarine(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, Cohort& actingCohort,
-            map<string, vector<double>>&cellEnvironment, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions&
-            madingleyStockDefinitions) {
+    virtual void GetEatingPotentialMarine(GridCell& gcl,Cohort& actingCohort,
+            MadingleyModelInitialisation& params) {
         ;
     }
     //----------------------------------------------------------------------------------------------
@@ -65,9 +64,8 @@ public:
     @param cellEnvironment The environment in the current grid cell 
     @param madingleyCohortDefinitions The definitions for cohorts in the model 
     @param madingleyStockDefinitions The definitions for stocks in the model  */
-    virtual void GetEatingPotentialTerrestrial(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks, Cohort& actingCohort,
-            map<string, vector<double> >& cellEnvironment, FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions&
-            madingleyStockDefinitions) {
+    virtual void GetEatingPotentialTerrestrial(GridCell& gcl,Cohort& actingCohort,
+            MadingleyModelInitialisation& params) {
         ;
     }
     //----------------------------------------------------------------------------------------------
@@ -76,20 +74,16 @@ public:
     @param gridCellStocks The stocks in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param cellEnvironment The environment in the current grid cell 
-    @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
     @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param trackProcesses An instance of ProcessTracker to hold diagnostics for eating 
     @param currentTimestep The current model time step 
     @param outputDetail The level of output detail being used in this model run  */
-    virtual void RunEating(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
-            Cohort& actingCohort, map<string, vector< double > >& cellEnvironment,
-            map<string, map<string, double>>&deltas,
-            FunctionalGroupDefinitions& madingleyCohortDefinitions,
-            FunctionalGroupDefinitions& madingleyStockDefinitions,
-            ProcessTracker& trackProcesses, unsigned currentTimestep,
-            MadingleyModelInitialisation& initialisation) {
-        ;
+    virtual void RunEating(GridCell& gcl,Cohort& actingCohort, 
+            unsigned currentTimestep,
+            MadingleyModelInitialisation& params) {
+               cout<<"Top level IEatingImplementation RunEating process called: should be virtual so this is probably not what you want!"<<endl ;
+
     }
     //----------------------------------------------------------------------------------------------
 };

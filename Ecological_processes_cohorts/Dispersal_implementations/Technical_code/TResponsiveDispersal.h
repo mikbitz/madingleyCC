@@ -100,12 +100,12 @@ public:
             if (ProportionalPresentMass < StarvationDispersalBodyMassThreshold) {
                 // Cohort tries to disperse
 
-                vector<unsigned> DestinationCell = CalculateDispersalProbability(gridForDispersal, cohortToDisperse.origin[0], cohortToDisperse.origin[1], CalculateDispersalSpeed(AdultMass));
+                CalculateDispersalProbability(gridForDispersal, cohortToDisperse, CalculateDispersalSpeed(AdultMass));
 
-                // Update the delta array of cells to disperse to, if the cohort moves
-                if (DestinationCell[0] < 999999) {
+                // Update the cell to disperse to, if the cohort moves
+                if (cohortToDisperse.origin != cohortToDisperse.destination) {
                     // Update the delta array of cohorts
-                    relocate(disperseMonkeys, cohortToDisperse, DestinationCell);
+                    disperseMonkeys.push_back(cohortToDisperse);
                 }
 
                 // Note that regardless of whether or not it succeeds, if a cohort tries to disperse, it is counted as having dispersed for the purposes of not then allowing it to disperse
@@ -120,13 +120,13 @@ public:
                 double RandomValue = randomNumber(RandomNumberGenerator);
                 if (((1.0 - ProportionalPresentMass) / (1.0 - StarvationDispersalBodyMassThreshold)) > RandomValue) {
 
-                    vector<unsigned> DestinationCell = CalculateDispersalProbability(gridForDispersal, cohortToDisperse.origin[0], cohortToDisperse.origin[1], CalculateDispersalSpeed(AdultMass));
+                    CalculateDispersalProbability(gridForDispersal, cohortToDisperse, CalculateDispersalSpeed(AdultMass));
 
-                    // Update the delta array of cells to disperse to, if the cohort moves
-                    if (DestinationCell[0] < 999999) {
-                        // Update the delta array of cohorts
-                        relocate(disperseMonkeys, cohortToDisperse, DestinationCell);
-                    }
+                // Update the cell to disperse to, if the cohort moves
+                if (cohortToDisperse.origin != cohortToDisperse.destination) {
+                    // Update the delta array of cohorts
+                    disperseMonkeys.push_back(cohortToDisperse);
+                }
 
 
                     CohortHasDispersed = true;
@@ -137,12 +137,13 @@ public:
         return CohortHasDispersed;
     }
     //----------------------------------------------------------------------------------------------
-    void CheckDensityDrivenDispersal(vector<Cohort>& disperseMonkeys,ModelGrid& gridForDispersal, Cohort& cohortToDisperse) {
+
+    void CheckDensityDrivenDispersal(vector<Cohort>& disperseMonkeys, ModelGrid& gridForDispersal, Cohort& cohortToDisperse) {
         // Check the population density
         double NumberOfIndividuals = cohortToDisperse.CohortAbundance;
 
         // Get the cell area, in kilometres squared
-        double CellArea = gridForDispersal.GetCellEnvironment(cohortToDisperse.origin[0], cohortToDisperse.origin[1])["Cell Area"][0];
+        double CellArea = cohortToDisperse.origin->CellArea();
 
         // If below the density threshold
         if ((NumberOfIndividuals / CellArea) < DensityThresholdScaling / cohortToDisperse.AdultMass) {
@@ -151,15 +152,13 @@ public:
             double DispersalSpeed = CalculateDispersalSpeed(cohortToDisperse.AdultMass);
 
             // Cohort tries to disperse
-            vector<unsigned> DestinationCell = CalculateDispersalProbability(gridForDispersal, cohortToDisperse.origin[0], cohortToDisperse.origin[1], DispersalSpeed);
+            CalculateDispersalProbability(gridForDispersal, cohortToDisperse, DispersalSpeed);
 
-            // Update the delta array of cells to disperse to, if the cohort moves
-            if (DestinationCell[0] < 999999) {
+            // Update the cell to disperse to, if the cohort moves
+            if (cohortToDisperse.origin != cohortToDisperse.destination) {
                 // Update the delta array of cohorts
-                 relocate(disperseMonkeys, cohortToDisperse, DestinationCell);
-
+                disperseMonkeys.push_back(cohortToDisperse);
             }
-
         }
     }
     //----------------------------------------------------------------------------------------------
@@ -177,9 +176,9 @@ public:
     @param dispersalSpeed The average dispersal speed of individuals in the acting cohort 
 
     Note that the second, third, and fourth elements are always positive; thus, they do not indicate 'direction' in terms of dispersal.*/
-    vector<unsigned> CalculateDispersalProbability(ModelGrid& madingleyGrid, unsigned latIndex, unsigned lonIndex, double dispersalSpeed) {
-        double LatCellLength = madingleyGrid.CellHeightsKm[latIndex];
-        double LonCellLength = madingleyGrid.CellWidthsKm[latIndex];
+    void CalculateDispersalProbability(ModelGrid& madingleyGrid, Cohort& c, double dispersalSpeed) {
+        double LatCellLength = madingleyGrid.CellHeightsKm[c.origin->LatIndex()];
+        double LonCellLength = madingleyGrid.CellWidthsKm[c.origin->LatIndex()];
 
         // Pick a direction at random
         std::uniform_real_distribution<double> randomNumber(0.0, 1.0);
@@ -191,9 +190,14 @@ public:
 
         // Check that the whole cell hasn't moved out (i.e. that dispersal speed is not greater than cell length). 
         // This could happen if dispersal speed was high enough; indicates a need to adjust the time step, or to slow dispersal
-        assert(((uSpeed > LonCellLength) || (vSpeed > LatCellLength)) && "Dispersal probability should always be <= 1");
+        if (uSpeed > LonCellLength)cout<<"Dispersal Big U "<< uSpeed<<endl;
+        if (vSpeed > LatCellLength)cout<<"Dispersal Big V "<< vSpeed<<endl;
 
-        return newCell(madingleyGrid,uSpeed,vSpeed,LatCellLength,LonCellLength,latIndex,lonIndex);
+        //assert(((uSpeed > LonCellLength) || (vSpeed > LatCellLength)) && "Dispersal probability should always be <= 1");
+
+        GridCell* destination=newCell(madingleyGrid,uSpeed,vSpeed,LatCellLength,LonCellLength,c.origin);
+        if (destination!=0 && destination->Realm()==c.origin->Realm())c.destination=destination;
+
     }
     
 };

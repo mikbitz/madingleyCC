@@ -235,6 +235,7 @@ public:
                 return IndexLookupFromTrait[searchTraits][searchTraitValues];
             }//If trait value string not found then show error message
             else {
+                cout<<searchTraitValues<<endl;
                 cout << "Trait Value to search for not found in lookup tables" << endl;
                 exit(1);
             }

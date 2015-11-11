@@ -60,13 +60,13 @@ class Dispersal  {
     @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
     @param madingleyStockDefinitions The functional group definitions for stocks in the model 
     @param currentMonth The current model month */
-    void RunCrossGridCellEcologicalProcess(GridCell& g, ModelGrid& gridForDispersal,  MadingleyModelInitialisation& params,  unsigned currentMonth) {
+    void RunCrossGridCellEcologicalProcess(GridCell& gcl, ModelGrid& gridForDispersal,  MadingleyModelInitialisation& params,  unsigned currentMonth) {
 
-        g.ask([&](Cohort& c){
+        gcl.ask([&](Cohort& c){
                 // Check to see if the cell is marine and the cohort type is planktonic
                 bool dispersed=false;
                 
-                if (g.isMarine() &&
+                if (gcl.isMarine() &&
                         ((params.CohortFunctionalGroupDefinitions.GetTraitNames("Mobility", c.FunctionalGroupIndex) == "planktonic") || (c.IndividualBodyMass <= PlanktonThreshold))) {
                     // Run advective dispersal
                     AdvectiveDispersalImplementation->RunDispersal(disperseMonkeys, gridForDispersal, c, currentMonth);

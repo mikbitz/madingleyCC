@@ -37,7 +37,6 @@ public:
     @param gridCellCohorts The cohorts  in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param bodyMassIncludingChangeThisTimeStep Body mass including change from other ecological functions this time step; should not exceed adult mass 
-    @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param currentTimestep The current model time step 
     @return The proportion of individuals in the cohort that die from starvation mortality*/
     double CalculateMortalityRate(Cohort& actingCohort, double bodyMassIncludingChangeThisTimeStep,  unsigned currentTimestep) {
@@ -55,7 +54,6 @@ public:
 
     @param gridCellCohorts The cohorts in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
-    @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
     @param bodyMassIncludingChangeThisTimeStep Body mass including change from other ecological functions this time step; should not exceed adult mass 
     @return The starvation mortality rate in mortality formulation time step units*/
     double CalculateStarvationRate( Cohort& actingCohort, double bodyMassIncludingChangeThisTimeStep) {
