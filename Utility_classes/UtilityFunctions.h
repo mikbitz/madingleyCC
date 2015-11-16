@@ -6,7 +6,8 @@
 #include <map>
 #include <random>       // std::default_random_engine
 #include <chrono>       // std::chrono::system_clock
-#include<assert.h>
+#include <assert.h>
+#include <iostream>
 /** \brief Generic functions */
 using namespace std;
 class UtilityFunctions {
@@ -21,7 +22,7 @@ public:
      */
     void ConvertToM180To180(vector<double>& lons) {
         // Loop over longitudinal coordinates of the model grid cells
-        for (int jj = 0; jj < lons.size(); jj++) {
+        for (unsigned jj = 0; jj < lons.size(); jj++) {
             // If longitudinal coorindates exceed 180, then subtrarct 360 to correct the coorindates
             if (lons[jj] >= 180.0) {
                 lons[jj] -= 360.0;
@@ -361,10 +362,10 @@ public:
         double AngularEccentricity = acos(DegreesToRadians(PolarRadius / EquatorialRadius));
 
         // First eccentricity squared
-        double ESquared = pow(sin(DegreesToRadians(AngularEccentricity)), 2);
+        //double ESquared = pow(sin(DegreesToRadians(AngularEccentricity)), 2);
 
         // Flattening
-        double Flattening = 1 - cos(DegreesToRadians(AngularEccentricity));
+        //double Flattening = 1 - cos(DegreesToRadians(AngularEccentricity));
 
         // Temporary value to save computations
         double TempVal = pow((EquatorialRadius * cos(latitudeRad)), 2) + pow((PolarRadius * sin(latitudeRad)), 2);
@@ -400,13 +401,13 @@ public:
         double PolarRadius = 6356752.3142;
 
         // Angular eccentricity
-        double AngularEccentricity = acos(DegreesToRadians(PolarRadius / EquatorialRadius));
+        //double AngularEccentricity = acos(DegreesToRadians(PolarRadius / EquatorialRadius));
 
         // First eccentricity squared
-        double ESquared = pow(sin(DegreesToRadians(AngularEccentricity)), 2);
+        //double ESquared = pow(sin(DegreesToRadians(AngularEccentricity)), 2);
 
         // Flattening
-        double Flattening = 1 - cos(DegreesToRadians(AngularEccentricity));
+        //double Flattening = 1 - cos(DegreesToRadians(AngularEccentricity));
 
         // Temporary value to save computations
         double TempVal = pow((EquatorialRadius * cos(latitudeRad)), 2) + pow((PolarRadius * sin(latitudeRad)), 2);

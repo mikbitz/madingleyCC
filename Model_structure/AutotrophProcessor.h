@@ -2,6 +2,8 @@
 #define AUTOTROPHPROCESSOR_H
 #include <ProcessTracker.h>
 #include <GlobalProcessTracker.h>
+
+#include "GridCell.h"
 /** \file AutotrophProcessor.h
  * \brief the AutotrophProcessor header file
  */
@@ -36,50 +38,47 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Convert NPP estimate into biomass of an autotroph stock
-    @param cellEnvironment The environment of the current grid cell 
-    @param gridCellStockHandler The stock handler for the current stock 
+    @param gcl The current grid cell 
     @param actingStock The location of the stock to add biomass to 
-    @param terrestrialNPPUnits The units of the terrestrial NPP data 
-    @param oceanicNPPUnits The units of the oceanic NPP data 
-    @param currentTimestep The current model time step 
-    @param GlobalModelTimeStepUnit The time step unit used in the model */
-    void ConvertNPPToAutotroph(map<string, vector<double>>&cellEnvironment, GridCellStockHandler& gridCellStockHandler, vector<int>&
-            actingStock, string terrestrialNPPUnits, string oceanicNPPUnits, unsigned currentTimestep, string GlobalModelTimeStepUnit,
-            unsigned currentMonth) {
+    @param currentTimestep The current model time step
+    @param currentMonth Month as an integer 
+    @param params Current parameters */
+    void ConvertNPPToAutotroph(GridCell& gcl, Stock&  actingStock, 
+     unsigned currentTimestep, 
+     unsigned currentMonth, MadingleyModelInitialisation& params) {
         // Get NPP from the cell environment
-        double NPP = cellEnvironment["NPP"][currentMonth];
-        
+        double NPP = gcl.CellEnvironment["NPP"][currentMonth];
         // If NPP is a missing value then set to zero
-        if (NPP == cellEnvironment["Missing Value"][0]) NPP = 0.0;
+        if (NPP == gcl.CellEnvironment["Missing Value"][0]) NPP = 0.0;
 
         // Check that this is an ocean cell
-        if (cellEnvironment["Realm"][0] == 2.0) {
+        if (gcl.isMarine()) {
             // Check that the units of oceanic NPP are gC per m2 per day
-            assert(oceanicNPPUnits == "gC/m2/day" && "Oceanic NPP data are not in the correct units for this formulation of the model");
+            assert(params.Units["OceanNPP"] == "gC/m2/day" && "Oceanic NPP data are not in the correct units for this formulation of the model");
 
             //Convert to g/cell/month
             NPP *= MsqToKmSqConversion;
 
             //Multiply by cell area to get g/cell/day
-            NPP *= cellEnvironment["Cell Area"][0];
+            NPP *= gcl.CellArea();
 
             //Convert to g wet matter, assuming carbon content of phytoplankton is 10% of wet matter
             NPP *= PhytoplanktonConversionRatio;
 
             //Finally convert to g/cell/month and add to the stock totalbiomass
-            NPP *= Utilities.ConvertTimeUnits(GlobalModelTimeStepUnit, "day");
-            gridCellStockHandler[actingStock].TotalBiomass += NPP;
+            NPP *= Utilities.ConvertTimeUnits(params.GlobalModelTimeStepUnit, "day");
+            actingStock.TotalBiomass += NPP;
 
             // If the biomass of the autotroph stock has been made less than zero (i.e. because of negative NPP) then reset to zero
-            if (gridCellStockHandler[actingStock].TotalBiomass < 0.0)
-                gridCellStockHandler[actingStock].TotalBiomass = 0.0;
+            if (actingStock.TotalBiomass < 0.0)
+                actingStock.TotalBiomass = 0.0;
         }            // Else if neither on land or in the ocean
         else {
             cout << "This is not a marine cell!" << endl;
             // Set the autotroph biomass to zero
-            gridCellStockHandler[actingStock].TotalBiomass = 0.0;
+            actingStock.TotalBiomass = 0.0;
         }
-        assert(gridCellStockHandler[actingStock].TotalBiomass >= 0.0 && "stock negative");
+        assert(actingStock.TotalBiomass >= 0.0 && "stock negative");
     }
     //----------------------------------------------------------------------------------------------
 };

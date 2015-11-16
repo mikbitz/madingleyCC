@@ -1,5 +1,6 @@
 #ifndef CLIMATEVARIABLESCALCULATOR_H
 #define CLIMATEVARIABLESCALCULATOR_H
+#include <math.h>
 /** \file ClimateVariablesCalculator.h
  * \brief the ClimateVariablesCalculator header file
  */

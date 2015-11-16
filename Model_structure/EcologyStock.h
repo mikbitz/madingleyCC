@@ -3,6 +3,8 @@
 #include <AutotrophProcessor.h>
 #include <RevisedTerrestrialPlantModel.h>
 #include <HANPP.h>
+
+#include <MadingleyModelInitialisation.h>
 /** \file EcologyStock.h
  * \brief the EcologyStock header file
  */
@@ -31,35 +33,29 @@ public:
 
     //----------------------------------------------------------------------------------------------
     /** \brief Run ecological processes that operate on stocks within a single grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
+    @param gcl The current grid cell 
     @param actingStock The acting stock 
-    @param cellEnvironment The stocks in the current grid cell 
-    @param environmentalDataUnits List of units associated with the environmental variables 
-    @param humanNPPExtraction Name of the human appropriation of NPP scenario to run 
-    @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param currentTimeStep The current model time step 
-    @param globalModelTimeStepUnit The time step unit used in the model 
-    @param trackProcesses Whether to track properties of ecological processes 
-    @param tracker An instance of the ecological process tracker 
-    @param currentMonth The current model month */
+    @param currentMonth The current model month 
+    @param params Parameters */
 
-    void RunWithinCellEcology(GridCellStockHandler& gridCellStocks, vector<int>& actingStock, map<string, vector<double>>&cellEnvironment,
-            map<string, string>& environmentalDataUnits, string humanNPPExtraction, FunctionalGroupDefinitions& madingleyStockDefinitions,
-            unsigned currentTimeStep, string globalModelTimeStepUnit, unsigned currentMonth) {
-        if (madingleyStockDefinitions.GetTraitNames("Realm", actingStock[0]) == "marine") {
+    void RunWithinCellEcology(GridCell& gcl, Stock& actingStock, 
+            unsigned currentTimeStep, unsigned currentMonth,MadingleyModelInitialisation& params) {
+        string globalModelTimeStepUnit=params.GlobalModelTimeStepUnit;
+        string humanNPPExtraction=params.InitialisationFileStrings["HumanNPPExtraction"];
+        FunctionalGroupDefinitions& madingleyStockDefinitions=params.StockFunctionalGroupDefinitions;
+        
+        if (gcl.isMarine()) {
             // Run the autotroph processor
-            MarineNPPtoAutotrophStock.ConvertNPPToAutotroph(cellEnvironment, gridCellStocks, actingStock, environmentalDataUnits["LandNPP"],
-                    environmentalDataUnits["OceanNPP"], currentTimeStep, globalModelTimeStepUnit, currentMonth);
-        } else if (madingleyStockDefinitions.GetTraitNames("Realm", actingStock[0]) == "terrestrial") {
-            // Run the dynamic plant model to update the leaf stock for this time step
-            DynamicPlantModel.UpdateLeafStock(cellEnvironment, gridCellStocks, actingStock, currentTimeStep, madingleyStockDefinitions.GetTraitNames("leaf strategy", actingStock[0]) == "deciduous", globalModelTimeStepUnit, currentMonth);
-            // Apply human appropriation of NPP
-            HANPP.RemoveHumanAppropriatedMatter(cellEnvironment, humanNPPExtraction, gridCellStocks, actingStock, currentTimeStep, currentMonth);
-
+            MarineNPPtoAutotrophStock.ConvertNPPToAutotroph(gcl, actingStock, 
+                    currentTimeStep, currentMonth,params);
         } else {
-            cout << "Stock must be classified as belonging to either the marine or terrestrial realm" << endl;
-            exit(1);
-        }
+            // Run the dynamic plant model to update the leaf stock for this time step
+            DynamicPlantModel.UpdateLeafStock(gcl.CellEnvironment,  actingStock, currentTimeStep, madingleyStockDefinitions.GetTraitNames("leaf strategy", actingStock.FunctionalGroupIndex) == "deciduous", params.GlobalModelTimeStepUnit, currentMonth);
+            // Apply human appropriation of NPP
+            HANPP.RemoveHumanAppropriatedMatter(gcl, humanNPPExtraction, actingStock, currentTimeStep, currentMonth);
+
+        } 
     }
     //----------------------------------------------------------------------------------------------
 };

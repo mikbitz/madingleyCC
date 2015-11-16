@@ -55,14 +55,9 @@ public:
     }
     //----------------------------------------------------------------------------------------------       
     /** \brief Generate new cohorts from reproductive potential mass
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
-    @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
+    @param gridCell The current grid cell 
     @param cellEnvironment The environment of the current grid cell 
-    @param madingleyCohortDefinitions The definitions of cohort functional groups in the model 
-    @param madingleyStockDefinitions The definitions of stock functional groups in the model 
     @param currentTimestep The current model time step 
-    @param tracker An instance of ProcessTracker to hold diagnostics for reproduction 
     @param partial Thread-locked variables 
     @param iteroparous Whether the acting cohort is iteroparous, as opposed to semelparous 
     @param currentMonth The current model month */
@@ -162,15 +157,10 @@ public:
     }
     //----------------------------------------------------------------------------------------------       
     /** \brief assigns ingested biomass from other ecological processes to reproductive potential mass
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
+    @param gridCell The current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
-    @param cellEnvironment The environment in the current grid cell 
-    @param deltas The sorted list to track changes in biomass and abundance of the acting cohort in this grid cell 
-    @param madingleyCohortDefinitions The definitions of cohort functional groups in the model 
-    @param madingleyStockDefinitions The definitions of stock functional groups in the model 
     @param currentTimestep The current model time step 
-    @param tracker An instance of ProcessTracker to hold diagnostics for reproduction */
+    @param params The model parameters */
     void RunReproductiveMassAssignment(GridCell& gcl, Cohort& actingCohort, unsigned currentTimestep, MadingleyModelInitialisation& params) {
         // Biomass per individual in each cohort to be assigned to reproductive potential
         double BiomassToAssignToReproductivePotential;
@@ -213,7 +203,6 @@ public:
     }
     //----------------------------------------------------------------------------------------------       
     /** \brief Assign the juvenile and adult masses of the new cohort to produce
-    @param gridCellCohorts The cohorts in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param madingleyCohortDefinitions The definitions of cohort functional groups in the model 
     @return A vector containing the juvenile and adult masses of the cohort to be produced*/
@@ -225,14 +214,14 @@ public:
         std::uniform_real_distribution<double> randomNumber(0.0, 1.0);
         double RandomValue = randomNumber(RandomNumberGenerator);
         if (RandomValue > MassEvolutionProbabilityThreshold) {
-            // Determine the new juvenile body mass
-            std::uniform_real_distribution<double> randomNumberJ(actingCohort.JuvenileMass, MassEvolutionStandardDeviation * actingCohort.JuvenileMass);
+            // Determine the new juvenile body mass //MB correctly formulated?
+            std::uniform_real_distribution<double> randomNumberJ(actingCohort.JuvenileMass, (1+MassEvolutionStandardDeviation) * actingCohort.JuvenileMass);
             double RandomValueJ = randomNumberJ(RandomNumberGenerator);
             CohortJuvenileAdultMasses[0] = max(RandomValueJ,
                     madingleyCohortDefinitions.GetBiologicalPropertyOneFunctionalGroup("Minimum mass", actingCohort.FunctionalGroupIndex));
 
             // Determine the new adult body mass
-            std::uniform_real_distribution<double> randomNumberA(actingCohort.AdultMass, MassEvolutionStandardDeviation * actingCohort.AdultMass);
+            std::uniform_real_distribution<double> randomNumberA(actingCohort.AdultMass, (1+MassEvolutionStandardDeviation) * actingCohort.AdultMass);
             double RandomValueA = randomNumberA(RandomNumberGenerator);
             CohortJuvenileAdultMasses[1] = min(RandomValueA,
                     madingleyCohortDefinitions.GetBiologicalPropertyOneFunctionalGroup("Maximum mass", actingCohort.FunctionalGroupIndex));

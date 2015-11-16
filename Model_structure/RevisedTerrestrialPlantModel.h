@@ -1,10 +1,9 @@
 #ifndef REVISEDTERRESTRIALPLANTMODEL_H
 #define REVISEDTERRESTRIALPLANTMODEL_H
-#include <GlobalProcessTracker.h>
-#include <ProcessTracker.h>
-#include <GridCellStockHandler.h>
 #include <math.h>
+#include <Stock.h>
 #include <UtilityFunctions.h>
+
 using namespace std;
 /** \file RevisedTerrestrialPlantModel.h
  * \brief the RevisedTerrestrialPlantModel header file
@@ -227,7 +226,7 @@ public:
     @param GlobalModelTimeStepUnit The time step unit used in the model 
     @param tracker Whether to track properties of the ecological processes 
     @param currentMonth The current model month */
-    void UpdateLeafStock(map<string, vector<double>>&cellEnvironment, GridCellStockHandler& gridCellStocks, vector<int>& actingStock,
+    void UpdateLeafStock(map<string, vector<double>>&cellEnvironment, Stock& actingStock, 
             unsigned currentTimeStep, bool deciduous, string GlobalModelTimeStepUnit, unsigned currentMonth) {
 
 
@@ -318,13 +317,13 @@ public:
         WetMatterIncrement *= Utilities.ConvertTimeUnits(GlobalModelTimeStepUnit, "month");
 
         // Add the leaf wet matter to the acting stock
-        gridCellStocks[actingStock].TotalBiomass += max(-gridCellStocks[actingStock].TotalBiomass, WetMatterIncrement);
+        actingStock.TotalBiomass += max(-actingStock.TotalBiomass, WetMatterIncrement);
 
         // Calculate fractional leaf mortality
         double LeafMortFrac = 1 - exp(-TimeStepLeafMortRate);
 
         // Update the leaf stock biomass owing to the leaf mortality
-        gridCellStocks[actingStock].TotalBiomass *= (1 - LeafMortFrac);
+        actingStock.TotalBiomass *= (1 - LeafMortFrac);
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Calculate NPP in kg C per m2

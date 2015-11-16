@@ -43,10 +43,8 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \briefInitializes an implementation of eating 
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
-    @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
-    @param madingleyStockDefinitions The definitions for stock functional groups in the model 
+    @param gcl The current grid cell
+    @param params The model parameter set 
     @param implementationKey The name of the implementation of eating to initialize 
     \remarks Eating needs to be initialized every time step */
     void InitializeEcologicalProcess(GridCell& gcl, MadingleyModelInitialisation& params, string implementationKey) {
@@ -55,17 +53,13 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Run eating 
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
+    @param gcl The current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param cellEnvironment The environment in the current grid cell 
-    @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
-    @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param currentTimestep The current model time step 
-    @param trackProcesses An instance of ProcessTracker to hold diagnostics for eating 
     @param partial Thread-locked variables 
-    @param outputDetail The level of output detail being used for the current model run 
-    @param currentMonth The current model month  */
+    @param currentMonth The current model month
+    @params params The Params */
     void RunEcologicalProcess(GridCell& gcl,
             Cohort& actingCohort, 
             unsigned currentTimestep,

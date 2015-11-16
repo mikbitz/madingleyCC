@@ -1,7 +1,6 @@
 #ifndef IEATINGIMPLEMENTATION_H
 #define IEATINGIMPLEMENTATION_H
 #include <GridCellCohortHandler.h>
-#include <GridCellStockHandler.h>
 #include <FunctionalGroupDefinitions.h>
 #include <ProcessTracker.h>
 #include <MadingleyModelInitialisation.h>
@@ -37,48 +36,34 @@ public:
     
     //----------------------------------------------------------------------------------------------
     /** \brief Initialises eating implementation each time step
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
-    @param madingleyCohortDefinitions The definitions for cohorts in the model 
+    @param gcl The current grid cell 
     @param madingleyStockDefinitions The definitions for stocks in the model  */
     virtual void InitializeEatingPerTimeStep(GridCell& gcl,MadingleyModelInitialisation& params) {
         ;
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Calculate the potential biomass that could be gained through eating for marine cells
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
-    @param actingCohort The position of the acting cohort in the jagged array of cohorts 
-    @param cellEnvironment The environment in the current grid cell 
-    @param madingleyCohortDefinitions The definitions for cohorts in the model 
-    @param madingleyStockDefinitions The definitions for stocks in the model  */
+    @param gcl The current grid cell 
+    @param params The current model settings
+     */ 
     virtual void GetEatingPotentialMarine(GridCell& gcl,Cohort& actingCohort,
             MadingleyModelInitialisation& params) {
         ;
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Calculate the potential biomass that could be gained through eating for terrestrial cells
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
+    @param gcl The current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of cohorts 
-    @param cellEnvironment The environment in the current grid cell 
-    @param madingleyCohortDefinitions The definitions for cohorts in the model 
-    @param madingleyStockDefinitions The definitions for stocks in the model  */
+    @param params The current model thingies  */
     virtual void GetEatingPotentialTerrestrial(GridCell& gcl,Cohort& actingCohort,
             MadingleyModelInitialisation& params) {
         ;
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Calculate the actual biomass eaten from each cohort or sotck, apply changes from eating to the cohorts or stocks eaten, and update deltas for the acting cohort
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
-    @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
-    @param cellEnvironment The environment in the current grid cell 
-    @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
-    @param madingleyStockDefinitions The definitions for stock functional groups in the model 
-    @param trackProcesses An instance of ProcessTracker to hold diagnostics for eating 
+    @param gcl The current grid cell 
     @param currentTimestep The current model time step 
-    @param outputDetail The level of output detail being used in this model run  */
+    @param params the actual model settings  */
     virtual void RunEating(GridCell& gcl,Cohort& actingCohort, 
             unsigned currentTimestep,
             MadingleyModelInitialisation& params) {

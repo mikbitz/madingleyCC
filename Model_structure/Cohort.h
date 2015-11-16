@@ -36,7 +36,6 @@ public:
     double CohortAbundance;
     /** \brief The index of the functional group that the cohort belongs to */
     unsigned FunctionalGroupIndex;
-    unsigned positionInList;
     /** \brief Whether this cohort has ever been merged with another cohort */
     bool Merged;
     /** \brief The proportion of the timestep for which this cohort is active */
@@ -47,7 +46,7 @@ public:
     GridCell* origin, *destination;
     static map<string, map<string, double>> Deltas;
     static vector<Cohort> newCohorts;
-    
+    static unsigned NextID;
     //----------------------------------------------------------------------------------------------
     //Methods
     //----------------------------------------------------------------------------------------------

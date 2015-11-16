@@ -49,28 +49,20 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Initialize an implementation of mortality. This is only in here to satisfy the requirements of IEcologicalProcessAcrossGridCells
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
-    @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
-    @param madingleyStockDefinitions The definitions for stock functional groups in the model 
+    @param gcl The current grid cell 
+    @param params Needed for groups in the model 
     @param implementationKey The name of the implementation of mortality to initialize */
     void InitializeEcologicalProcess(GridCell& gcl, MadingleyModelInitialisation& params, string implementationKey) {
 
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Run mortality
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
+    @param gcl The current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
-    @param cellEnvironment The environment in the current grid cell 
-    @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
-    @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param currentTimestep The current model time step 
-    @param trackProcesses An instance of ProcessTracker to hold diagnostics for mortality 
     @param partial Thread-locked variables 
-    @param specificLocations Whether the model is being run for specific locations 
-    @param outputDetail The level output detail being used for the current model run 
-    @param currentMonth The current model month */
+    @param currentMonth The current model month
+    @param params params */
     void RunEcologicalProcess(GridCell& gcl,
             Cohort& actingCohort, 
             unsigned currentTimestep,

@@ -1,11 +1,13 @@
 #ifndef TREVISEDREPRODUCTION_H
 #define TREVISEDREPRODUCTION_H
+#include <IReproductionimplementation.h>
+#include <UtilityFunctions.h>
 /** \file TRevisedReproduction.h
  * \brief the TRevisedReproduction header file
  */
 ///MB this class seems incomplete at present...
 /** \brief A formulation of the process of reproduction */
-class RevisedReproduction : IReproductionImplementation {
+class RevisedReproduction : public IReproductionImplementation {
     //----------------------------------------------------------------------------------------------
     //Variables
     //----------------------------------------------------------------------------------------------  
@@ -42,16 +44,15 @@ public:
     @param currentTimestep The current model time step 
     @param tracker An instance of ProcessTracker to hold diagnostics for reproduction 
     @param partial Thread-locked variables */
-    void RunReproduction(GridCellCohortHandler& gridCellCohorts, GridCellStockHandler& gridCellStocks,
-            Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, map<string,
-            FunctionalGroupDefinitions& madingleyCohortDefinitions, FunctionalGroupDefinitions& madingleyStockDefinitions,
-            unsigned currentTimestep, ProcessTracker& tracker, ThreadLockedParallelVariables& partial) {
+    void RunReproduction(GridCell& gcl, Cohort& actingCohort,
+            unsigned currentTimestep,ThreadLockedParallelVariables& partial, 
+            bool iteroparous, unsigned currentMonth, MadingleyModelInitialisation& params) {
         // Check that the abundance in the cohort to produce is greater than or equal to zero
         assert(OffspringCohortAbundance >= 0.0 && "Offspring abundance < 0");
 
         // Get the adult and juvenile masses of the cohort to produce
-        vector<double> OffspringProperties = GetOffspringCohortProperties(gridCellCohorts, actingCohort,
-                madingleyCohortDefinitions);
+        vector<double> OffspringProperties = GetOffspringCohortProperties(gcl.GridCellCohorts, actingCohort,
+                params.CohortFunctionalGroupDefinitions);
 
         // Update cohort abundance in case juvenile mass has been altered
         OffspringCohortAbundance = (OffspringCohortAbundance * actingCohort.JuvenileMass) /
@@ -66,7 +67,7 @@ public:
                 currentTimestep, partial.NextCohortIDThreadLocked);
 
         // Add the offspring cohort to the grid cell cohorts array
-        gridCellCohorts[actingCohort[0]].push_back(OffspringCohort);
+        gcl.GridCellCohorts[actingCohort.FunctionalGroupIndex].push_back(OffspringCohort);
 
         // Subtract all of the reproductive potential mass of the parent cohort, which has been used to generate the new
         // cohort, from the delta reproductive potential mass
@@ -83,10 +84,8 @@ public:
     @param madingleyStockDefinitions The definitions of stock functional groups in the model 
     @param currentTimestep The current model time step 
     @param tracker An instance of ProcessTracker to hold diagnostics for reproduction */
-    void AssignMassToReproductivePotential(GridCellCohortHandler gridCellCohorts, GridCellStockHandler gridCellStocks,
-            vector<int> actingCohort, map<string, vector<double> > cellEnvironment, 
-            FunctionalGroupDefinitions madingleyCohortDefinitions, FunctionalGroupDefinitions madingleyStockDefinitions,
-            unsigned currentTimestep, ProcessTracker tracker) {
+    void AssignMassToReproductivePotential(GridCell& gcl,
+            Cohort& actingCohort, unsigned currentTimestep) {
         // If this is the first time reproductive potential mass has been assigned for this cohort, 
         // then set the maturity time step for this cohort as the current model time step
         if (actingCohort.MaturityTimeStep == std::numeric_limits<unsigned>::max()) {

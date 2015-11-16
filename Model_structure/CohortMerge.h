@@ -80,46 +80,55 @@ public:
      */
     int MergeToReachThresholdFast(GridCell& gcl, MadingleyModelInitialisation& params) {
 
-        // A list of shortest distances between pairs of cohorts
-        vector<Pear> ShortestDistances;
-
-        // Vector of lists of shortest distances in each functional group
-        set< Pear, pearComparator > SortedDistances;
+        // Set of lists of shortest distances in each functional group
+        // set is automatically sorted - multiset allows for elements with the same distance
+        multiset< Pear, pearComparator > SortedDistances;
         // How many cohorts to remove to hit the threshold
-        int NumberToRemove = gcl.GridCellCohorts.GetNumberOfCohorts() - params.MaxNumberOfCohorts;
+        unsigned MergeCounter = 0;
 
+        int NumberToRemove = gcl.GetNumberOfCohorts() - params.MaxNumberOfCohorts;
+        if (NumberToRemove > 0) {
 
-        //Loop through functional groups
-        for (unsigned ff = 0; ff < gcl.GridCellCohorts.size(); ff++) {
-            if (gcl.GridCellCohorts[ff].size() > 1) {
-                // Loop through cohorts within functional groups
-                for (int cc = 0; cc < gcl.GridCellCohorts[ff].size() - 1; cc++) {
-                    // Loop through comparison cohorts
-                    for (int dd = cc + 1; dd < gcl.GridCellCohorts[ff].size(); dd++) {
-                        Pear PairwiseDistance(&gcl.GridCellCohorts[ff][cc], &gcl.GridCellCohorts[ff][dd]);
-                        SortedDistances.insert(PairwiseDistance);
+            //Loop through functional groups
+            for (unsigned ff = 0; ff < gcl.GridCellCohorts.size(); ff++) {
+                if (gcl.GridCellCohorts[ff].size() > 1) {
+                    // Loop through cohorts within functional groups
+                    for (int cc = 0; cc < gcl.GridCellCohorts[ff].size() - 1; cc++) {
+                        // Loop through comparison cohorts
+                        for (int dd = cc + 1; dd < gcl.GridCellCohorts[ff].size(); dd++) {
+                            Pear PairwiseDistance(&gcl.GridCellCohorts[ff][cc], &gcl.GridCellCohorts[ff][dd]);
+                            SortedDistances.insert(PairwiseDistance);
+                        }
                     }
                 }
             }
-        }
-        auto I = SortedDistances.begin();
-        unsigned MergeCounter = 0;
-        while (MergeCounter < NumberToRemove && I != SortedDistances.end()) {
-            Cohort& CohortToMergeFrom = *(I->a);
-            Cohort& CohortToMergeTo   = *(I->b);
-            if (CohortToMergeFrom.CohortAbundance > 0 && CohortToMergeTo.CohortAbundance > 0) {
-                // Add the abundance of the second cohort to that of the first
-                CohortToMergeTo.CohortAbundance += CohortToMergeFrom.CohortAbundance * CohortToMergeFrom.IndividualBodyMass / CohortToMergeTo.IndividualBodyMass;
-                // Add the reproductive potential mass of the second cohort to that of the first
-                CohortToMergeTo.IndividualReproductivePotentialMass += CohortToMergeFrom.IndividualReproductivePotentialMass * CohortToMergeFrom.CohortAbundance / CohortToMergeTo.CohortAbundance;
-                // Set the abundance of the second cohort to zero
-                CohortToMergeFrom.CohortAbundance = 0.0;
-                // Designate both cohorts as having merged
-                CohortToMergeTo.Merged = true;
-                CohortToMergeFrom.Merged = true;
-                MergeCounter++;
+           // cout<<"dist ";
+           // for (auto opp: SortedDistances)cout<<opp.dist<<" ";
+           // cout<<endl;
+            auto I = SortedDistances.begin();
+            while (MergeCounter < NumberToRemove && I != SortedDistances.end()) {
+                std::uniform_real_distribution<double> randomNumber(0.0, 1.0);
+                double Rnd = randomNumber(RandomNumberGenerator);
+                Cohort& CohortToMergeFrom = *(I->a);
+                Cohort& CohortToMergeTo = *(I->b);
+                if (Rnd > 0.5) {
+                    CohortToMergeFrom = *(I->b);
+                    CohortToMergeTo = *(I->a);
+                }
+                if (CohortToMergeFrom.CohortAbundance > 0 && CohortToMergeTo.CohortAbundance > 0) {
+                    // Add the abundance of the second cohort to that of the first
+                    CohortToMergeTo.CohortAbundance += CohortToMergeFrom.CohortAbundance * CohortToMergeFrom.IndividualBodyMass / CohortToMergeTo.IndividualBodyMass;
+                    // Add the reproductive potential mass of the second cohort to that of the first
+                    CohortToMergeTo.IndividualReproductivePotentialMass += CohortToMergeFrom.IndividualReproductivePotentialMass * CohortToMergeFrom.CohortAbundance / CohortToMergeTo.CohortAbundance;
+                    // Set the abundance of the second cohort to zero
+                    CohortToMergeFrom.CohortAbundance = 0.0;
+                    // Designate both cohorts as having merged
+                    CohortToMergeTo.Merged = true;
+                    CohortToMergeFrom.Merged = true;
+                    MergeCounter++;
+                }
+                ++I;
             }
-            ++I;
         }
 
         return MergeCounter;

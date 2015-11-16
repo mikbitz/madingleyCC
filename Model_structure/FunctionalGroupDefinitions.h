@@ -44,6 +44,7 @@ public:
     FunctionalGroupDefinitions(string fileName, string outputPath) {
         cout << "Reading those functional group definitions" << endl;
         fileName = "input/Model setup/" + fileName;
+        outputPath=".";
         ifstream infile(fileName.c_str());
         if (infile.is_open()) {
 

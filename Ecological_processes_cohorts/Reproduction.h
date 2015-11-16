@@ -35,29 +35,20 @@ public:
     //----------------------------------------------------------------------------------------------
     /** \brief Initialize an implementation of reproduction. This is only in here to satisfy the requirements of IEcologicalProcessWithinGridCells
 
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
-    @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
-    @param madingleyStockDefinitions The definitions for stock functional groups in the model 
+    @param gcl The current grid cell 
+    @param params The definitions for functional groups in the model, among other things 
     @param implementationKey The name of the reproduction implementation to initialize 
      */
     void InitializeEcologicalProcess(GridCell& gcl, MadingleyModelInitialisation& params, string implementationKey){
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Run reproduction
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
-    @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
-    @param cellEnvironment The environment in the current grid cell 
-    @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
-    @param madingleyStockDefinitions The definitions for stock functional groups in the model 
+    @param gcl The current grid cell 
+    @param actingCohort The acting cohort 
     @param currentTimeStep The current model time step 
-    @param processTracker An instance of ProcessTracker to hold diagnostics for eating 
     @param partial Thread-locked variables for the parallelised version 
-    @param specificLocations Whether the model is being run for specific locations 
-    @param outputDetail The level of output detail being used for this model run 
     @param currentMonth The current model month 
-     */
+    @params Parameters defined here */
     void RunEcologicalProcess(GridCell& gcl,
             Cohort& actingCohort, 
             unsigned currentTimestep,

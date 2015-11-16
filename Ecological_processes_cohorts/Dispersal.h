@@ -1,6 +1,7 @@
 #ifndef DISPERSAL_H
 #define DISPERSAL_H
 #include <string>
+#include <GridCell.h>
 #include <IDispersalImplementation.h>
 #include <GridCellCohortHandler.h>
 #include <limits>
@@ -68,11 +69,11 @@ class Dispersal  {
                 
                 if (gcl.isMarine() &&
                         ((params.CohortFunctionalGroupDefinitions.GetTraitNames("Mobility", c.FunctionalGroupIndex) == "planktonic") || (c.IndividualBodyMass <= PlanktonThreshold))) {
-                    // Run advective dispersal
+                   // Run advective dispersal
                     AdvectiveDispersalImplementation->RunDispersal(disperseMonkeys, gridForDispersal, c, currentMonth);
                 }   // Otherwise, if mature do responsive dispersal
                 else if (c.isMature()) {
-                     //Run responsive dispersal
+                    //Run responsive dispersal
                     ResponsiveDispersalImplementation->RunDispersal(disperseMonkeys, gridForDispersal, c, currentMonth);
                 }    // If the cohort is immature, run diffusive dispersal
                 else {
@@ -80,6 +81,7 @@ class Dispersal  {
                 }
             
         });
+
         // IF THE CELL IS MARINE, RUN ADVECTIVE DISPERSAL FOR THE PHYTOPLANKTON STOCK AS WELL IN v1
     }
     //----------------------------------------------------------------------------------------------
@@ -87,12 +89,12 @@ class Dispersal  {
         dispersalCounter = disperseMonkeys.size();
         //do removals first as this currently depends closely on the order of cohorts in the grid
         //dispersals have been created in increasing order of index, so first reverse
-        reverse(disperseMonkeys.begin(),disperseMonkeys.end());
+        //reverse(disperseMonkeys.begin(),disperseMonkeys.end());
         for (auto& c: disperseMonkeys){
-            gridForDispersal.DeleteGridCellIndividualCohort(c);
+            gridForDispersal.Move(c);
+
         }
         for (auto& c: disperseMonkeys){ 
-            gridForDispersal.AddNewCohortToGridCell(c);
         }
         disperseMonkeys.clear();
     }

@@ -16,7 +16,6 @@ public:
     //Methods
     //----------------------------------------------------------------------------------------------
     /** \brief Calculate the proportion of individuals in a cohort that die through a particular type of mortality in a model time step
-    @param gridCellCohorts The cohorts in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param bodyMassIncludingChangeThisTimeStep The body mass that individuals in this cohort will have at the end of this time step 
     @param currentTimestep The current model time step 

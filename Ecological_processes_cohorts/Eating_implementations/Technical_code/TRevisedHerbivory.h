@@ -81,10 +81,8 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Initialises herbivory implementation each time step
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
-    @param madingleyCohortDefinitions The definitions for cohorts in the model 
-    @param madingleyStockDefinitions The definitions for stocks in the model 
+    @param gcl The current grid cell 
+    @param params The definitions of model parameters 
     \remark This only works if: a) herbivory is initialised in every grid cell; and b) if parallelisation is done by latitudinal strips
     It is critical to run this every time step */
     void InitializeEatingPerTimeStep(GridCell& gcl, MadingleyModelInitialisation& params) {
@@ -93,12 +91,9 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Calculate the potential biomass that could be gained through herbivory on each grid cell autotroph stock
-    @param gridCellCohorts The cohorts in the grid cell 
-    @param gridCellStocks The stocks in the grid cell 
+    @param gcl The current grid cell 
     @param actingCohort The acting cohort 
-    @param cellEnvironment The environment in the current grid cell 
-    @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
-    @param madingleyStockDefinitions The functional group definitions for stocks  in the model */
+    @param params The definitions for stuff in the model */
     void GetEatingPotentialTerrestrial(GridCell& gcl,Cohort& actingCohort, MadingleyModelInitialisation& params) {
         // Set the total biomass eaten by the acting cohort to zero
         TotalBiomassEatenByCohort = 0.0;
@@ -139,12 +134,9 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Calculate the potential biomass that could be gained through herbivory on each grid cell autotroph stock
-    @param gridCellCohorts The cohorts in the grid cell 
-    @param gridCellStocks The stocks in the grid cell 
+    @param gcl The current grid cell 
     @param actingCohort The acting cohort 
-    @param cellEnvironment The environment in the current grid cell 
-    @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
-    @param madingleyStockDefinitions The functional group definitions for stocks  in the model */
+    @params All your base are belong to us */
     void GetEatingPotentialMarine(GridCell& gcl,Cohort& actingCohort, MadingleyModelInitialisation& params) {
         // Set the total biomass eaten by the acting cohort to zero
         TotalBiomassEatenByCohort = 0.0;
@@ -186,15 +178,10 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Calculate the actual amount eaten in herbivory, apply the changes to the eaten autotroph stocks, and update deltas for the herbivore cohort
-    @param gridCellCohorts The cohorts in this grid cell 
-    @param gridCellStocks The stocks in this grid cell 
+    @param gcl this grid cell 
     @param actingCohort The acting cohort 
-    @param cellEnvironment The environmental conditions in this grid cell 
-    @param madingleyCohortDefinitions The functional group definitions for cohorts in the model 
-    @param madingleyStockDefinitions The functional group definitions for stocks in the model 
-    @param trackProcesses An instance of ProcessTracker to hold diagnostics for herbivory 
     @param currentTimestep The current model time step 
-    @param outputDetail The level of output detail being used in this model run */
+    @param params  The model parameters */
     void RunEating(GridCell& gcl,Cohort& actingCohort, 
             unsigned currentTimestep,
             MadingleyModelInitialisation& params) {
@@ -223,7 +210,8 @@ public:
                     exit(1);
                 }
                 // Add the biomass eaten and assimilated by an individual to the delta biomass for the acting cohort
-                Cohort::Deltas["biomass"]["herbivory"] += BiomassesEaten[FunctionalGroup][i] * AssimilationEfficiency / actingCohort.CohortAbundance;
+                //MB should we be able to get here if abundance is zero?
+                if(actingCohort.CohortAbundance>0)Cohort::Deltas["biomass"]["herbivory"] += BiomassesEaten[FunctionalGroup][i] * AssimilationEfficiency / actingCohort.CohortAbundance;
 
                 // Move the biomass eaten but not assimilated by an individual into the organic matter pool
                 Cohort::Deltas["organicpool"]["herbivory"] += BiomassesEaten[FunctionalGroup][i] * (1 - AssimilationEfficiency);

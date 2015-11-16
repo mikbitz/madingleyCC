@@ -159,6 +159,7 @@ Constructor for EnviroData
 EnviroData(string fileName, string dataName, string dataType, string dataResolution, string units)
        {
     //dummy data for initial testing
+
     int NumLonCells=1;int NumLatCells=1;double value=0;
     if(dataName=="SST")value=293;
     if(dataName=="AWC")value=0.1;
@@ -166,7 +167,7 @@ EnviroData(string fileName, string dataName, string dataType, string dataResolut
     if(dataName=="land_sea_mask")value=0;
     if (dataName=="frost")value=0;
     vector<vector< double> > TempStateVariable(NumLatCells);for (auto &t : TempStateVariable )t.resize(NumLonCells);
-    for (unsigned i=0;i<NumLatCells;i++)for (unsigned j=0;j<NumLonCells;j++)TempStateVariable[i][j]=value;
+    for (int i=0;i<NumLatCells;i++)for (int j=0;j<NumLonCells;j++)TempStateVariable[i][j]=value;
     for (int i=0;i<12;i++)DataArray.push_back(TempStateVariable);
     NumTimes=12;
         }

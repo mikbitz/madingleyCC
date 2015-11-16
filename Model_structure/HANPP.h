@@ -1,5 +1,8 @@
 #ifndef HANPP_H
 #define HANPP_H
+
+#include "GridCell.h"
+
 /** \file HANPP.h
  * \brief the HANPP header file
  */
@@ -20,7 +23,7 @@ public:
     @param gridCellStocks The stocks in the current grid cell 
     @param actingStock The position of the acting stock in the jagged array of grid cell stocks 
     @param currentTimestep The current model time step */
-    void RemoveHumanAppropriatedMatter(map<string, vector<double>>&cellEnvironment, string humanNPPExtraction, GridCellStockHandler& gridCellStocks, vector<int>& actingStock, unsigned currentTimestep, unsigned currentMonth) {
+    void RemoveHumanAppropriatedMatter(GridCell& gcl, string humanNPPExtraction, Stock& actingStock, unsigned currentTimestep, unsigned currentMonth) {
         // Factor to convert NPP from units per m2 to units per km2
         double m2Tokm2Conversion = 1000000.0;
 
@@ -28,7 +31,7 @@ public:
         if (humanNPPExtraction == "hanpp") {
             // Loop over stocks in the grid cell and calculate the total biomass of all stocks
             double TotalAutotrophBiomass = 0.0;
-            for (auto& stockFunctionalGrouping : gridCellStocks.GridCellStocks) {
+            for (auto& stockFunctionalGrouping : gcl.GridCellStocks) {
                 vector<Stock> stockFunctionalGroup=stockFunctionalGrouping.second;
                 for (int i = 0; i < stockFunctionalGroup.size(); i++) {
                     TotalAutotrophBiomass += stockFunctionalGroup[i].TotalBiomass;
@@ -36,16 +39,16 @@ public:
             }
 
             // Get the total amount of NPP appropriated by humans from this cell
-            double HANPP = cellEnvironment["HANPP"][0] * cellEnvironment["Seasonality"][currentMonth];
+            double HANPP = gcl.CellEnvironment["HANPP"][0] * gcl.CellEnvironment["Seasonality"][currentMonth];
 
             // If HANPP value is missing, then assume zero
-            if (HANPP == cellEnvironment["Missing Value"][0]) HANPP = 0.0;
+            if (HANPP == gcl.CellEnvironment["Missing Value"][0]) HANPP = 0.0;
 
             // Allocate HANPP for this stock according to the proportion of total autotroph biomass that the stock represents
             if (TotalAutotrophBiomass == 0.0) {
                 HANPP = 0.0;
             } else {
-                HANPP *= (gridCellStocks[actingStock].TotalBiomass / TotalAutotrophBiomass);
+                HANPP *= (actingStock.TotalBiomass / TotalAutotrophBiomass);
             }
 
 
@@ -53,7 +56,7 @@ public:
             HANPP *= m2Tokm2Conversion;
 
             // Multiply by cell area (in km2) to get g/cell/day
-            HANPP *= cellEnvironment["Cell Area"][0];
+            HANPP *= gcl.CellEnvironment["Cell Area"][0];
 
             // Convert from gC to g dry matter
             double DryMatterAppropriated = HANPP * 2;
@@ -63,9 +66,9 @@ public:
 
 
             // Remove human appropriated NPP from total NPP, reduce NPP to 10% available to herbivores and then add to autotroph biomass
-            gridCellStocks[actingStock].TotalBiomass -= WetMatterAppropriated;
+            actingStock.TotalBiomass -= WetMatterAppropriated;
 
-            if (gridCellStocks[actingStock].TotalBiomass < 0.0) gridCellStocks[actingStock].TotalBiomass = 0.0;
+            if (actingStock.TotalBiomass < 0.0) actingStock.TotalBiomass = 0.0;
 
         } else if (humanNPPExtraction == "no") {
         } else {
@@ -76,10 +79,10 @@ public:
             double ProportionMatterAppropriated = double(atof(humanNPPExtraction.c_str()));
 
             // Get the absolute amount of NPP appropriated based on this
-            double MatterAppropriated = gridCellStocks[actingStock].TotalBiomass * ProportionMatterAppropriated;
+            double MatterAppropriated = actingStock.TotalBiomass * ProportionMatterAppropriated;
 
             // Remove human appropriated NPP from total NPP, reduce NPP to 10% available to herbivores and then add to autotroph biomass
-            gridCellStocks[actingStock].TotalBiomass -= MatterAppropriated;
+            actingStock.TotalBiomass -= MatterAppropriated;
         }
     }
     //----------------------------------------------------------------------------------------------

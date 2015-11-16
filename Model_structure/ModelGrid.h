@@ -34,8 +34,6 @@ public:
     float LatCellSize;
     /** \brief the longitudinal length of each grid cell. Currently assumes all cells are equal sized.  */
     float LonCellSize;
-    /** \brief The rarefaction of grid cells to be applied to active cells in the model grid */
-    int GridCellRarefaction;
     /** \brief The number of latitudinal cells in the model grid */
     long NumLatCells;
     /** \brief The number of longitudinal cells in the model grid */
@@ -55,9 +53,6 @@ public:
      */
     vector<double> CellWidthsKm;
     //
-    /** \brief An instance of the simple random number generator class */
-    std::default_random_engine RandomNumberGenerator;
-
     /** \brief Instance of the class to perform general functions */
     UtilityFunctions Utilities;
 
@@ -76,13 +71,6 @@ public:
     @param maxLon Maximum grid longitude (degrees, currently -180 to 180) 
     @param latCellSize Latitudinal size of grid cells 
     @param lonCellSize Longitudinal size of grid cells 
-    @param cellList List of indices of active cells in the model grid 
-    @param enviroStack List of environmental data layers 
-    @param cohortFunctionalGroups The functional group definitions for cohorts in the model 
-    @param stockFunctionalGroups The functional group definitions for stocks in the model 
-    @param globalDiagnostics Global diagnostic variables 
-    @param nextCohortID The unique ID to assign to the next cohort created 
-    @param tracking Whether process tracking is enabled 
      */
     void SetUpGrid(float minLat, float minLon, float maxLat, float maxLon, float latCellSize, float lonCellSize) {
         // Add one to the counter of the number of grids. If there is more than one model grid, exit the program with a debug crash.
@@ -96,7 +84,6 @@ public:
         MaxLongitude = maxLon;
         LatCellSize = latCellSize;
         LonCellSize = lonCellSize;
-        GridCellRarefaction = 1;
 
 
         // Check to see if the number of grid cells is an integer
@@ -122,20 +109,17 @@ public:
 
         cout << "Initialising grid cell environment:" << endl;
 
-        int Count = 0;
-
-
             CellHeightsKm.resize(Lats.size());
             CellWidthsKm.resize(Lats.size());
 
             // Calculate the lengths of widths of grid cells in each latitudinal strip
             // Assume that we are at the midpoint of each cell when calculating lengths
-            for (int ii = 0; ii < Lats.size(); ii++) {
+            for (unsigned ii = 0; ii < Lats.size(); ii++) {
                 CellHeightsKm[ii] = Utilities.CalculateLengthOfDegreeLatitude(Lats[ii] + LatCellSize / 2) * LatCellSize;
                 CellWidthsKm[ii] = Utilities.CalculateLengthOfDegreeLongitude(Lats[ii] + LatCellSize / 2) * LonCellSize;
             }
         
-            setCellCoords();
+        setCellCoords();
         cout << "\n" << endl;
         cout.flush();
 
@@ -144,8 +128,8 @@ public:
     //----------------------------------------------------------------------------------------------
     void setCellCoords() {
         // Loop over cells to set up the model grid
-        for (int ii = 0; ii < InternalGrid.size(); ii++) {
-            for (int jj = 0; jj < InternalGrid[ii].size(); jj++) {
+        for (unsigned ii = 0; ii < InternalGrid.size(); ii++) {
+            for (unsigned jj = 0; jj < InternalGrid[ii].size(); jj++) {
                 // Create the grid cell at the specified position
                 InternalGrid[ii][jj].setCellCoords(Lats[ii], ii,
                         Lons[jj], jj, LatCellSize, LonCellSize, GlobalMissingValue);
@@ -154,211 +138,14 @@ public:
     }
    //----------------------------------------------------------------------------------------------
     void setCellValues() {
-        // Loop over cells to set up the model grid
-        for (int ii = 0; ii < InternalGrid.size(); ii++) {
-            for (int jj = 0; jj < InternalGrid[ii].size(); jj++) {
+        // Loop over cells to set up some variables stored in cells
+        for (unsigned ii = 0; ii < InternalGrid.size(); ii++) {
+            for (unsigned jj = 0; jj < InternalGrid[ii].size(); jj++) {
                 // Create the grid cell at the specified position
                 InternalGrid[ii][jj].SetCellValue(Lats[ii], ii,
                         Lons[jj], jj, LatCellSize, LonCellSize, GlobalMissingValue);
             }
         }
-    }
-   //----------------------------------------------------------------------------------------------
-   /** \brief Estimates missing environmental data for grid cells by interpolation */
-    void InterpolateMissingValues() {
-        map<string, vector<double>> WorkingCellEnvironment;
-        bool Changed = false;
-
-        for (unsigned ii = 0; ii < NumLatCells; ii++) {
-            for (unsigned jj = 0; jj < NumLonCells; jj++) {
-                WorkingCellEnvironment = GetCellEnvironment(ii, jj);
-
-                // If the cell environment does not contain valid NPP data then interpolate values
-                if (!InternalGrid[ii][jj].ContainsData(WorkingCellEnvironment["NPP"], WorkingCellEnvironment["Missing Value"][0])) {
-                    //If NPP doesn't exist the interpolate from surrounding values (of the same realm)
-                    WorkingCellEnvironment["NPP"] = GetInterpolatedValues(ii, jj, GetCellLatitude(ii), GetCellLongitude(jj), "NPP", WorkingCellEnvironment["Realm"][0]);
-
-                    //Calculate NPP seasonality - for use in converting annual NPP estimates to monthly
-                    WorkingCellEnvironment["Seasonality"] = InternalGrid[ii][jj].CalculateNPPSeasonality(WorkingCellEnvironment["NPP"], WorkingCellEnvironment["Missing Value"][0]);
-                    Changed = true;
-                }                    // Otherwise convert the missing data values to zeroes where they exist amongst valid data eg in polar regions.
-                else {
-                    WorkingCellEnvironment["NPP"] = InternalGrid[ii][jj].ConvertMissingValuesToZero(WorkingCellEnvironment["NPP"], WorkingCellEnvironment["Missing Value"][0]);
-                }
-
-                // If the cell environment does not contain valid monthly mean diurnal temperature range data then interpolate values
-                if (InternalGrid[ii][jj].ContainsMissingValue(WorkingCellEnvironment["DiurnalTemperatureRange"], WorkingCellEnvironment["Missing Value"][0])) {
-                    //If NPP doesn't exist the interpolate from surrounding values (of the same realm)
-                    WorkingCellEnvironment["DiurnalTemperatureRange"] = FillWithInterpolatedValues(ii, jj, GetCellLatitude(ii), GetCellLongitude(jj), "DiurnalTemperatureRange", WorkingCellEnvironment["Realm"][0]);
-
-                    Changed = true;
-                }
-
-                // Same for u and v velocities
-                if (!InternalGrid[ii][jj].ContainsData(WorkingCellEnvironment["uVel"], WorkingCellEnvironment["Missing Value"][0])) {
-                    //If u doesn't exist the interpolate from surrounding values (of the same realm)
-                    WorkingCellEnvironment["uVel"] = GetInterpolatedValues(ii, jj, GetCellLatitude(ii), GetCellLongitude(jj), "uVel", WorkingCellEnvironment["Realm"][0]);
-
-                    Changed = true;
-                }                    // Otherwise convert the missing data values to zeroes where they exist amongst valid data eg in polar regions.
-                else {
-                    WorkingCellEnvironment["uVel"] = InternalGrid[ii][jj].ConvertMissingValuesToZero(WorkingCellEnvironment["uVel"], WorkingCellEnvironment["Missing Value"][0]);
-                }
-
-                if (!InternalGrid[ii][jj].ContainsData(WorkingCellEnvironment["vVel"], WorkingCellEnvironment["Missing Value"][0])) {
-                    //If v vel doesn't exist the interpolate from surrounding values (of the same realm)
-                    WorkingCellEnvironment["vVel"] = GetInterpolatedValues(ii, jj, GetCellLatitude(ii), GetCellLongitude(jj), "vVel", WorkingCellEnvironment["Realm"][0]);
-
-                    Changed = true;
-                }                    // Otherwise convert the missing data values to zeroes where they exist amongst valid data eg in polar regions.
-                else {
-                    WorkingCellEnvironment["vVel"] = InternalGrid[ii][jj].ConvertMissingValuesToZero(WorkingCellEnvironment["vVel"], WorkingCellEnvironment["Missing Value"][0]);
-                }
-
-                if (Changed) InternalGrid[ii][jj].CellEnvironment = WorkingCellEnvironment;
-            }
-        }
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Calculate the weighted average of surrounding grid cell data, where those grid cells are of the specified realm and contain
-    non missing data values
-    @param latIndex Index of the latitude cell for which the weighted average over surrounding cells is requested 
-    @param lonIndex Index of the longitude cell for which the weighted average over surrounding cells is requested 
-    @param lat Latitude of the cell for which the weighted value is requested 
-    @param lon Longitude of the cell for which the weighted value is requested 
-    @param dataName Names of the data for which weighted value is requested 
-    @param realm Realm of the grid cell for which data is to be averaged over 
-    @return The weighted average value of the specified data type across surrounding grid cells of the specified realm
-     */
-    vector<double> GetInterpolatedValues(unsigned latIndex, unsigned lonIndex, double lat, double lon, string dataName, double realm) {
-        map<string, vector<double>> TempCellEnvironment = GetCellEnvironment(latIndex, lonIndex);
-        vector<double> InterpData(TempCellEnvironment[dataName].size());
-        vector<unsigned> InterpCount(TempCellEnvironment[dataName].size());
-
-        unsigned LowerLatIndex = latIndex - 1;
-        unsigned UpperLatIndex = latIndex + 1;
-        unsigned LowerLonIndex = lonIndex - 1;
-        unsigned UpperLonIndex = lonIndex + 1;
-
-
-        if (latIndex == 0) LowerLatIndex = latIndex;
-        if (lat == MaxLatitude) UpperLatIndex = latIndex;
-
-        if (lonIndex == 0) LowerLonIndex = lonIndex;
-        if (lon == MaxLongitude) UpperLonIndex = lonIndex;
-
-        //Loop over surrounding cells in the datalayer
-        for (unsigned ii = LowerLatIndex; ii <= UpperLatIndex; ii++) {
-            for (unsigned jj = LowerLonIndex; jj < UpperLonIndex; jj++) {
-                if (ii < NumLatCells && jj < NumLonCells) {
-                    TempCellEnvironment = GetCellEnvironment(ii, jj);
-
-                    for (unsigned hh = 0; hh < InterpData.size(); hh++) {
-                        //If the cell contains data then sum this and increment count
-                        if (TempCellEnvironment[dataName][hh] != TempCellEnvironment["Missing Value"][0] && TempCellEnvironment["Realm"][0] == realm) {
-                            InterpData[hh] += TempCellEnvironment[dataName][hh];
-                            InterpCount[hh]++;
-                        }
-                    }
-                }
-            }
-        }
-
-        //take the mean over surrounding valid cells for each timestep
-        for (int hh = 0; hh < InterpData.size(); hh++) {
-            if (InterpCount[hh] > 0) {
-                InterpData[hh] /= InterpCount[hh];
-            } else {
-                InterpData[hh] = 0.0;
-            }
-        }
-        return InterpData;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Calculate the weighted average of surrounding grid cell data, where those grid cells are of the specified realm and contain
-    non missing data values
-    @param latIndex Index of the latitude cell for which the weighted average over surrounding cells is requested 
-    @param lonIndex Index of the longitude cell for which the weighted average over surrounding cells is requested 
-    @param lat Latitude of the cell for which the weighted value is requested 
-    @param lon Longitude of the cell for which the weighted value is requested 
-    @param dataName Names of the data for which weighted value is requested 
-    @param realm Realm of the grid cell for which data is to be averaged over 
-    @returns The weighted average value of the specified data type across surrounding grid cells of the specified realm
-     */
-    vector<double> FillWithInterpolatedValues(unsigned latIndex, unsigned lonIndex, double lat, double lon, string dataName, double realm) {
-        map<string, vector<double> > TempCellEnvironment = GetCellEnvironment(latIndex, lonIndex);
-        vector<double> InterpData(TempCellEnvironment[dataName].size());
-        vector<unsigned> InterpCount(TempCellEnvironment[dataName].size());
-        unsigned LowerLatIndex = latIndex - 1;
-        unsigned UpperLatIndex = latIndex + 1;
-        unsigned LowerLonIndex = lonIndex - 1;
-        unsigned UpperLonIndex = lonIndex + 1;
-
-
-        if (latIndex == 0) LowerLatIndex = latIndex;
-        if (lat == MaxLatitude) UpperLatIndex = latIndex;
-
-        if (lonIndex == 0) LowerLonIndex = lonIndex;
-        if (lon == MaxLongitude) UpperLonIndex = lonIndex;
-
-        for (unsigned hh = 0; hh < InterpData.size(); hh++) {
-            if (TempCellEnvironment[dataName][hh] == TempCellEnvironment["Missing Value"][0]) {
-                //Loop over surrounding cells in the datalayer
-                for (unsigned ii = LowerLatIndex; ii <= UpperLatIndex; ii++) {
-                    for (unsigned jj = LowerLonIndex; jj <= UpperLonIndex; jj++) {
-                        if (ii < NumLatCells && jj < NumLonCells) {
-                            TempCellEnvironment = GetCellEnvironment(ii, jj);
-
-                            //If the cell contains data then sum this and increment count
-                            if (TempCellEnvironment[dataName][hh] != TempCellEnvironment["Missing Value"][0] && TempCellEnvironment["Realm"][0] == realm) {
-                                InterpData[hh] += TempCellEnvironment[dataName][hh];
-                                InterpCount[hh]++;
-                            }
-
-                        }
-                    }
-                }
-                //take the mean over surrounding valid cells for each timestep
-                if (InterpCount[hh] > 0) {
-                    InterpData[hh] /= InterpCount[hh];
-                } else {
-                    InterpData[hh] = 0.0;
-                }
-            } else {
-                InterpData[hh] = TempCellEnvironment[dataName][hh];
-            }
-        }
-
-
-        return InterpData;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Returns the stocks within the specified grid cell
-    @param latIndex Latitude index 
-    @param lonIndex Longitude index 
-    @returns The stock handler for the specified grid cell
-     */
-    GridCellStockHandler& GetGridCellStocks(unsigned latIndex, unsigned lonIndex) {
-        return InternalGrid[latIndex][ lonIndex].GridCellStocks;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Sets the stocks in the specified grid cell to the passed stocks
-    @param newGridCellStocks New stocks for the grid cell 
-    @param latIndex Latitude index 
-    @param lonIndex Longitude index 
-     */
-    void SetGridCellStocks(GridCellStockHandler newGridCellStocks, unsigned latIndex, unsigned lonIndex) {
-        InternalGrid[latIndex][ lonIndex].GridCellStocks = newGridCellStocks;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief
-    Returns the array (indexed by functional group) of lists of gridCellCohorts for the specified grid cell
-    @param latIndex Latitude index of grid cell 
-    @param lonIndex Longitude index of grid cell 
-    @returns Array (indexed by functional group) of lists of gridCellCohorts
-     */
-    GridCellCohortHandler& GetGridCellCohorts(unsigned latIndex, unsigned lonIndex) {
-        return InternalGrid[latIndex][ lonIndex].GridCellCohorts;
     }
     //----------------------------------------------------------------------------------------------
     /** \brief
@@ -379,8 +166,10 @@ public:
      */
     void DeleteGridCellIndividualCohort(Cohort c) {
         vector<Cohort>& z=c.origin->GridCellCohorts[c.FunctionalGroupIndex];
-        z.erase(z.begin() + c.positionInList);
-        for (unsigned i=c.positionInList;i<z.size();i++)z[i].positionInList--;
+        auto h=find_if(z.begin(),z.end(),[c](Cohort& k){return c.ID==k.ID;});
+        if (c.ID != (*h).ID)cout<<"huh? "<<c.ID<<" "<< (*h).ID<<endl;
+        z.erase(h);
+        //for (unsigned i=c.positionInList;i<z.size();i++)z[i].positionInList--;
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Add a new cohort to an existing list of cohorts in the grid cell
@@ -391,18 +180,26 @@ public:
      */
     void AddNewCohortToGridCell(Cohort c) {
         c.origin=c.destination;
-        c.positionInList=c.destination->GridCellCohorts[c.FunctionalGroupIndex].size();
+        //c.positionInList=c.destination->GridCellCohorts[c.FunctionalGroupIndex].size();
         c.destination->GridCellCohorts[c.FunctionalGroupIndex].push_back(c);
 
     }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Replace the gridCellCohorts in a grid cell with a new list of gridCellCohorts
-    @param newGridCellCohorts The new list of gridCellCohorts 
-    @param latIndex Grid cell latitude index 
-    @param lonIndex Grid cell longitude index 
+        //----------------------------------------------------------------------------------------------
+    /** \brief Add a new cohort to an existing list of cohorts in the grid cell
+    @param latIndex Latitude index of the grid cell 
+    @param lonIndex Longitude index of the grid cell 
+    @param functionalGroup Functional group of the cohort (i.e. array index) 
+    @param cohortToAdd The cohort object to add 
      */
-    void SetGridCellCohorts(GridCellCohortHandler newGridCellCohorts, unsigned latIndex, unsigned lonIndex) {
-        InternalGrid[latIndex][ lonIndex].GridCellCohorts = newGridCellCohorts;
+    void Move(Cohort c) {
+        vector<Cohort>& z=c.origin->GridCellCohorts[c.FunctionalGroupIndex];
+        auto h=find_if(z.begin(),z.end(),[c](Cohort& k){return c.ID==k.ID;});
+        if (c.ID != (*h).ID)cout<<"huh? "<<c.ID<<" "<< (*h).ID<<endl;
+        z.erase(h);
+        c.origin=c.destination;
+        //c.positionInList=c.destination->GridCellCohorts[c.FunctionalGroupIndex].size();
+        c.destination->GridCellCohorts[c.FunctionalGroupIndex].push_back(c);
+
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Return the value of a specified environmental layer from an individual grid cell    @param variableName The name of the environmental lyaer 
@@ -419,21 +216,6 @@ public:
         return InternalGrid[latCellIndex][ lonCellIndex].GetEnviroLayer(variableName, timeInterval, variableExists);
     }
     //----------------------------------------------------------------------------------------------
-    /** \brief
-    Set the value of a specified environmental layer in an individual grid cell
-
-    @param variableName The name of the environmental layer 
-    @param timeInterval The time interval within the environmental variable to set (i.e. 0 if it is a yearly variable
-    or the month index - 0=Jan, 1=Feb etc. - for monthly variables) 
-    @param setValue The value to set 
-    @param latCellIndex The latitudinal cell index 
-    @param lonCellIndex The longitudinal cell index 
-    @return True if the value is set successfully, false otherwise
-     */
-    bool SetEnviroLayer(string variableName, unsigned timeInterval, double setValue, unsigned latCellIndex, unsigned lonCellIndex) {
-        return InternalGrid[latCellIndex][ lonCellIndex].SetEnviroLayer(variableName, timeInterval, setValue);
-    }
-        //----------------------------------------------------------------------------------------------
     /** \brief
     Set the value of a specified environmental layer in an individual grid cell
 
@@ -477,499 +259,7 @@ public:
     bool AddToEnviroLayer(string variableName, unsigned timeInterval, double setValue, Cohort& c) {
         return c.origin->SetEnviroLayer(variableName, timeInterval, setValue);
     }
-    //----------------------------------------------------------------------------------------------
-    /** \brief
-    Get the total of a state variable for specific cells
-    @param variableName The name of the variable 
-    @param functionalGroups A vector of functional group indices to consider 
-    @param cellIndices List of indices of active cells in the model grid 
-    @param stateVariableType A string indicating the type of state variable; 'cohort' or 'stock' 
-    @returns Summed value of variable over whole grid
-     */
-//    double StateVariableGridTotal(string variableName, string traitValue, vector<int> functionalGroups, vector<vector<unsigned>> cellIndices, string stateVariableType, MadingleyModelInitialisation initialisation) {
-//
-//        double tempVal = 0;
-//
-//        vector<vector< double> > TempStateVariable = GetStateVariableGrid(variableName, traitValue, functionalGroups, cellIndices, stateVariableType, initialisation);
-//
-//        // Loop through and sum values across a grid, excluding missing values
-//        for (int ii = 0; ii < cellIndices.size(); ii++) {
-//            tempVal += TempStateVariable[cellIndices[ii][0]][ cellIndices[ii][1]];
-//        }
-//
-//        return tempVal;
-//    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Gets a state variable for specified functional groups of specified entity types in a specified grid cell
-    @param variableName The name of the variable to get: 'biomass' or 'abundance' 
-    @param functionalGroups The functional group indices to get the state variable for 
-    @param latCellIndex The latitudinal index of the cell 
-    @param lonCellIndex The longitudinal index of the cell 
-    @param stateVariableType The type of entity to return the state variable for: 'stock' or 'cohort' 
-    @return The state variable for specified functional groups of specified entity types in a specified grid cell
-     */
-//    double GetStateVariable(string variableName, string traitValue, vector<int> functionalGroups, unsigned latCellIndex, unsigned lonCellIndex, string stateVariableType, MadingleyModelInitialisation modelInitialisation) {
-//
-//        double returnValue = 0.0;
-//        map<string, int> vn, sv;
-//        sv["cohort"] = 0;
-//        sv["stock"] = 1;
-//        vn["biomass" ] = 0;
-//        vn["abundance"] = 1;
-//
-//        //lowercase the string - a bit clunky...but then C++ strings are a bit
-//        transform(variableName.begin(), variableName.end(), variableName.begin(), ::tolower);
-//        transform(stateVariableType.begin(), stateVariableType.end(), stateVariableType.begin(), ::tolower);
-//        GridCellCohortHandler TempCohorts = InternalGrid[latCellIndex][ lonCellIndex].GridCellCohorts;
-//        GridCellStockHandler TempStocks = InternalGrid[latCellIndex][ lonCellIndex].GridCellStocks;
-//
-//        switch (sv[stateVariableType]) {
-//            case 0://"cohort":
-//
-//
-//                switch (vn[variableName]) {
-//                    case 0://"biomass":
-//                        if (traitValue != "Zooplankton") {
-//                            for (int f : functionalGroups) {
-//                                for (auto item : TempCohorts[f]) {
-//                                    returnValue += ((item.IndividualBodyMass + item.IndividualReproductivePotentialMass) * item.CohortAbundance);
-//                                }
-//                            }
-//                        } else {
-//                            for (int f : functionalGroups) {
-//                                for (auto item : TempCohorts[f]) {
-//                                    if (item.IndividualBodyMass <= modelInitialisation.PlanktonDispersalThreshold)
-//                                        returnValue += ((item.IndividualBodyMass + item.IndividualReproductivePotentialMass) * item.CohortAbundance);
-//                                }
-//                            }
-//                        }
-//                        break;
-//
-//                    case 1://"abundance":
-//                        if (traitValue != "Zooplankton") {
-//                            for (int f : functionalGroups) {
-//                                for (auto item : TempCohorts[f]) {
-//                                    returnValue += item.CohortAbundance;
-//                                }
-//                            }
-//                        } else {
-//                            for (int f : functionalGroups) {
-//                                for (auto item : TempCohorts[f]) {
-//                                    if (item.IndividualBodyMass <= modelInitialisation.PlanktonDispersalThreshold)
-//                                        returnValue += item.CohortAbundance;
-//                                }
-//                            }
-//                        }
-//                        break;
-//
-//                    default:
-//                        cout << "For cohorts, state variable name must be either 'biomass' or 'abundance'";
-//                        exit(1);
-//                        break;
-//                }
-//                break;
-//
-//            case 1://"stock":
-//
-//                switch (vn[variableName]) {
-//                    case 0://"biomass":
-//                        for (int f : functionalGroups) {
-//                            for (auto item : TempStocks[f]) {
-//                                returnValue += item.TotalBiomass;
-//                            }
-//                        }
-//                        break;
-//                    default:
-//                        cout << "For stocks, state variable name must be 'biomass'" << endl;
-//                        exit(1);
-//                        break;
-//                }
-//                break;
-//
-//            default:
-//                cout << "State variable type must be either 'cohort' or 'stock'" << endl;
-//                exit(1);
-//                break;
-//
-//        }
-//        return returnValue;
-//    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Gets a state variable density for specified functional groups of specified entity types in a specified grid cell
-    @param variableName The name of the variable to get: 'biomass' or 'abundance' 
-    @param functionalGroups The functional group indices to get the state variable for 
-    @param latCellIndex The latitudinal index of the cell 
-    @param lonCellIndex The longitudinal index of the cell 
-    @param stateVariableType The type of entity to return the state variable for: 'stock' or 'cohort' 
-    @return The state variable density for specified functional groups of specified entity types in a specified grid cell
-     */
-//    double GetStateVariableDensity(string variableName, string traitValue, vector<int> functionalGroups, unsigned latCellIndex, unsigned lonCellIndex, string stateVariableType, MadingleyModelInitialisation modelInitialisation) {
-//
-//        double returnValue = 0.0;
-//        map<string, int> vn, sv;
-//        sv["cohort"] = 0;
-//        sv["stock"] = 1;
-//        vn["biomass" ] = 0;
-//        vn["abundance"] = 1;
-//
-//        //lowercase the string - a bit clunky...but then C++ strings are a bit
-//        transform(variableName.begin(), variableName.end(), variableName.begin(), ::tolower);
-//        transform(stateVariableType.begin(), stateVariableType.end(), stateVariableType.begin(), ::tolower);
-//
-//        GridCellStockHandler TempStocks = InternalGrid[latCellIndex][ lonCellIndex].GridCellStocks;
-//        GridCellCohortHandler TempCohorts = InternalGrid[latCellIndex][ lonCellIndex].GridCellCohorts;
-//
-//        switch (sv[stateVariableType]) {
-//            case 0://"cohort":
-//
-//
-//                switch (vn[variableName]) {
-//                    case 0://"biomass":
-//                        if (traitValue != "Zooplankton (all)") {
-//                            for (int f : functionalGroups) {
-//                                for (auto item : TempCohorts[f]) {
-//                                    returnValue += ((item.IndividualBodyMass + item.IndividualReproductivePotentialMass) * item.CohortAbundance);
-//                                }
-//                            }
-//                        } else {
-//                            for (int f : functionalGroups) {
-//                                for (auto item : TempCohorts[f]) {
-//                                    if (item.IndividualBodyMass <= modelInitialisation.PlanktonDispersalThreshold)
-//                                        returnValue += ((item.IndividualBodyMass + item.IndividualReproductivePotentialMass) * item.CohortAbundance);
-//                                }
-//                            }
-//                        }
-//                        break;
-//
-//                    case 1://"abundance":
-//                        if (traitValue != "Zooplankton (all)") {
-//                            for (int f : functionalGroups) {
-//                                for (auto item : TempCohorts[f]) {
-//                                    returnValue += item.CohortAbundance;
-//                                }
-//                            }
-//                        } else {
-//                            for (int f : functionalGroups) {
-//                                for (auto item : TempCohorts[f]) {
-//                                    if (item.IndividualBodyMass <= modelInitialisation.PlanktonDispersalThreshold)
-//                                        returnValue += item.CohortAbundance;
-//                                }
-//                            }
-//                        }
-//                        break;
-//
-//                    default:
-//                        cout << "For cohorts, state variable name must be either 'biomass' or 'abundance'" << endl;
-//                        exit(1);
-//                        break;
-//                }
-//                break;
-//
-//            case 1://"stock":
-//
-//                switch (vn[variableName]) {
-//                    case 0://"biomass":
-//                        for (int f : functionalGroups) {
-//                            for (auto item : TempStocks[f]) {
-//                                returnValue += item.TotalBiomass;
-//                            }
-//                        }
-//                        break;
-//                    default:
-//                        cout << "For stocks, state variable name must be 'biomass'" << endl;
-//                        exit(1);
-//                        break;
-//                }
-//                break;
-//
-//            default:
-//                cout << "State variable type must be either 'cohort' or 'stock'" << endl;
-//                exit(1);
-//                break;
-//
-//        }
-//
-//
-//        return returnValue / (InternalGrid[latCellIndex][ lonCellIndex].CellEnvironment["Cell Area"][0]);
-//    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Get the mean density of a state variable for specific cells
-    @param variableName The name of the variable 
-    @param functionalGroups A vector of functional group indices to consider 
-    @param cellIndices List of indices of active cells in the model grid 
-    @param stateVariableType A string indicating the type of state variable; 'cohort' or 'stock' 
-    @return Mean density of variable over whole grid
-     */
-//    double StateVariableGridMeanDensity(string variableName, string traitValue, vector<int> functionalGroups, vector<vector<unsigned>> cellIndices, string stateVariableType, MadingleyModelInitialisation initialisation) {
-//
-//        double tempVal = 0;
-//
-//        vector<vector< double> > TempStateVariable = GetStateVariableGridDensityPerSqKm(variableName, traitValue, functionalGroups, cellIndices, stateVariableType, initialisation);
-//
-//        // Loop through and sum values across a grid, excluding missing values
-//        for (int ii = 0; ii < cellIndices.size(); ii++) {
-//            tempVal += TempStateVariable[cellIndices[ii][0]][ cellIndices[ii][1]];
-//        }
-//
-//        return tempVal / cellIndices.size();
-//    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Return an array of values for a single state variable over specific cells
-    @param variableName Variable name 
-    @param functionalGroups A vector of functional group indices to consider 
-    @param cellIndices List of indices of active cells in the model grid 
-    @param stateVariableType A string indicating the type of state variable; 'cohort' or 'stock' 
-    @return Array of state variable values for each grid cell
-     */
-    //MB NB ***!!! array bounds checking not yet in place
-//    vector<vector< double> > GetStateVariableGrid(string variableName, string traitValue, vector<int> functionalGroups, vector<vector<unsigned>> cellIndices, string stateVariableType, MadingleyModelInitialisation initialisation) {
-//        vector<vector< double> > TempStateVariable(NumLatCells);
-//        for (auto &t : TempStateVariable)t.resize(NumLonCells);
-//        map<string, int> vn;
-//        vn["biomass" ] = 0;
-//        vn["abundance"] = 1;
-//
-//        //lowercase the string - a bit clunky...but then C++ strings are a bit
-//        transform(variableName.begin(), variableName.end(), variableName.begin(), ::tolower);
-//        transform(stateVariableType.begin(), stateVariableType.end(), stateVariableType.begin(), ::tolower);
-//        switch (vn[variableName]) {
-//            case 0://"biomass":
-//                for (int ii = 0; ii < cellIndices.size(); ii++) {
-//                    // Check whether the state variable concerns cohorts or stocks
-//                    if (stateVariableType == "cohort") {
-//                        if (traitValue != "Zooplankton") {
-//                            //                                // Check to make sure that the cell has at least one cohort
-//                            //                                if (InternalGrid[cellIndices[ii][0]][ cellIndices[ii][1]].GridCellCohorts != null)
-//                            //                                {
-//                            for (int nn = 0; nn < functionalGroups.size(); nn++) {
-//                                //                                        if (InternalGrid[cellIndices[ii][0]][ cellIndices[ii][1]].GridCellCohorts[functionalGroups[nn]] != null)
-//                                //                                        {
-//                                for (Cohort item : InternalGrid[cellIndices[ii][0]][ cellIndices[ii][1]].GridCellCohorts[functionalGroups[nn]]) {
-//                                    TempStateVariable[cellIndices[ii][0]][ cellIndices[ii][1]] += ((item.IndividualBodyMass + item.IndividualReproductivePotentialMass) * item.CohortAbundance);
-//                                }
-//                                //                                        }
-//                            }
-//                            //                                }
-//                        } else {
-//                            //                                //Check to make sure that the cell has at least one cohort
-//                            //                                if (InternalGrid[cellIndices[ii][0], cellIndices[ii][1]].GridCellCohorts != null)
-//                            //                                {
-//                            for (int nn = 0; nn < functionalGroups.size(); nn++) {
-//                                //                                        if (InternalGrid[cellIndices[ii][0]][ cellIndices[ii][1]].GridCellCohorts[functionalGroups[nn]] != null)
-//                                //                                        {
-//                                for (Cohort item : InternalGrid[cellIndices[ii][0]][ cellIndices[ii][1]].GridCellCohorts[functionalGroups[nn]]) {
-//                                    if (item.IndividualBodyMass <= initialisation.PlanktonDispersalThreshold)
-//                                        TempStateVariable[cellIndices[ii][0]][ cellIndices[ii][1]] += ((item.IndividualBodyMass + item.IndividualReproductivePotentialMass) * item.CohortAbundance);
-//                                }
-//                                //                                        }
-//                            }
-//                            //                                }
-//                        }
-//                    } else if (stateVariableType == "stock") {
-//                        //                            // Check to make sure that the cell has at least one stock
-//                        //                            if (InternalGrid[cellIndices[ii][0]][ cellIndices[ii][1]].GridCellStocks != null)
-//                        //                            {
-//                        for (int nn = 0; nn < functionalGroups.size(); nn++) {
-//                            //                                    if (InternalGrid[cellIndices[ii][0]][ cellIndices[ii][1]].GridCellStocks[functionalGroups[nn]] != null)
-//                            //                                    {
-//                            for (Stock item : InternalGrid[cellIndices[ii][0]][ cellIndices[ii][1]].GridCellStocks[functionalGroups[nn]]) {
-//                                TempStateVariable[cellIndices[ii][0]][ cellIndices[ii][1]] += (item.TotalBiomass);
-//
-//                            }
-//                            //                                    }
-//                            // 
-//                        }
-//                        //                            }
-//                    } else {
-//                        cout << "Variable 'state variable type' must be either 'stock' 'or 'cohort'" << endl;
-//                        exit(1);
-//                    }
-//
-//                }
-//                break;
-//            case 1://"abundance":
-//                for (int ii = 0; ii < cellIndices.size(); ii++) {
-//                    // Check whether the state variable concerns cohorts or stocks
-//                    if (stateVariableType == "cohort") {
-//                        if (traitValue != "Zooplankton") {
-//                            //                                // Check to make sure that the cell has at least one cohort
-//                            //                                if (InternalGrid[cellIndices[ii][0], cellIndices[ii][1]].GridCellCohorts != null)
-//                            //                                {
-//                            for (int nn = 0; nn < functionalGroups.size(); nn++) {
-//                                //                                        if (InternalGrid[cellIndices[ii][0]][ cellIndices[ii][1]].GridCellCohorts[functionalGroups[nn]] != null)
-//                                //                                        {
-//                                for (Cohort item : InternalGrid[cellIndices[ii][0]][ cellIndices[ii][1]].GridCellCohorts[functionalGroups[nn]]) {
-//                                    TempStateVariable[cellIndices[ii][0]][ cellIndices[ii][1]] += item.CohortAbundance;
-//                                }
-//                                //                                        }
-//                            }
-//                            //                                }
-//                        } else {
-//                            //                                // Check to make sure that the cell has at least one cohort
-//                            //                                if (InternalGrid[cellIndices[ii][0], cellIndices[ii][1]].GridCellCohorts != null)
-//                            //                                {
-//                            for (int nn = 0; nn < functionalGroups.size(); nn++) {
-//                                //                                        if (InternalGrid[cellIndices[ii][0]][ cellIndices[ii][1]].GridCellCohorts[functionalGroups[nn]] != null)
-//                                //                                        {
-//                                for (Cohort item : InternalGrid[cellIndices[ii][0]][ cellIndices[ii][1]].GridCellCohorts[functionalGroups[nn]]) {
-//                                    if (item.IndividualBodyMass <= initialisation.PlanktonDispersalThreshold)
-//                                        TempStateVariable[cellIndices[ii][0]][ cellIndices[ii][1]] += item.CohortAbundance;
-//                                }
-//                                //                                        }
-//                            }
-//                            //                                }
-//                        }
-//                    } else {
-//                        cout << "Currently abundance cannot be calculated for grid cell stocks" << endl;
-//                        exit(1);
-//                    }
-//                }
-//                break;
-//            default:
-//                cout << "Invalid search string passed for cohort property" << endl;
-//                exit(1);
-//                break;
-//        }
-//        //
-//        //            return TempStateVariable;
-//
-//    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief  Return an array of values for a single state variable over specific cells, given in densities per km^2
-    @param variableName Variable name 
-    @param functionalGroups A vector of functional group indices to consider 
-    @param cellIndices List of indices of active cells in the model grid 
-    @param stateVariableType A string indicating the type of state variable; 'cohort' or 'stock' 
-    @return Array of state variable values for each grid cell
-     */
-//    vector<vector< double> > GetStateVariableGridDensityPerSqKm(string variableName, string traitValue, vector<int> functionalGroups, vector<vector<unsigned>> cellIndices, string stateVariableType, MadingleyModelInitialisation initialisation) {
-//        vector<vector< double> > TempStateVariable(NumLatCells);
-//        for (auto &t : TempStateVariable)t.resize(NumLonCells);
-//        double CellArea;
-//
-//        TempStateVariable = GetStateVariableGrid(variableName, traitValue, functionalGroups, cellIndices, stateVariableType, initialisation);
-//
-//        for (int ii = 0; ii < cellIndices.size(); ii++) {
-//            CellArea = GetCellEnvironment(cellIndices[ii][0], cellIndices[ii][1])["Cell Area"][0];
-//            TempStateVariable[cellIndices[ii][0]][ cellIndices[ii][1]] /= CellArea;
-//        }
-//
-//        return TempStateVariable;
-//    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief   Return an array of log(values + 1) for a state variable for particular functional groups over specific cells. State variable (currently only biomass or abundance) must be >= 0 in all grid cells
-    @param variableName The name of the variable 
-    @param functionalGroups A vector of functional group indices to consider 
-    @param cellIndices List of indices of active cells in the model grid 
-    @param stateVariableType A string indicating the type of state variable; 'cohort' or 'stock' 
-    @return Array of log(state variable values +1 ) for each grid cell
-     */
-//    vector<vector< double> > GetStateVariableGridLog(string variableName, string traitValue, vector<int> functionalGroups, vector<vector<unsigned>> cellIndices, string stateVariableType, MadingleyModelInitialisation initialisation) {
-//
-//        vector<vector< double> > TempStateVariable(NumLatCells);
-//        for (auto &t : TempStateVariable)t.resize(NumLonCells);
-//
-//        TempStateVariable = GetStateVariableGrid(variableName, traitValue, functionalGroups, cellIndices, stateVariableType, initialisation);
-//
-//        for (int ii = 0; ii < cellIndices.size(); ii++) {
-//            TempStateVariable[cellIndices[ii][0]][ cellIndices[ii][1]] = log(TempStateVariable[cellIndices[ii][0]][ cellIndices[ii][1]] + 1);
-//        }
-//
-//        return TempStateVariable;
-//    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief  Return an array of log(values + 1) for a state variable for particular functional groups over specific cells. State variable (currently only biomass or abundance) must be >= 0 in all grid cells
-    @param variableName The name of the variable 
-    @param functionalGroups A vector of functional group indices to consider 
-    @param cellIndices List of indices of active cells in the model grid 
-    @param stateVariableType A string indicating the type of state variable; 'cohort' or 'stock' 
-    @return Array of log(state variable values +1 ) for each grid cell
-     */
-//    vector<vector< double> > GetStateVariableGridLogDensityPerSqKm(string variableName, string traitValue, vector<int> functionalGroups, vector<vector<unsigned>> cellIndices, string stateVariableType, MadingleyModelInitialisation initialisation) {
-//
-//        vector<vector< double> > TempStateVariable(NumLatCells);
-//        for (auto &t : TempStateVariable)t.resize(NumLonCells);
-//        double CellArea;
-//
-//        TempStateVariable = GetStateVariableGrid(variableName, traitValue, functionalGroups, cellIndices, stateVariableType, initialisation);
-//
-//        for (int ii = 0; ii < cellIndices.size(); ii++) {
-//            CellArea = GetCellEnvironment(cellIndices[ii][0], cellIndices[ii][1])["Cell Area"][0];
-//            TempStateVariable[cellIndices[ii][0]][ cellIndices[ii][1]] /= CellArea;
-//            TempStateVariable[cellIndices[ii][0]][ cellIndices[ii][1]] = log(TempStateVariable[cellIndices[ii][0]][ cellIndices[ii][1]] + 1);
-//        }
-//
-//        return TempStateVariable;
-//
-//    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief  Returns, for a given longitude, the appropriate longitude index in the grid
-    ASSUMES THAT LONGITUDES IN THE MODEL GRID OBJECT REFER TO LOWER LEFT CORNERS!!!
-    @param myLon Longitude, in degrees 
-    @return longitude index in the model grid
-     */
-    unsigned GetLonIndex(double myLon) {
-        assert((myLon >= MinLongitude && myLon < MaxLongitude) && "Error: latitude out of range");
-
-        return (unsigned) floor((myLon - MinLongitude) / LonCellSize);
-
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief  Return the longitude of a cell at a particular lon. index
-    @param cellLonIndex The longitudinal index (i.e. row) of the cell 
-    @return Returns the longitude of the bottom of the cell, in degrees
-     */
-    double GetCellLongitude(unsigned cellLonIndex) {
-        assert((cellLonIndex <= (NumLonCells - 1)) && "Error: Cell index out of range when trying to find the longitude for a particular cell");
-
-        double TempLongitude = std::numeric_limits<unsigned>::max();
-        ;
-
-        for (int ii = 0; ii < NumLatCells; ii++) {
-            if (InternalGrid.size() >= ii && InternalGrid[cellLonIndex].size() >= cellLonIndex)
-                TempLongitude = InternalGrid[ii][ cellLonIndex].Longitude;
-        }
-
-        assert(TempLongitude != std::numeric_limits<unsigned>::max() && "Error trying to find cell longitude - no grid cells have been initialised for this latitude index: ");
-
-        return TempLongitude;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Return the latitude of a cell at a particular lat. index
-    @param cellLatIndex The latitudinal index (i.e. row) of the cell 
-    @return Returns the latitude of the bottom of the cell, in degrees
-     */
-    double GetCellLatitude(unsigned cellLatIndex) {
-        assert((cellLatIndex <= (NumLatCells - 1)) && "Error: Cell index out of range when trying to find the latitude for a particular cell");
-
-        double TempLatitude = std::numeric_limits<unsigned>::max();
-
-        for (int jj = 0; jj < NumLonCells; jj++) {
-            if (InternalGrid.size() >= cellLatIndex && InternalGrid[cellLatIndex].size() >= jj) {
-                TempLatitude = InternalGrid[cellLatIndex][ jj].Latitude;
-                break;
-            }
-        }
-
-        assert((TempLatitude != std::numeric_limits<unsigned>::max()) && "Error trying to find cell latitude - no grid cells have been initialised for this latitude index: ");
-
-        return TempLatitude;
-
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief   Returns, for a given latitude, the appropriate latitude index in the grid
-    ASSUMES THAT LATITUDES IN THE MODEL GRID OBJECT REFER TO LOWER LEFT CORNERS!!!
-    @param myLat Latitude, in degrees 
-    @return latitude index in the model grid
-     */
-    unsigned GetLatIndex(double myLat) {
-
-        assert((myLat >= MinLatitude && myLat < MaxLatitude) && "Error: latitude out of range");
-
-        return (unsigned) floor((myLat - MinLatitude) / LatCellSize);
-
-    }
-    //----------------------------------------------------------------------------------------------
+     //----------------------------------------------------------------------------------------------
     /** \brief   A method to return the values for all environmental data layers for a particular grid cell
     @param cellLatIndex Latitude index of grid cell 
     @param cellLonIndex Longitude index of grid cell 
@@ -978,127 +268,12 @@ public:
     map<string, vector<double> >& GetCellEnvironment(unsigned cellLatIndex, unsigned cellLonIndex) {
         return InternalGrid[cellLatIndex][ cellLonIndex].CellEnvironment;
     }
-    //----------------------------------------------------------------------------------------------
-    /** \brief  Get a grid of values for an environmental data layer
-    @param enviroVariable  The name of the environmental data layer 
-    @param timeInterval The desired time interval within the environmental variable (i.e. 0 if it is a yearly variable
-    or the month index - 0=Jan, 1=Feb etc. - for monthly variables) 
-    @return The values in each grid cell
-     */
-    vector<vector< double> > GetEnviroGrid(string enviroVariable, unsigned timeInterval) {
-        // Check to see if environmental variable exists
-        for (int ii = 0; ii < NumLatCells; ii++) {
-            for (int jj = 0; jj < NumLonCells; jj++) {
-                if (InternalGrid.size() >= ii && InternalGrid[ii].size() >= jj)
-                    assert(InternalGrid[ii][ jj].CellEnvironment.count(enviroVariable) != 0 && "Environmental variable not found when running GetEnviroGrid");
-            }
-        }
-
-        vector<vector< double> > outputData(NumLatCells);
-        for (auto e : outputData)e.resize(NumLonCells);
-
-        for (int ii = 0; ii < NumLatCells; ii += GridCellRarefaction) {
-            for (int jj = 0; jj < NumLonCells; jj += GridCellRarefaction) {
-                outputData[ii][ jj] = InternalGrid[ii][ jj].CellEnvironment[enviroVariable][timeInterval];
-            }
-        }
-
-        return outputData;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief
-    Get a grid of values for an environmental data layer in specific cells
-    @param enviroVariable The name of the environmental data layer to return 
-    @param timeInterval The desired time interval for which to get data (i.e. 0 if it is a yearly variable
-    or the month index - 0=Jan, 1=Feb etc. - for monthly variables) 
-    @param cellIndices List of active cells in the model grid 
-    @return The values in each grid cell
-     */
-    vector<vector< double> > GetEnviroGrid(string enviroVariable, unsigned timeInterval, vector<vector<unsigned>> cellIndices) {
-        // Check to see if environmental variable exists
-        for (int ii = 0; ii < cellIndices.size(); ii++) {
-            if (InternalGrid.size() >= cellIndices[ii][0] && InternalGrid[cellIndices[ii][0]].size() >= cellIndices[ii][1])
-                assert(InternalGrid[cellIndices[ii][0]][ cellIndices[ii][1]].CellEnvironment.count(enviroVariable) != 0
-                    && "Environmental variable not found when running GetEnviroGrid");
-        }
-
-        // Create grid to hold the data to return
-        vector<vector< double> > outputData(NumLatCells);
-        for (auto e : outputData)e.resize(NumLonCells);
-
-        for (int ii = 0; ii < cellIndices.size(); ii++) {
-            outputData[cellIndices[ii][0]][ cellIndices[ii][1]] = InternalGrid[cellIndices[ii][0]][ cellIndices[ii][1]].CellEnvironment
-                    [enviroVariable][timeInterval];
-        }
-
-        return outputData;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief  Return the total over the whole grid for an environmental variable
-    @param enviroVariable The environmental variable 
-    @param timeInterval The desired time interval within the environmental variable (i.e. 0 if it is a yearly variable
-    or the month index - 0=Jan, 1=Feb etc. - for monthly variables) 
-    @return The total of the variable over the whole grid
-     */
-    double GetEnviroGridTotal(string enviroVariable, unsigned timeInterval) {
-        vector<vector< double> > enviroGrid = GetEnviroGrid(enviroVariable, timeInterval);
-        double enviroTotal = 0.0;
-
-        for (int ii = 0; ii < NumLatCells; ii += GridCellRarefaction) {
-            for (int jj = 0; jj < NumLonCells; jj += GridCellRarefaction) {
-                enviroTotal += enviroGrid[ii][ jj];
-            }
-        }
-
-        return enviroTotal;
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief  Return the sum of an environmental variable over specific cells
-    @param enviroVariable The environmental variable 
-    @param timeInterval The desired time interval within the environmental variable (i.e. 0 if it is a yearly variable
-    or the month index - 0=Jan, 1=Feb etc. - for monthly variables) 
-    @param cellIndices List of active cells in the model grid 
-    @return The total of the variable over the whole grid
-     */
-    double GetEnviroGridTotal(string enviroVariable, unsigned timeInterval, vector<vector<unsigned>> cellIndices) {
-        vector<vector< double> > enviroGrid = GetEnviroGrid(enviroVariable, timeInterval, cellIndices);
-        double enviroTotal = 0.0;
-
-        for (int ii = 0; ii < cellIndices.size(); ii++) {
-            enviroTotal += enviroGrid[cellIndices[ii][0]][ cellIndices[ii][1]];
-        }
-
-        return enviroTotal;
-    }
-    //----------------------------------------------------------------------------------------------
-/** \brief  Get the longitudinal and latitudinal indices of the cell of a viable cell to move to
-    @param  latCell The latitudinal index of the focal grid cell 
-    @param  lonCell The longitudinal index of the focal grid cell
+     //----------------------------------------------------------------------------------------------
+/** \brief  Get pointer to a viable cell to move to
+    @param  gcl Pointer to the focal grid cell
     @param  v latitudinal displacement
     @param  u longitudinal displacement
-    @return The longitudinal and latitudinal cell indices of the cell that lies to the northwest of the focal grid cell
-    @remark Currently assumes wrapping in longitude
-     */
-    const vector<unsigned> getNewCellIndices(const unsigned& latCell, const unsigned& lonCell, const int& v, const int& u) {
-        vector<unsigned> Cell = {9999999, 9999999};
-
-        if (latCell + v >= 0 && latCell + v < NumLatCells) {
-            int lnc = lonCell + u;
-            while (lnc < 0)lnc += NumLonCells;
-            while (lnc >= NumLonCells)lnc -= NumLonCells;
-                Cell[0] = latCell + v;
-                Cell[1] = lnc;
-                
-        }
-        return Cell;
-    }
-        //----------------------------------------------------------------------------------------------
-/** \brief  Get the longitudinal and latitudinal indices of the cell of a viable cell to move to
-    @param  latCell The latitudinal index of the focal grid cell 
-    @param  lonCell The longitudinal index of the focal grid cell
-    @param  v latitudinal displacement
-    @param  u longitudinal displacement
-    @return The longitudinal and latitudinal cell indices of the cell that lies to the northwest of the focal grid cell
+    @return Pointer to cell that lies at displacement u,v from the current cell
     @remark Currently assumes wrapping in longitude
      */
     GridCell* getNewCell(GridCell* gcl, const int& v, const int& u) {
@@ -1111,19 +286,6 @@ public:
                 Cell=&(InternalGrid[latCell + v][lnc]);
         }
         return Cell;
-    }
-    //----------------------------------------------------------------------------------------------
-    GridCell& getCellRef(const unsigned& latCell, const unsigned& lonCell,bool success) {
-        unsigned ltc=latCell,lnc=lonCell;
-        if (ltc >= 0 && ltc < NumLatCells) {
-            while (lnc < 0)lnc += NumLonCells;
-            while (lnc >= NumLonCells)lnc -= NumLonCells;
-            success=true;    
-        } else{
-            ltc=0;lnc=0;
-            success=false;
-        }
-        return InternalGrid[ltc][lnc];
     }
     //----------------------------------------------------------------------------------------------
     //Apply any function that operates on a grid cell to all cells in the grid

@@ -13,6 +13,7 @@
 #include <EcologyCohort.h>
 #include <Activity.h>
 #include <ThreadLocked.h>
+#include <fstream>
 /// @todo check private versus public variables
 /** \file MadingleyModel.h
  * \brief The main model header file
@@ -38,7 +39,9 @@ public:
     /** \brief An instance of StopWatch to time individual time steps */
     StopWatch TimeStepTimer;
     StopWatch EcologyTimer;
+    StopWatch DispersalTimer;
     StopWatch OutputTimer;
+    StopWatch MergeTimer;
     /** \brief An array of instances of the output class to deal with grid cell outputs */
     //vector<OutputCell> CellOutputs;
 
@@ -101,7 +104,8 @@ public:
         // Write out model run details to the console
         cout << "Running model" << endl;
         cout << "Number of time steps is: " << params.NumTimeSteps << endl;
-
+        ofstream urg("aaggh");
+        urg<<"step,dispersals,extinctions,productions,combinations,totalcohorts,incelltime,dispersaltime"<<endl;
         // Temporary variable
         bool varExists;
         Dispersals = 0;         
@@ -121,12 +125,12 @@ public:
             EcologyTimer.Stop();
             cout << "Within grid ecology took: " << EcologyTimer.GetElapsedTimeSecs() << endl;
 
-            EcologyTimer.Start();
+            DispersalTimer.Start();
 
             RunCrossGridCellEcology(Dispersals);
 
-            EcologyTimer.Stop();
-            cout << "Across grid ecology took: " << EcologyTimer.GetElapsedTimeSecs() << endl;               
+            DispersalTimer.Stop();
+            cout << "Across grid ecology took: " << DispersalTimer.GetElapsedTimeSecs() << endl;               
             // Stop the timer
             TimeStepTimer.Stop();
             //
@@ -147,7 +151,10 @@ public:
             OutputTimer.Stop();
             cout << "Cell/Grid Outputs took: " << OutputTimer.GetElapsedTimeSecs() << endl;
             // Write the results of dispersal to the console
-            cout << "Number of cohorts that dispersed this time step: " << Dispersals << endl;
+
+        cout<<"Total Cohorts remaining "<<GlobalDiagnosticVariables["NumberOfCohortsInModel"]<<endl ;
+        urg<<hh<<","<<Dispersals<<","<<GlobalDiagnosticVariables["NumberOfCohortsExtinct"]<<","<<GlobalDiagnosticVariables["NumberOfCohortsProduced"]<<","<<GlobalDiagnosticVariables["NumberOfCohortsCombined"]<<","<<GlobalDiagnosticVariables["NumberOfCohortsInModel"]<<","<<EcologyTimer.GetElapsedTimeSecs()<<","<<DispersalTimer.GetElapsedTimeSecs()<<endl;
+
         }
 
         //            // Write the final global outputs
@@ -161,10 +168,7 @@ public:
 
         EcosystemModelGrid.ask([&](GridCell& gcl) {
 
-            // Create a temporary internal copy of the grid cell stocks
-            GridCellStockHandler& WorkingGridCellStocks = EcosystemModelGrid.GetGridCellStocks(gcl.LatIndex(), gcl.LonIndex());
-
-            RunWithinCellStockEcology(gcl, WorkingGridCellStocks);
+            RunWithinCellStockEcology(gcl);
  
             RunWithinCellCohortEcology(gcl, singleThreadDiagnostics);
         });
@@ -175,38 +179,28 @@ public:
         GlobalDiagnosticVariables["NumberOfCohortsProduced"] = singleThreadDiagnostics.Productions;
         GlobalDiagnosticVariables["NumberOfCohortsInModel"] = GlobalDiagnosticVariables["NumberOfCohortsInModel"] + singleThreadDiagnostics.Productions - singleThreadDiagnostics.Extinctions;
         GlobalDiagnosticVariables["NumberOfCohortsCombined"] = singleThreadDiagnostics.Combinations;
+        cout << "Number of cohorts that dispersed this time step: " << Dispersals << endl;
         cout<<"Extinctions this step "<<singleThreadDiagnostics.Extinctions - singleThreadDiagnostics.Combinations<<endl ;
         cout<<"Productions "<<singleThreadDiagnostics.Productions<<endl ;
         cout<<"Combinations"<<singleThreadDiagnostics.Combinations<<endl ;
-        cout<<"Total Cohorts remaining "<<GlobalDiagnosticVariables["NumberOfCohortsInModel"]<<endl ;
-
     }
     //----------------------------------------------------------------------------------------------
     /** \brief   Run ecological processes for stocks in a specified grid cell
-    @param latCellIndex The latitudinal index of the cell to run stock ecology for
-    @param lonCellIndex The longitudinal index of the cell to run stock ecology for
-    @param workingGridCellStocks A (copy of?) the stocks in the current grid cell
-     * NB - acting on a copy here? needed of parallelity? Depends if you write to the grid cell pools...
+    @param gcl The current cell 
      */
-    void RunWithinCellStockEcology(GridCell& gcl, GridCellStockHandler& workingGridCellStocks) {
-        unsigned latCellIndex= gcl.LatIndex();
-        unsigned lonCellIndex= gcl.LonIndex();
+    void RunWithinCellStockEcology(GridCell& gcl) {
+
         // Create a local instance of the stock ecology class
         EcologyStock MadingleyEcologyStock;
-        //The location of the acting stock
-        vector<int> ActingStock(2);
         // Get the list of functional group indices for autotroph stocks
         vector<int> AutotrophStockFunctionalGroups = params.StockFunctionalGroupDefinitions.GetFunctionalGroupIndex("Heterotroph/Autotroph", "Autotroph", false);
         // Loop over autotroph functional groups
-        for (int FunctionalGroup : AutotrophStockFunctionalGroups) {
-            for (int ll = 0; ll < workingGridCellStocks[FunctionalGroup].size(); ll++) {
-                // Get the position of the acting stock
-                ActingStock[0] = FunctionalGroup;
-                ActingStock[1] = ll;
+        for (unsigned FunctionalGroup : AutotrophStockFunctionalGroups) {
+            for (auto& ActingStock: gcl.GridCellStocks[FunctionalGroup]) {
+
                 // Run stock ecology
-                MadingleyEcologyStock.RunWithinCellEcology(workingGridCellStocks, ActingStock, EcosystemModelGrid.GetCellEnvironment(
-                        latCellIndex, lonCellIndex), params.Units, params.InitialisationFileStrings["HumanNPPExtraction"], params.StockFunctionalGroupDefinitions,
-                        CurrentTimeStep, params.GlobalModelTimeStepUnit,CurrentMonth);
+                MadingleyEcologyStock.RunWithinCellEcology(gcl,ActingStock,
+                        CurrentTimeStep, CurrentMonth,params);
                 //workingGridCellStocks[ActingStock].TotalBiomass *= 0.75;//MB strange line - commented out in original?
             }
         }
@@ -256,18 +250,25 @@ public:
             // Check that the mass of individuals in this cohort is still >= 0 after running ecology
             if (gcl.GridCellCohorts[c.FunctionalGroupIndex].size() > 0)assert(c.IndividualBodyMass >= 0.0 && "Biomass < 0 for this cohort");
         });
-        for (auto& c: Cohort::newCohorts)EcosystemModelGrid.AddNewCohortToGridCell(c);
+        
+
+        for (auto& c: Cohort::newCohorts){
+            EcosystemModelGrid.AddNewCohortToGridCell(c);
+            if (c.destination != &gcl)cout<<"whut? wrong cell?"<<endl;
+        }
         partial.Productions+=Cohort::newCohorts.size();
         Cohort::newCohorts.clear();
 
         RunExtinction(gcl, partial);
 
         // Merge cohorts, if necessary
-        if (gcl.GridCellCohorts.GetNumberOfCohorts() > params.MaxNumberOfCohorts) {
+        if (gcl.GetNumberOfCohorts() > params.MaxNumberOfCohorts) {
             partial.Combinations += CohortMerger.MergeToReachThresholdFast(gcl, params);
+         
 
             //Run extinction a second time to remove those cohorts that have been set to zero abundance when merging
             RunExtinction(gcl, partial);
+
         }
     }
 
@@ -284,8 +285,6 @@ public:
                 partial.Extinctions += 1;}
             });
 
-            //cohort order needs to be reversed to get removals right
-            reverse(CohortsToRemove.begin(),CohortsToRemove.end());
             // Code to add the biomass to the biomass pool and dispose of the cohort
             for (auto& c :CohortsToRemove) {
                 // Add biomass of the extinct cohort to the organic matter pool
@@ -304,15 +303,16 @@ public:
     /** \brief Run ecological processes that operate across grid cells */
     void RunCrossGridCellEcology(unsigned& dispersals) {
         // Loop through each grid cell, and run dispersal for each.
+
         
         EcosystemModelGrid.ask([&](GridCell& c) {
 
             disperser.RunCrossGridCellEcologicalProcess(c, EcosystemModelGrid,  params,  CurrentMonth);
 
         });
+        
         // Apply the changes from dispersal
         disperser.UpdateCrossGridCellEcology(EcosystemModelGrid, dispersals);
-
     }
     //----------------------------------------------------------------------------------------------
     /** \brief   Sets up the list of global diagnostic variables

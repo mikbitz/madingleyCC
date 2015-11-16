@@ -56,12 +56,8 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Run metabolism for the acting cohort
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param cellEnvironment The environment in the current grid cell 
-    @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
-    @param madingleyStockDefinitions The definitions for the stock functional groups in the model 
     @param currentTimestep The current model time step 
     @param currentMonth The current model month */
     void RunMetabolism( 

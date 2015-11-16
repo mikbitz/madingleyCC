@@ -34,7 +34,6 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Calculate the proportion of individuals in a cohort that die from starvation mortality each time step
-    @param gridCellCohorts The cohorts  in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param bodyMassIncludingChangeThisTimeStep Body mass including change from other ecological functions this time step; should not exceed adult mass 
     @param currentTimestep The current model time step 
@@ -52,7 +51,6 @@ public:
     Calculates the rate of starvation mortality given current body mass and the maximum body mass ever achieved. Note that metabolic costs are already included in the deltas passed in
     the body mass including change this time step, so no change in body mass should mean no starvation (as metabolic costs have already been met)
 
-    @param gridCellCohorts The cohorts in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param bodyMassIncludingChangeThisTimeStep Body mass including change from other ecological functions this time step; should not exceed adult mass 
     @return The starvation mortality rate in mortality formulation time step units*/

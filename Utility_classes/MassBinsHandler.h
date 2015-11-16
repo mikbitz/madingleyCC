@@ -22,9 +22,8 @@ public:
     //----------------------------------------------------------------------------------------------
     /** \brief Sets up mass bins based on an input file
     @param massBinsFile The filename containing the mass bin information 
-    @param outputPath The path to the output folder to copy the mass bins definition file to
      */
-    void SetUpMassBins(string massBinsFile, string outputPath) {
+    void SetUpMassBins(string massBinsFile) {
 
         ifstream massFile(massBinsFile.c_str());
         string title;

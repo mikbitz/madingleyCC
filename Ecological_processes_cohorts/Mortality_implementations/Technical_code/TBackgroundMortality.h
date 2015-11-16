@@ -30,7 +30,6 @@ public:
     }    
     //----------------------------------------------------------------------------------------------
     /** \brief Calculate the rate of individuals in a cohort that die from background mortality in a model time step
-    @param gridCellCohorts The cohorts in the current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
     @param currentTimestep The current model time step 
     @return The rate of individuals in the cohort that die from background mortality

@@ -243,7 +243,7 @@ public:
                 if (param == "environmental data file") InitialisationFileStrings["Environmental"] = data[1];
 
                 //read in mass bins : use data[1] so that filename isn't lower-cased
-                if (param == "mass bin filename") ModelMassBins.SetUpMassBins(data[1], outputPath);
+                if (param == "mass bin filename") ModelMassBins.SetUpMassBins(data[1]);
 
                 if (param == "cohort functional group definitions file") {
                     cout << "Reading functional group definitions..." << endl;
@@ -458,11 +458,11 @@ Types::FileReaderPointer mFileReader;
 
         //Variable for altering the juvenile to adult mass ratio for marine cells when handling certain functional groups eg baleen whales
         double Scaling = 0.0;
-
+        gcl.setCohortSize(CohortFunctionalGroupDefinitions.AllFunctionalGroupsIndex.size());
         for (int FunctionalGroup : CohortFunctionalGroupDefinitions.AllFunctionalGroupsIndex) {
              int N= CohortFunctionalGroupDefinitions.GetBiologicalPropertyOneFunctionalGroup("Initial number of GridCellCohorts", FunctionalGroup);
-            if ((CohortFunctionalGroupDefinitions.GetTraitNames("Realm", FunctionalGroup) == "terrestrial" && gcl.CellEnvironment["Realm"][0] == 1.0) ||
-                (CohortFunctionalGroupDefinitions.GetTraitNames("Realm", FunctionalGroup) == "marine" && gcl.CellEnvironment["Realm"][0] == 2.0)) {
+            if ((CohortFunctionalGroupDefinitions.GetTraitNames("Realm", FunctionalGroup) == "terrestrial" && !gcl.isMarine()) ||
+                (CohortFunctionalGroupDefinitions.GetTraitNames("Realm", FunctionalGroup) == "marine" && gcl.isMarine())) {
 
                 NumCohortsThisCell += N;
             }

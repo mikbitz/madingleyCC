@@ -69,17 +69,12 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Run ecological processes that operate on cohorts within a single grid cell
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
+    @param gcl The current grid cell 
     @param actingCohort The acting cohort 
-    @param cellEnvironment The environment in the current grid cell 
-    @param madingleyCohortDefinitions The definitions for cohort functional groups in the model 
-    @param madingleyStockDefinitions The definitions for stock functional groups in the model 
     @param currentTimestep The current model time step 
-    @param trackProcesses An instance of the process tracker 
     @param partial Thread-locked local variables 
-    @param outputDetail The level of output detail being used for this model run 
-    @param currentMonth The current model month */
+    @param currentMonth The current model month
+    @param params Things that may be needed */
     void RunWithinCellEcology(GridCell& gcl, Cohort& actingCohort, unsigned currentTimestep, 
             ThreadLockedParallelVariables& partial,  unsigned currentMonth, MadingleyModelInitialisation& params) {
 

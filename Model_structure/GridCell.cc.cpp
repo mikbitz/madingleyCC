@@ -1,9 +1,9 @@
 #ifndef GRIDCELL_H
 #define GRIDCELL_H
+#include <GridCellStockHandler.h>
 #include <GridCellCohortHandler.h>
 #include <ClimateVariablesCalculator.h>
 #include <RevisedTerrestrialPlantModel.h>
-#include <UtilityFunctions.h>
 /** \file GridCell.h
  * \brief the GridCell header file
  */
@@ -14,11 +14,13 @@ public:
     //Variables
     //----------------------------------------------------------------------------------------------
     /** \brief The handler for the cohorts in this grid cell */
-    vector< vector< Cohort> > GridCellCohorts;
+    GridCellCohortHandler GridCellCohorts;
     /** \brief The handler for the stocks in this grid cell */
-    map<unsigned, vector<Stock> > GridCellStocks;
+    GridCellStockHandler GridCellStocks;
     /** \brief The environmental data for this grid cell */
     map<string, vector<double> > CellEnvironment;
+    /** \brief Deltas to track changes in biomasses and abundances of cohorts, stocks and environmental biomass pools during ecological processes */
+    map<string, map<string, double>> Deltas;
      /** \brief The latitude of this grid cell */
     float Latitude;
     /** \brief The longitude of this grid cell */
@@ -57,7 +59,7 @@ public:
         //Add the latitude and longitude indices
         CellEnvironment["LatIndex"].push_back(latIndex);
         CellEnvironment["LonIndex"].push_back(lonIndex);
-    }
+    }    
     //----------------------------------------------------------------------------------------------
     /** \brief Constructor for a grid cell; creates cell and reads in environmental data
     @param latitude The latitude of the grid cell 
@@ -77,11 +79,54 @@ public:
     void SetCellValue(float latitude, unsigned latIndex, float longitude, unsigned lonIndex, float latCellSize, float lonCellSize,
              double missingValue) {
 
+
         // bool to track when environmental data are missing
         bool EnviroMissingValue;
 
         // Temporary vector for holding initial values of grid cell properties
         vector<double> tempVector;
+
+        // Initialize delta abundance sorted list with appropriate processes
+        map<string, double> DeltaAbundance;
+        DeltaAbundance["mortality"] = 0.0;
+
+        // Add delta abundance sorted list to deltas sorted list
+        Deltas["abundance"] = DeltaAbundance;
+
+        // Initialize delta biomass sorted list with appropriate processes
+        map<string, double> DeltaBiomass;
+        DeltaBiomass["metabolism"] = 0.0;
+        DeltaBiomass["predation"] = 0.0;
+        DeltaBiomass["herbivory"] = 0.0;
+        DeltaBiomass["reproduction"] = 0.0;
+
+        // Add delta biomass sorted list to deltas sorted list
+        Deltas["biomass"] = DeltaBiomass;
+
+        // Initialize delta reproductive biomass vector with appropriate processes
+        map<string, double> DeltaReproductiveBiomass;
+        DeltaReproductiveBiomass["reproduction"] = 0.0;
+
+        // Add delta reproduction sorted list to deltas sorted list
+        Deltas["reproductivebiomass"] = DeltaReproductiveBiomass;
+
+        // Initialize organic pool delta vector with appropriate processes
+        map<string, double> DeltaOrganicPool;
+        DeltaOrganicPool["herbivory"] = 0.0;
+        DeltaOrganicPool["predation"] = 0.0;
+        DeltaOrganicPool["mortality"] = 0.0;
+
+        // Add delta organic pool sorted list to deltas sorted list
+        Deltas["organicpool"] = DeltaOrganicPool;
+
+        // Initialize respiratory CO2 pool delta vector with appropriate processes
+        map<string, double> DeltaRespiratoryCO2Pool;
+        DeltaRespiratoryCO2Pool["metabolism"] = 0.0;
+
+        // Add delta respiratory CO2 pool to deltas sorted list
+        Deltas["respiratoryCO2pool"] = DeltaRespiratoryCO2Pool;
+
+
 
         // Add the missing value of data in the grid cell to the cell environment
 
@@ -216,7 +261,7 @@ public:
     vector<double> ConvertMissingValuesToZero(vector<double> data, double missingValue) {
     vector<double> TempArray = data;
 
-        for (unsigned ii = 0; ii < TempArray.size(); ii++) {
+        for (int ii = 0; ii < TempArray.size(); ii++) {
             TempArray[ii] = (TempArray[ii] != missingValue) ? TempArray[ii] : 0.0;
         }
 
@@ -229,7 +274,7 @@ public:
     @return True if non missing values are found, false if not*/
     bool ContainsData(vector<double> data, double missingValue) {
         bool ContainsData = false;
-        for (unsigned ii = 0; ii < data.size(); ii++) {
+        for (int ii = 0; ii < data.size(); ii++) {
             if (data[ii] != missingValue) ContainsData = true;
         }
         return ContainsData;
@@ -241,7 +286,7 @@ public:
     @return True if non missing values are found, false if not*/
     bool ContainsMissingValue(vector<double> data, double missingValue) {
         bool ContainsMV = false;
-        for (unsigned ii = 0; ii < data.size(); ii++) {
+        for (int ii = 0; ii < data.size(); ii++) {
             if (data[ii] == missingValue) ContainsMV = true;
         }
         return ContainsMV;
@@ -341,12 +386,33 @@ public:
         }
     }
     //----------------------------------------------------------------------------------------------
+    /** \brief Sets the value in this grid cell of a delta of specified type and for a specified ecological process
+    @param deltaType The type of delta to set the value for: 'biomass', 'abundance', 'reproductivebiomass', 'organicpool' or 'respiratoryCO2pool 
+    @param ecologicalProcess The ecological process to set the value for 
+    @param setValue Value to set 
+    @return Whether the delta type and ecological process were found within the cell deltas*/
+    bool SetDelta(string deltaType, string ecologicalProcess, double setValue) {
+        // If the specified ecological and process exist in the cell deltas, then set the value and return true; otherwise, return false
+        if (Deltas.count(deltaType) != 0) {
+            if (Deltas[deltaType].count(ecologicalProcess) != 0) {
+                Deltas[deltaType][ecologicalProcess] = setValue;
+                return true;
+            } else {
+                cout << "Attempt to set delta failed: ecological process " << ecologicalProcess << " does not exist in the list" << endl;
+                return false;
+            }
+        } else {
+            cout << "Attempt to set delta failed: delta type " << deltaType << " does not exist in the list" << endl;
+            return false;
+        }
+    }
+    //----------------------------------------------------------------------------------------------
     //Apply any function to all cohorts in the cell
     template <typename F>
     void ask(F f) {
     // Loop through functional groups, and perform dispersal according to cohort type and status
         for (int  FG=0; FG < GridCellCohorts.size(); FG++) {
-            // Work through the list of cohorts 
+            // Work through the list of cohorts - be sure to work backward to get order of deletion right later
             for (Cohort& c : GridCellCohorts[FG]) {
                 f(c);
             }
@@ -359,30 +425,6 @@ public:
     //----------------------------------------------------------------------------------------------
     bool isMarine(){
         return (CellEnvironment["Realm"][0]==2.0);
-    }
-    //----------------------------------------------------------------------------------------------
-    unsigned LatIndex(){
-        return CellEnvironment["LatIndex"][0];
-    }
-    //----------------------------------------------------------------------------------------------
-    unsigned LonIndex(){
-        return CellEnvironment["LonIndex"][0];
-    }
-    //----------------------------------------------------------------------------------------------
-    double CellArea(){
-        return CellEnvironment["Cell Area"][0];
-    }
-    void setCohortSize(unsigned n){
-        GridCellCohorts.resize(n);
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Gets the number of cohorts in this grid cell */
-    int GetNumberOfCohorts() {
-        int sum = 0;
-        for (unsigned ii = 0; ii < GridCellCohorts.size(); ii++) {
-            sum += GridCellCohorts[ii].size();
-        }
-        return sum;
     }
 };
 #endif
