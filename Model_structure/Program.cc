@@ -2,11 +2,11 @@
 #include <math.h>
 #include <fenv.h>
 #include <cstdlib>
-
+#include <omp.h>
 
 //Magindgley model entry point.
 //Changes from original PLOS Biology version:-
-//MB 6/8/2015 - 4/10/2015 - converted C# to C++
+//MB 6/8/2015 - 15/11/2015 - converted C# to C++
 
 /** \file Program.cc \brief This is the main entry point for the madingley code */
 /**

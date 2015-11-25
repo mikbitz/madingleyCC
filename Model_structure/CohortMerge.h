@@ -58,7 +58,8 @@ public:
         Cohort *a,*b;
         double dist;
         Pear();
-        Pear(Cohort* _a,Cohort* _b):a(_a),b(_b){
+        Pear(Cohort* _a,Cohort* _b, double r){
+            if (r>0.5){a=_a;b=_b;} else {a=_b;b=_a;}
             dist=CohortMerge::CalculateDistance(*a,*b);
         }
     };
@@ -84,6 +85,7 @@ public:
         multiset< Pear, pearComparator > SortedDistances;
         // How many cohorts to remove to hit the threshold
         unsigned MergeCounter = 0;
+        std::uniform_real_distribution<double> randomNumber(0.0, 1.0);
 
         int NumberToRemove = gcl.GetNumberOfCohorts() - params.MaxNumberOfCohorts;
         if (NumberToRemove > 0) {
@@ -95,7 +97,7 @@ public:
                     for (int cc = 0; cc < gcl.GridCellCohorts[ff].size() - 1; cc++) {
                         // Loop through comparison cohorts
                         for (int dd = cc + 1; dd < gcl.GridCellCohorts[ff].size(); dd++) {
-                            Pear PairwiseDistance(&gcl.GridCellCohorts[ff][cc], &gcl.GridCellCohorts[ff][dd]);
+                            Pear PairwiseDistance(&gcl.GridCellCohorts[ff][cc], &gcl.GridCellCohorts[ff][dd],randomNumber(RandomNumberGenerator));
                             SortedDistances.insert(PairwiseDistance);
                         }
                     }
@@ -106,16 +108,12 @@ public:
            // cout<<endl;
             auto I = SortedDistances.begin();
             while (MergeCounter < NumberToRemove && I != SortedDistances.end()) {
-                std::uniform_real_distribution<double> randomNumber(0.0, 1.0);
-                double Rnd = randomNumber(RandomNumberGenerator);
                 Cohort& CohortToMergeFrom = *(I->a);
                 Cohort& CohortToMergeTo = *(I->b);
-                if (Rnd > 0.5) {
-                    CohortToMergeFrom = *(I->b);
-                    CohortToMergeTo = *(I->a);
-                }
+
                 if (CohortToMergeFrom.CohortAbundance > 0 && CohortToMergeTo.CohortAbundance > 0) {
                     // Add the abundance of the second cohort to that of the first
+
                     CohortToMergeTo.CohortAbundance += CohortToMergeFrom.CohortAbundance * CohortToMergeFrom.IndividualBodyMass / CohortToMergeTo.IndividualBodyMass;
                     // Add the reproductive potential mass of the second cohort to that of the first
                     CohortToMergeTo.IndividualReproductivePotentialMass += CohortToMergeFrom.IndividualReproductivePotentialMass * CohortToMergeFrom.CohortAbundance / CohortToMergeTo.CohortAbundance;

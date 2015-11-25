@@ -221,7 +221,7 @@ public:
 
                 // Run ecology
                 MadingleyEcologyCohort.RunWithinCellEcology(gcl,c,CurrentTimeStep, partial,  CurrentMonth, params);
-
+                if(Cohort::Deltas["organicpool"]["mortality"]<0) cout<<c.ID<<" "<<Cohort::Deltas["organicpool"]["mortality"]<<endl;
                 // Update the properties of the acting cohort
                 MadingleyEcologyCohort.UpdateEcology(gcl, c, CurrentTimeStep);
                 Cohort::zeroDeltas();
@@ -314,7 +314,7 @@ public:
      */
     void SetUpOutputs() {
         outputFile.open("aaggh");
-        outputFile<<"step dispersals extinctions productions combinations totalcohorts totalstocks totalAbundance organicPool respiratoryPool totalStockBiomass totalCohortBiomass totalBioMass incelltime dispersaltime"<<endl; 
+        outputFile<<"step dispersals extinctions productions combinations totalcohorts totalstocks totalAbundance organicPool respiratoryPool totalStockBiomass totalCohortBiomass totalLivingBiomass totalBiomass incelltime dispersaltime"<<endl; 
     }
     //----------------------------------------------------------------------------------------------
       void Output(unsigned step ){
@@ -327,14 +327,17 @@ public:
             respiratoryPool+=gcl.CellEnvironment["Respiratory CO2 Pool"][0]/1000.;
             gcl.ask([&](Cohort& c){
                 totalAbundance+=c.CohortAbundance;
-                totalCohortBiomass+=(c.IndividualBodyMass + c.IndividualReproductivePotentialMass) * c.CohortAbundance/1000.;
+
+                double CohortBiomass=(c.IndividualBodyMass + c.IndividualReproductivePotentialMass) * c.CohortAbundance/1000.;
+                totalCohortBiomass+=CohortBiomass;
             });
             gcl.askStocks([&](Stock& s){
                 totalStockBiomass+=s.TotalBiomass/1000.;//convert from g to kg
             });
         });
+        double totalLivingBiomass=totalCohortBiomass+totalStockBiomass;
         double totalBiomass=totalCohortBiomass+totalStockBiomass+respiratoryPool+organicPool;
-        outputFile<<step<<" "<<Dispersals<<" "<<GlobalDiagnosticVariables["NumberOfCohortsExtinct"]<<" "<<GlobalDiagnosticVariables["NumberOfCohortsProduced"]<<" "<<GlobalDiagnosticVariables["NumberOfCohortsCombined"]<<" "<<GlobalDiagnosticVariables["NumberOfCohortsInModel"]<<" "<<GlobalDiagnosticVariables["NumberOfStocksInModel"]<<" "<<totalAbundance<<" "<<organicPool<<" "<<respiratoryPool<<" "<<totalStockBiomass<<" "<<totalCohortBiomass<<" "<<totalBiomass<<" "<<EcologyTimer.GetElapsedTimeSecs()<<" "<<DispersalTimer.GetElapsedTimeSecs()<<endl;
+        outputFile<<step<<" "<<Dispersals<<" "<<GlobalDiagnosticVariables["NumberOfCohortsExtinct"]<<" "<<GlobalDiagnosticVariables["NumberOfCohortsProduced"]<<" "<<GlobalDiagnosticVariables["NumberOfCohortsCombined"]<<" "<<GlobalDiagnosticVariables["NumberOfCohortsInModel"]<<" "<<GlobalDiagnosticVariables["NumberOfStocksInModel"]<<" "<<totalAbundance<<" "<<organicPool<<" "<<respiratoryPool<<" "<<totalStockBiomass<<" "<<totalCohortBiomass<<" "<<totalLivingBiomass<<" "<<totalBiomass<<" "<<EcologyTimer.GetElapsedTimeSecs()<<" "<<DispersalTimer.GetElapsedTimeSecs()<<endl;
 
       }  
 
