@@ -3,7 +3,6 @@
 #include <string>
 #include <GridCell.h>
 #include <IDispersalImplementation.h>
-#include <GridCellCohortHandler.h>
 #include <limits>
 #include <TAdvectiveDispersal.h>
 #include <TResponsiveDispersal.h>
@@ -18,7 +17,7 @@ class Dispersal  {
     //----------------------------------------------------------------------------------------------
     //Variables
     //----------------------------------------------------------------------------------------------
-    vector<Cohort>disperseMonkeys;
+    vector<Cohort>dispersers;
     /** \brief The available implementations of the dispersal process */
     AdvectiveDispersal* AdvectiveDispersalImplementation;
     DiffusiveDispersal* DiffusiveDispersalImplementation;
@@ -70,14 +69,14 @@ class Dispersal  {
                 if (gcl.isMarine() &&
                         ((params.CohortFunctionalGroupDefinitions.GetTraitNames("Mobility", c.FunctionalGroupIndex) == "planktonic") || (c.IndividualBodyMass <= PlanktonThreshold))) {
                    // Run advective dispersal
-                    AdvectiveDispersalImplementation->RunDispersal(disperseMonkeys, gridForDispersal, c, currentMonth);
+                    AdvectiveDispersalImplementation->RunDispersal(dispersers, gridForDispersal, c, currentMonth);
                 }   // Otherwise, if mature do responsive dispersal
                 else if (c.isMature()) {
                     //Run responsive dispersal
-                    ResponsiveDispersalImplementation->RunDispersal(disperseMonkeys, gridForDispersal, c, currentMonth);
+                    ResponsiveDispersalImplementation->RunDispersal(dispersers, gridForDispersal, c, currentMonth);
                 }    // If the cohort is immature, run diffusive dispersal
                 else {
-                    DiffusiveDispersalImplementation->RunDispersal(disperseMonkeys, gridForDispersal, c,  currentMonth);
+                    DiffusiveDispersalImplementation->RunDispersal(dispersers, gridForDispersal, c,  currentMonth);
                 }
             
         });
@@ -86,17 +85,13 @@ class Dispersal  {
     }
     //----------------------------------------------------------------------------------------------
     void UpdateCrossGridCellEcology(ModelGrid& gridForDispersal, unsigned& dispersalCounter){
-        dispersalCounter = disperseMonkeys.size();
-        //do removals first as this currently depends closely on the order of cohorts in the grid
-        //dispersals have been created in increasing order of index, so first reverse
-        //reverse(disperseMonkeys.begin(),disperseMonkeys.end());
-        for (auto& c: disperseMonkeys){
-            gridForDispersal.Move(c);
+        dispersalCounter = dispersers.size();
 
+        for (auto& c: dispersers){
+            gridForDispersal.Move(c);
         }
-        for (auto& c: disperseMonkeys){ 
-        }
-        disperseMonkeys.clear();
+
+        dispersers.clear();
     }
 };
 

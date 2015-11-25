@@ -57,7 +57,7 @@ public:
     @param actingCohortFunctionalGroup The functional group index of the acting cohort 
     @param actingCohortNumber The position of the cohort within the functional group in the array of grid cell cohorts 
     @param currentMonth The current model month */
-    bool RunDispersal(vector<Cohort>& disperseMonkeys, ModelGrid& gridForDispersal, Cohort& cohortToDisperse,unsigned currentMonth) {
+    bool RunDispersal(vector<Cohort>& dispersers, ModelGrid& gridForDispersal, Cohort& cohortToDisperse,unsigned currentMonth) {
         // Calculate dispersal speed for the cohort         
         double DispersalSpeed = CalculateDispersalSpeed(cohortToDisperse.IndividualBodyMass);
 
@@ -67,7 +67,7 @@ public:
         CalculateDispersalProbability(gridForDispersal, cohortToDisperse, DispersalSpeed);
         if (cohortToDisperse.origin!=cohortToDisperse.destination){
             // Update the delta array of cohorts
-            disperseMonkeys.push_back(cohortToDisperse);
+            dispersers.push_back(cohortToDisperse);
 
             }
         return false;
@@ -82,18 +82,10 @@ public:
     //----------------------------------------------------------------------------------------------
     /** \brief Calculates the probability of diffusive dispersal given average individual dispersal speed
     @param madingleyGrid The model grid 
-    @param latIndex The latitude index of the grid cell to check for dispersal 
-    @param lonIndex The longitude index of the grid cell to check for dispersal 
+    @param C a cohort
     @param dispersalSpeed The average speed at which individuals in this cohort move around their environment, in km per month 
-    @return A six element array. 
-    The first element is the probability of dispersal.
-    The second element is the probability of dispersing in the u (longitudinal) direction
-    The third element is the probability of dispersing in the v (latitudinal) direction
-    The fourth element is the probability of dispersing in the diagonal direction
-    The fifth element is the u velocity modified by the random diffusion component
-    The sixth element is the v velocity modified by the random diffusion component
-    Note that the second, third, and fourth elements are always positive; thus, they do not indicate 'direction' in terms of dispersal.*/
-    GridCell* CalculateDispersalProbability(ModelGrid& madingleyGrid,Cohort& c, double dispersalSpeed) {
+    */
+    void CalculateDispersalProbability(ModelGrid& madingleyGrid,Cohort& c, double dispersalSpeed) {
         // Check that the u speed and v speed are not greater than the cell length. If they are, then rescale them; this limits the max velocity
         // so that cohorts cannot be advected more than one grid cell per time step
         double LatCellLength = madingleyGrid.CellHeightsKm[c.origin->LatIndex()];
@@ -108,7 +100,7 @@ public:
         double uSpeed = dispersalSpeed * cos(RandomDirection);
         double vSpeed = dispersalSpeed * sin(RandomDirection);
         GridCell* destination=newCell(madingleyGrid,uSpeed,vSpeed,LatCellLength,LonCellLength,c.origin);
-        if (destination!=0 && destination->Realm()==c.origin->Realm())c.destination=destination;
+        c.TryLivingAt(destination);
     }
     //----------------------------------------------------------------------------------------------
 };

@@ -1,6 +1,5 @@
 #ifndef IEATINGIMPLEMENTATION_H
 #define IEATINGIMPLEMENTATION_H
-#include <GridCellCohortHandler.h>
 #include <FunctionalGroupDefinitions.h>
 #include <ProcessTracker.h>
 #include <MadingleyModelInitialisation.h>
@@ -71,5 +70,10 @@ public:
 
     }
     //----------------------------------------------------------------------------------------------
+    IEatingImplementation(){;}
+    //----------------------------------------------------------------------------------------------
+    IEatingImplementation(double cellArea, string globalModelTimeStepUnit){cout<<"Virtual IEatingImplementation constructor called:This is probably a mistake"<<endl;}
+    //----------------------------------------------------------------------------------------------
+    virtual ~IEatingImplementation(){;}
 };
 #endif

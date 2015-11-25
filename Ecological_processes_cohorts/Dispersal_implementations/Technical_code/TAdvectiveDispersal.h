@@ -68,7 +68,7 @@ public:
     @param actingCohortNumber The position of the acting cohort within the functional group in the array of grid cell cohorts 
     @param currentMonth The current model month 
      */
-    bool RunDispersal(vector<Cohort>& disperseMonkeys,  ModelGrid& gridForDispersal, Cohort& cohortToDisperse , const unsigned& currentMonth) {
+    bool RunDispersal(vector<Cohort>& dispersers,  ModelGrid& gridForDispersal, Cohort& cohortToDisperse , const unsigned& currentMonth) {
 
         // Loop through a number of times proportional to the rescaled dispersal
         for (int mm = 0; mm < AdvectionTimeStepsPerModelTimeStep; mm++) {
@@ -78,7 +78,7 @@ public:
 
         // Update the dispersal for this cohort, if necessary
         if (cohortToDisperse.origin != cohortToDisperse.destination) {
-            disperseMonkeys.push_back(cohortToDisperse);
+            dispersers.push_back(cohortToDisperse);
             return true;
         }
         return false;
@@ -95,18 +95,9 @@ public:
     //----------------------------------------------------------------------------------------------
     /** \brief    Calculates the probability of advective dispersal given the grid cell
     @param madingleyGrid The model grid 
-    @param latIndex The latitude index of the grid cell to check for dispersal 
-    @param lonIndex The longitude index of the grid cell to check for dispersal 
-    @param currentMonth The current model month 
-    @return A six element array. 
-    The first element is the probability of dispersal.
-    The second element is the probability of dispersing in the u (longitudinal) direction
-    The third element is the probability of dispersing in the v (latitudinal) direction
-    The fourth element is the probability of dispersing in the diagonal direction
-    The fifth element is the distance travelled in the u direction (u velocity modified by the random diffusion component)
-    The sixth element is the distance travelled in the v direction (v velocity modified by the random diffusion component)
-    Note that the second, third, and fourth elements are always positive; thus, they do not indicate 'direction' in terms of dispersal.*/
-    GridCell* CalculateDispersalProbability(ModelGrid& madingleyGrid, Cohort& c,const unsigned& currentMonth) {
+    @param c a cohort
+    @return a grid cell*/
+    void CalculateDispersalProbability(ModelGrid& madingleyGrid, Cohort& c,const unsigned& currentMonth) {
         // Advective speed in u (longitudinal) direction
         double uAdvectiveSpeed;
 
@@ -156,7 +147,7 @@ public:
         assert(abs(uDistanceTravelled) <= LonCellLength && "u velocity greater than cell width");
         assert(abs(vDistanceTravelled) <= LatCellLength && "v velocity greater than cell width");
         GridCell* destination= newCell(madingleyGrid,uDistanceTravelled,vDistanceTravelled,LatCellLength,LonCellLength,c.origin);
-        if (destination!=0 && destination->Realm()==c.origin->Realm())c.destination=destination;
+        c.TryLivingAt(destination);
     }
     //----------------------------------------------------------------------------------------------
     /** \brief    Get a randomly directed diffusion vector. This is derived from the LTRANS model formulation, which itself is derived from Visser 1997 (MEPS)

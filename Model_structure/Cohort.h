@@ -78,6 +78,8 @@ public:
     Cohort(Cohort& , double , double , double , double , unsigned , long long& ) ;
     //----------------------------------------------------------------------------------------------
     bool isMature();
+    double Realm();
+    void TryLivingAt(GridCell* );
     static void zeroDeltas();
 };
 

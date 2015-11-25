@@ -1,6 +1,5 @@
 #ifndef IMORTALITYIMPLEMENTATION_H
 #define IMORTALITYIMPLEMENTATION_H
-#include <GridCellCohortHandler.h>
 /** \file IMortalityImplementation.h
  * \brief the IMortalityImplementation header file
  */

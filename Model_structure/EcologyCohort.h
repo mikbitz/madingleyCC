@@ -40,11 +40,10 @@ public:
     //----------------------------------------------------------------------------------------------
     /** \brief Initalise the ecological processes */
     EcologyCohort(GridCell& gcl, MadingleyModelInitialisation& params) {
-        double cellArea= gcl.CellEnvironment["Cell Area"][0];
         string globalModelTimeStepUnit= params.GlobalModelTimeStepUnit;
         bool drawRandomly= params.DrawRandomly;
         // Declare and attach eating formulations
-        Eating *EatingFormulation = new Eating(cellArea, globalModelTimeStepUnit);
+        Eating *EatingFormulation = new Eating(gcl.CellEnvironment["Cell Area"][0], globalModelTimeStepUnit);
         EatingFormulations["Basic eating"] = EatingFormulation;
         // Declare and attach metabolism formulations
         Metabolism *MetabolismFormulation = new Metabolism(globalModelTimeStepUnit);

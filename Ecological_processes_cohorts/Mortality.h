@@ -93,8 +93,9 @@ public:
             // Add the delta biomass to net biomass
             BodyMassIncludingChangeThisTimeStep += Biomass.second;
         }
-        BodyMassIncludingChangeThisTimeStep = min(actingCohort.AdultMass, BodyMassIncludingChangeThisTimeStep + actingCohort.IndividualBodyMass);
 
+        BodyMassIncludingChangeThisTimeStep = min(actingCohort.AdultMass, BodyMassIncludingChangeThisTimeStep + actingCohort.IndividualBodyMass);
+        //if (BodyMassIncludingChangeThisTimeStep<0)cout<<BodyMassIncludingChangeThisTimeStep<<" "<<actingCohort.IndividualBodyMass<<" "<<actingCohort.ID<<endl;
         // Temporary variable to hold net reproductive biomass change of individuals in this cohort as a result of other ecological processes
         ReproductiveMassIncludingChangeThisTimeStep = 0.0;
 
@@ -107,10 +108,11 @@ public:
         ReproductiveMassIncludingChangeThisTimeStep += actingCohort.IndividualReproductivePotentialMass;
 
         // Check to see if the cohort has already been killed by predation etc
-        if (BodyMassIncludingChangeThisTimeStep <= 1.e-15) //MB a small number ! maybe should be larger?
+        if (BodyMassIncludingChangeThisTimeStep <= 1.e-14) //MB a small number ! maybe should be larger? 1.e-15 fails to exclude negatives
         {
             // If individual body mass is not greater than zero, then all individuals become extinct
             MortalityTotal = actingCohort.CohortAbundance;
+            BodyMassIncludingChangeThisTimeStep=0;//MB kludged to exclude negative values below - need mass checking through the code
         } else {
             // Calculate background mortality rate
             MortalityRateBackground = Implementations["basic background mortality"]->CalculateMortalityRate(

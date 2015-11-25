@@ -215,13 +215,13 @@ public:
         double RandomValue = randomNumber(RandomNumberGenerator);
         if (RandomValue > MassEvolutionProbabilityThreshold) {
             // Determine the new juvenile body mass //MB correctly formulated?
-            std::uniform_real_distribution<double> randomNumberJ(actingCohort.JuvenileMass, (1+MassEvolutionStandardDeviation) * actingCohort.JuvenileMass);
+            std::normal_distribution<double> randomNumberJ(actingCohort.JuvenileMass, MassEvolutionStandardDeviation * actingCohort.JuvenileMass);
             double RandomValueJ = randomNumberJ(RandomNumberGenerator);
             CohortJuvenileAdultMasses[0] = max(RandomValueJ,
                     madingleyCohortDefinitions.GetBiologicalPropertyOneFunctionalGroup("Minimum mass", actingCohort.FunctionalGroupIndex));
 
             // Determine the new adult body mass
-            std::uniform_real_distribution<double> randomNumberA(actingCohort.AdultMass, (1+MassEvolutionStandardDeviation) * actingCohort.AdultMass);
+            std::normal_distribution<double> randomNumberA(actingCohort.AdultMass, MassEvolutionStandardDeviation * actingCohort.AdultMass);
             double RandomValueA = randomNumberA(RandomNumberGenerator);
             CohortJuvenileAdultMasses[1] = min(RandomValueA,
                     madingleyCohortDefinitions.GetBiologicalPropertyOneFunctionalGroup("Maximum mass", actingCohort.FunctionalGroupIndex));

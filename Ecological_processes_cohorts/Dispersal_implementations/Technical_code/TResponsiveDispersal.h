@@ -64,24 +64,24 @@ public:
     @param actingCohortNumber The position of the acting cohort within the functional group in the array of grid cell cohorts 
     @param currentMonth The current model month 
      */
-    bool RunDispersal(vector<Cohort>& disperseMonkeys, ModelGrid& gridForDispersal, Cohort& cohortToDisperse,
+    bool RunDispersal(vector<Cohort>& dispersers, ModelGrid& gridForDispersal, Cohort& cohortToDisperse,
               const unsigned& currentMonth) {
         // Starvation driven dispersal takes precedence over density driven dispersal (i.e. a cohort can't do both). Also, the delta 
         // arrays only allow each cohort to perform one type of dispersal each time step
         bool CohortDispersed = false;
 
         // Check for starvation-driven dispersal
-        CohortDispersed = CheckStarvationDispersal(disperseMonkeys,gridForDispersal, cohortToDisperse);
+        CohortDispersed = CheckStarvationDispersal(dispersers,gridForDispersal, cohortToDisperse);
 
         if (!CohortDispersed) {
             // Check for density driven dispersal
-            CheckDensityDrivenDispersal(disperseMonkeys,gridForDispersal, cohortToDisperse);
+            CheckDensityDrivenDispersal(dispersers,gridForDispersal, cohortToDisperse);
         }
         return false;
     }
 
     //----------------------------------------------------------------------------------------------
-    bool CheckStarvationDispersal(vector<Cohort>& disperseMonkeys,ModelGrid& gridForDispersal, Cohort& cohortToDisperse) {
+    bool CheckStarvationDispersal(vector<Cohort>& dispersers,ModelGrid& gridForDispersal, Cohort& cohortToDisperse) {
         // A boolean to check whether a cohort has dispersed
         bool CohortHasDispersed = false;
 
@@ -105,7 +105,7 @@ public:
                 // Update the cell to disperse to, if the cohort moves
                 if (cohortToDisperse.origin != cohortToDisperse.destination) {
                     // Update the delta array of cohorts
-                    disperseMonkeys.push_back(cohortToDisperse);
+                    dispersers.push_back(cohortToDisperse);
                 }
 
                 // Note that regardless of whether or not it succeeds, if a cohort tries to disperse, it is counted as having dispersed for the purposes of not then allowing it to disperse
@@ -125,7 +125,7 @@ public:
                 // Update the cell to disperse to, if the cohort moves
                 if (cohortToDisperse.origin != cohortToDisperse.destination) {
                     // Update the delta array of cohorts
-                    disperseMonkeys.push_back(cohortToDisperse);
+                    dispersers.push_back(cohortToDisperse);
                 }
 
 
@@ -138,7 +138,7 @@ public:
     }
     //----------------------------------------------------------------------------------------------
 
-    void CheckDensityDrivenDispersal(vector<Cohort>& disperseMonkeys, ModelGrid& gridForDispersal, Cohort& cohortToDisperse) {
+    void CheckDensityDrivenDispersal(vector<Cohort>& dispersers, ModelGrid& gridForDispersal, Cohort& cohortToDisperse) {
         // Check the population density
         double NumberOfIndividuals = cohortToDisperse.CohortAbundance;
 
@@ -157,7 +157,7 @@ public:
             // Update the cell to disperse to, if the cohort moves
             if (cohortToDisperse.origin != cohortToDisperse.destination) {
                 // Update the delta array of cohorts
-                disperseMonkeys.push_back(cohortToDisperse);
+                dispersers.push_back(cohortToDisperse);
             }
         }
     }
@@ -196,7 +196,7 @@ public:
         //assert(((uSpeed > LonCellLength) || (vSpeed > LatCellLength)) && "Dispersal probability should always be <= 1");
 
         GridCell* destination=newCell(madingleyGrid,uSpeed,vSpeed,LatCellLength,LonCellLength,c.origin);
-        if (destination!=0 && destination->Realm()==c.origin->Realm())c.destination=destination;
+        c.TryLivingAt(destination);
 
     }
     

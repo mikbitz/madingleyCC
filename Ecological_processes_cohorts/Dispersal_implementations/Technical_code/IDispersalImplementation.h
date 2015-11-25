@@ -24,8 +24,8 @@ public:
 
     //----------------------------------------------------------------------------------------------
      /** \brief Run the dispersal implementation */
-    virtual bool RunDispersal(vector<Cohort>& disperseMonkeys, ModelGrid& gridForDispersal, Cohort& cohortToDisperse,unsigned currentMonth) {
-        ;
+    virtual bool RunDispersal(vector<Cohort>& dispersers, ModelGrid& gridForDispersal, Cohort& cohortToDisperse,unsigned currentMonth) {
+        cout<<"Called virtual dispersal runner: probably not what you want"<<endl;
     }
     //----------------------------------------------------------------------------------------------
     GridCell* newCell(ModelGrid& madingleyGrid,double& uSpeed,double& vSpeed,double & LatCellLength,double & LonCellLength,GridCell* c){
@@ -66,12 +66,11 @@ public:
                     signu = 0;
                 }
             }
-            // try to get a cell - only use it if realm is the same as the origin cell.
+            // try to get a cell.
    
             GridCell* FreshCell = madingleyGrid.getNewCell(c, signv, signu);
             
-            if ((FreshCell!=0) && (FreshCell->Realm() == c->Realm()) )
-                    DestinationCell=FreshCell;
+            if (FreshCell!=0) DestinationCell=FreshCell;
         }
         return DestinationCell;
     }

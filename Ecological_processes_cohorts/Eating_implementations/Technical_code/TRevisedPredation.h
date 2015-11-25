@@ -129,11 +129,16 @@ public:
         CellArea = cellArea;
         CellAreaHectares = cellArea * 100;
     }
+    ~RevisedPredation(){
+            for (auto& A: AbundancesEaten)A.clear();
+            for (auto& P:PotentialAbundanceEaten)P.clear(); 
+            for (auto& b : BinnedPreyDensities)b.clear();
+    }
     //----------------------------------------------------------------------------------------------
     /** \brief Initialises predation implementation each time step
     @param gcl The current grid cell 
     @param params The definitions of things in the model 
-    \remarks This only works if: a) predation is initialised in every grid cell; and b) if parallelisation is done by latitudinal strips
+    @remark This only works if: a) predation is initialised in every grid cell; and b) if parallelisation is done by latitudinal strips
     It is critical to run this every time step */
     void InitializeEatingPerTimeStep(GridCell& gcl, MadingleyModelInitialisation& params) {
         //Get the functional group indices of all heterotroph cohorts (i.e. potential prey)
@@ -424,13 +429,8 @@ public:
     @param actingCohort The acting cohort 
     @param cellEnvironment The environment in the current grid cell 
     @param currentTimestep The current model time step */
-    void RunEating(GridCell& gcl,Cohort& actingCohort, 
-            unsigned currentTimestep,
+    void RunEating(GridCell& gcl,Cohort& actingCohort, unsigned currentTimestep,
             MadingleyModelInitialisation& params) {
-        //            if (trackProcesses.TrackProcesses)
-        //            {
-        //                Track = (RandomNumberGenerator.GetUniform() > 0.975) ? true : false;
-        //            }
 
         TempDouble = 0.0;
 

@@ -1,7 +1,6 @@
 #ifndef COHORTMERGE_H
 #define COHORTMERGE_H
 #include <Cohort.h>
-#include <GridCellCohortHandler.h>
 #include <set>
 
 #include "MadingleyModelInitialisation.h"

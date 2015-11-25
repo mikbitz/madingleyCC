@@ -63,6 +63,7 @@ public:
     //
     MadingleyModelInitialisation params;
     Dispersal disperser;
+    ofstream outputFile;
     //----------------------------------------------------------------------------------------------
     //Methods
     //----------------------------------------------------------------------------------------------
@@ -85,11 +86,8 @@ public:
                 GlobalDiagnosticVariables["NumberOfStocksInModel"],
                 EcosystemModelGrid);
 
-
         // Set up model outputs
         SetUpOutputs();
-        // Make the initial outputs
-        InitialOutputs( CurrentMonth);
 
         //end of initialisations
         // Initialise the cohort merger - this is just to set where the random seed comes from
@@ -104,8 +102,7 @@ public:
         // Write out model run details to the console
         cout << "Running model" << endl;
         cout << "Number of time steps is: " << params.NumTimeSteps << endl;
-        ofstream urg("aaggh");
-        urg<<"step,dispersals,extinctions,productions,combinations,totalcohorts,incelltime,dispersaltime"<<endl;
+
         // Temporary variable
         bool varExists;
         Dispersals = 0;         
@@ -131,29 +128,17 @@ public:
 
             DispersalTimer.Stop();
             cout << "Across grid ecology took: " << DispersalTimer.GetElapsedTimeSecs() << endl;               
-            // Stop the timer
+
             TimeStepTimer.Stop();
-            //
+            
             OutputTimer.Start();
-            // Write the global outputs for this time step
-            // GlobalOutputs.TimeStepOutputs(EcosystemModelGrid, CurrentTimeStep, CurrentMonth, TimeStepTimer,CohortFunctionalGroupDefinitions,
-            //                     StockFunctionalGroupDefinitions,_CellList,GlobalDiagnosticVariables, params);
+             Output(hh);
             OutputTimer.Stop();
             cout << "Global Outputs took: " << OutputTimer.GetElapsedTimeSecs() << endl;
-            OutputTimer.Start();
-            //                 {
-            //                     // Write out grid outputs for this time step
-            //                     GridOutputs.TimeStepOutputs(EcosystemModelGrid, CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions, _CellList,
-            //                         CurrentTimeStep, params);
-            //                 }
-            //
-            //
-            OutputTimer.Stop();
-            cout << "Cell/Grid Outputs took: " << OutputTimer.GetElapsedTimeSecs() << endl;
+
             // Write the results of dispersal to the console
 
-        cout<<"Total Cohorts remaining "<<GlobalDiagnosticVariables["NumberOfCohortsInModel"]<<endl ;
-        urg<<hh<<","<<Dispersals<<","<<GlobalDiagnosticVariables["NumberOfCohortsExtinct"]<<","<<GlobalDiagnosticVariables["NumberOfCohortsProduced"]<<","<<GlobalDiagnosticVariables["NumberOfCohortsCombined"]<<","<<GlobalDiagnosticVariables["NumberOfCohortsInModel"]<<","<<EcologyTimer.GetElapsedTimeSecs()<<","<<DispersalTimer.GetElapsedTimeSecs()<<endl;
+            cout<<"Total Cohorts remaining "<<GlobalDiagnosticVariables["NumberOfCohortsInModel"]<<endl ;
 
         }
 
@@ -168,6 +153,8 @@ public:
 
         EcosystemModelGrid.ask([&](GridCell& gcl) {
 
+            gcl.randomizeCohorts();
+            
             RunWithinCellStockEcology(gcl);
  
             RunWithinCellCohortEcology(gcl, singleThreadDiagnostics);
@@ -179,10 +166,6 @@ public:
         GlobalDiagnosticVariables["NumberOfCohortsProduced"] = singleThreadDiagnostics.Productions;
         GlobalDiagnosticVariables["NumberOfCohortsInModel"] = GlobalDiagnosticVariables["NumberOfCohortsInModel"] + singleThreadDiagnostics.Productions - singleThreadDiagnostics.Extinctions;
         GlobalDiagnosticVariables["NumberOfCohortsCombined"] = singleThreadDiagnostics.Combinations;
-        cout << "Number of cohorts that dispersed this time step: " << Dispersals << endl;
-        cout<<"Extinctions this step "<<singleThreadDiagnostics.Extinctions - singleThreadDiagnostics.Combinations<<endl ;
-        cout<<"Productions "<<singleThreadDiagnostics.Productions<<endl ;
-        cout<<"Combinations"<<singleThreadDiagnostics.Combinations<<endl ;
     }
     //----------------------------------------------------------------------------------------------
     /** \brief   Run ecological processes for stocks in a specified grid cell
@@ -330,41 +313,30 @@ public:
     @param initialisation An instance of the model initialisation class
      */
     void SetUpOutputs() {
-        //            // Initialise the global outputs
-        //            GlobalOutputs = new OutputGlobal(InitialisationFileStrings["OutputDetail"], params);
-        //
-
-        //                GridOutputs = new OutputGrid(InitialisationFileStrings["OutputDetail"], params);
-        //            
-        //
-        //            
+        outputFile.open("aaggh");
+        outputFile<<"step dispersals extinctions productions combinations totalcohorts totalstocks totalAbundance organicPool respiratoryPool totalStockBiomass totalCohortBiomass totalBioMass incelltime dispersaltime"<<endl; 
     }
     //----------------------------------------------------------------------------------------------
-    /** \brief   Generates the initial outputs for this model run
-    @param outputFilesSuffix The suffix to be applied to all outputs from this model run
-     */
-    void InitialOutputs( unsigned month) {
-        //            // Set up global outputs for all model runs
-        //            GlobalOutputs.SetupOutputs(NumTimeSteps, EcosystemModelGrid, OutputFilesSuffix);
-        //
-        //            // Create initial global outputs
-        //            GlobalOutputs.InitialOutputs(EcosystemModelGrid,CohortFunctionalGroupDefinitions,StockFunctionalGroupDefinitions,_CellList,
-        //                GlobalDiagnosticVariables, params);
-        //
-        //            // Temporary
-        //            Boolean varExists;
-        //
+      void Output(unsigned step ){
+          
+          
+        double organicPool=0,respiratoryPool=0,totalAbundance=0;
+        double totalStockBiomass=0,totalCohortBiomass=0;
+        EcosystemModelGrid.ask([&](GridCell& gcl){
+            organicPool    +=gcl.CellEnvironment["Organic Pool"][0]/1000.;
+            respiratoryPool+=gcl.CellEnvironment["Respiratory CO2 Pool"][0]/1000.;
+            gcl.ask([&](Cohort& c){
+                totalAbundance+=c.CohortAbundance;
+                totalCohortBiomass+=(c.IndividualBodyMass + c.IndividualReproductivePotentialMass) * c.CohortAbundance/1000.;
+            });
+            gcl.askStocks([&](Stock& s){
+                totalStockBiomass+=s.TotalBiomass/1000.;//convert from g to kg
+            });
+        });
+        double totalBiomass=totalCohortBiomass+totalStockBiomass+respiratoryPool+organicPool;
+        outputFile<<step<<" "<<Dispersals<<" "<<GlobalDiagnosticVariables["NumberOfCohortsExtinct"]<<" "<<GlobalDiagnosticVariables["NumberOfCohortsProduced"]<<" "<<GlobalDiagnosticVariables["NumberOfCohortsCombined"]<<" "<<GlobalDiagnosticVariables["NumberOfCohortsInModel"]<<" "<<GlobalDiagnosticVariables["NumberOfStocksInModel"]<<" "<<totalAbundance<<" "<<organicPool<<" "<<respiratoryPool<<" "<<totalStockBiomass<<" "<<totalCohortBiomass<<" "<<totalBiomass<<" "<<EcologyTimer.GetElapsedTimeSecs()<<" "<<DispersalTimer.GetElapsedTimeSecs()<<endl;
 
-        //                // Set up grid outputs
-        //                GridOutputs.SetupOutputs(EcosystemModelGrid, OutputFilesSuffix, NumTimeSteps, 
-        //                    CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions);
-        //
-        //                // Create initial grid outputs
-        //                GridOutputs.InitialOutputs(EcosystemModelGrid, CohortFunctionalGroupDefinitions, StockFunctionalGroupDefinitions, _CellList, params);
-        //            
-        //
-    }
-    
+      }  
 
 };
 #endif

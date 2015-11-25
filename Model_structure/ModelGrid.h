@@ -1,7 +1,6 @@
 #ifndef MODELGRID_H
 #define MODELGRID_H
 using namespace std;
-#include <GridCellCohortHandler.h>
 #include <GridCell.h>
 #include <map>
 #include <limits>

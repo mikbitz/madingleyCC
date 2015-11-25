@@ -1,9 +1,9 @@
 #ifndef GRIDCELL_H
 #define GRIDCELL_H
-#include <GridCellCohortHandler.h>
 #include <ClimateVariablesCalculator.h>
 #include <RevisedTerrestrialPlantModel.h>
 #include <UtilityFunctions.h>
+#include <Cohort.h>
 /** \file GridCell.h
  * \brief the GridCell header file
  */
@@ -344,12 +344,29 @@ public:
     //Apply any function to all cohorts in the cell
     template <typename F>
     void ask(F f) {
-    // Loop through functional groups, and perform dispersal according to cohort type and status
         for (int  FG=0; FG < GridCellCohorts.size(); FG++) {
             // Work through the list of cohorts 
             for (Cohort& c : GridCellCohorts[FG]) {
                 f(c);
             }
+        }
+    }
+    //----------------------------------------------------------------------------------------------
+    //Apply any function to all stocks in the cell
+    template <typename F>
+    void askStocks(F f) {
+        for (int  FG=0; FG < GridCellStocks.size(); FG++) {
+            // Work through the list of cohorts 
+            for (Stock& s : GridCellStocks[FG]) {
+                f(s);
+            }
+        }
+    }
+    //----------------------------------------------------------------------------------------------
+    //Randomise cohort order jn a cell
+    void randomizeCohorts() {
+        for (int  FG=0; FG < GridCellCohorts.size(); FG++) { 
+            random_shuffle(GridCellCohorts[FG].begin(),GridCellCohorts[FG].begin());
         }
     }
     //----------------------------------------------------------------------------------------------
@@ -384,5 +401,6 @@ public:
         }
         return sum;
     }
+    
 };
 #endif
