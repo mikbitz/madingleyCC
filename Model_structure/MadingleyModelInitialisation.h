@@ -6,7 +6,6 @@
 #include <string>
 #include <UtilityFunctions.h>
 #include <FunctionalGroupDefinitions.h>
-#include <EnviroData.h>
 #include <MassBinsHandler.h>
 #include <sstream>
 #include <ModelGrid.h>
@@ -94,8 +93,6 @@ public:
     FunctionalGroupDefinitions CohortFunctionalGroupDefinitions;
     /** \brief The functional group definitions of stocks in the model */
     FunctionalGroupDefinitions StockFunctionalGroupDefinitions;
-    /** \brief The environmental layers for use in the model */
-    map<string, EnviroData> EnviroStack;
     /** \brief The paths and filenames for the diagnostics for the ecological processes */
     map<string, string> ProcessTrackingOutputs;
     /** \brief The string values for the units of each environmental data layer */
@@ -125,6 +122,8 @@ public:
                                  ModelGrid& Grid) {
         //Write to console
         cout << "Initializing model...\n" << endl;
+        //read and store environmental layers
+        Environment::Get();
         //set default value of cohort random draw properties
         DrawRandomly = true;
         //set default dispersal
@@ -139,10 +138,9 @@ public:
         unsigned NumLonCells = (unsigned) ((RightmostLongitude - LeftmostLongitude) / CellSize);
         
         Grid.SetUpGrid(BottomLatitude, LeftmostLongitude, TopLatitude, RightmostLongitude,CellSize, CellSize);
-        //read and store environmental inputs in the grid.
+       
+        //MB THis is currently just used to get units -needs replacing
         ReadEnvironmentalLayers(InitialisationFileStrings["Environmental"], outputPath,Grid);
-        //set remaining grid cell attributes.
-        Grid.setCellValues();
         
         // Set up the cohorts and stocks
          InitializationTimer.Start();
@@ -344,94 +342,6 @@ public:
             Units[LayerName[ii]] = MethodUnits[ii];
         }
 
-        // Check that there are the same number of values for all parameters
-        assert(Folders.size() == Filenames.size() && Filenames.size() == DatasetNames.size() && DatasetNames.size() == FileTypes.size() && FileTypes.size() == LayerName.size() &&
-                "Error in Environmental Data Layer import lists - unequal number of filenames, dataset names, filetypes and datalayer names");
-
-        // Loop over parameter values
-        for (int ii = 0; ii < Filenames.size(); ii++) {
-            cout << Filenames[ii] << ": Variable " << ii + 1 << "  of " << Filenames.size() << endl;
-            // If the layers are not static, then suffix the file name with '1' - not currently implemented
-            if (StaticLayer[ii] == "n") {
-                assert("This option is currently not supported");
-                Filenames[ii] = Filenames[ii] + "1";
-            }
-            // For layers where the file format is ESRI ASCII grid, the dataset name is the same as the file name
-            if (FileTypes[ii] == "esriasciigrid") {
-                DatasetNames[ii] = Filenames[ii];
-            }
-            // Generate the appropriate file name for the environmental data layer
-            if (Folders[ii] == "input") {
-                Filenames[ii] = "input/Data/" + Filenames[ii];
-            } else {
-                Filenames[ii] = Folders[ii] + "/" + Filenames[ii];
-            }
-            Filenames[ii] = Filenames[ii] + Extensions[ii];
-            // Read in and store the environmental data
-
-            EnviroStack[LayerName[ii]] = EnviroData(Filenames[ii], DatasetNames[ii], FileTypes[ii], Resolutions[ii], MethodUnits[ii]);
-        }
-        double degreeResolution = 10;
-std::string mInputBaseDirectory = "../netCDFdata/";
-
-
-Types::FileReaderPointer mFileReader;
-            mFileReader = new FileReader( );
-
-    for( unsigned int variableIndex = 0; variableIndex < Constants::cNumberOfInputFiles; ++variableIndex ) {
-        std::string inputFilePath = mInputBaseDirectory + Convertor::Get( )->NumberToString( degreeResolution ) + "deg/" + Constants::cInputFileNames[ variableIndex ];
-        mFileReader->ReadNetCDFFile( inputFilePath, variableIndex );
-    }
-    
-    Logger::Get( )->LogString( "Finished reading netcdf!" );
-        cout << endl;
-        // Loop over variables in the list of environmental data
-
-        for (auto Layer : EnviroStack) {
-            Grid.ask([&](GridCell & gcl) {
-                // Initialise the temporary vector of values to be equal to the number of time intervals in the environmental variable
-                vector<double> tempVector(Layer.second.NumTimes);
-                //Loop over the time intervals in the environmental variable
-                for (int tm = 0; tm < Layer.second.NumTimes; tm++) {
-                    // Add the value of the environmental variable at this time interval to the temporary vector
-                    bool MissingValue=false;
-                    int lo=gcl.LonIndex();
-                    int la=gcl.LatIndex();
-                    tempVector[tm] = 0;//Layer.second.GetValue(c.Latitude, c.Longitude, (unsigned) tm, MissingValue, CellSize, CellSize);
-                    if (Layer.first=="LandSeaMask")
-                      if(DataGrid::Get()->GetGridCell(lo,la)->IsOcean())
-                      {tempVector[tm]=0;}
-                      else
-                      {tempVector[tm]=1;}
-                    //cout<<Layer.first<<endl;
-                    if (Layer.first=="SST")
-                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetSST(tm);
-                    if (Layer.first=="vVel")
-                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetVSpeed(tm);
-                    if (Layer.first=="uVel")
-                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetUSpeed(tm);
-                    if (Layer.first=="AWC")
-                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetWaterCapacity(tm);
-                    if (Layer.first=="OceanNPP")
-                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetOceanNPP(tm);
-                    if (Layer.first=="LandNPP")
-                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetNPP(tm);
-                    if (Layer.first=="LandDTR")
-                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetDiurnalTemperatureRange(tm);
-                    if (Layer.first=="FrostDays")
-                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetGroundFrostFrequency(tm);
-                    if (Layer.first=="Temperature")
-                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetNearSurfaceTemperature(tm);
-                    if (Layer.first=="Precipitation")
-                        tempVector[tm]=DataGrid::Get()->GetGridCell(lo,la)->GetPrecipitation(tm);
-                    // If the environmental variable is a missing value, then change the value to equal the standard missing value for this cell
-                    if (MissingValue || tempVector[tm]<=-9990)
-                            tempVector[tm] = 0.;//-9999;
-                    }
-
-                gcl.CellEnvironment[Layer.first] = tempVector;
-            });
-        }
     }
     //----------------------------------------------------------------------------------------------
 
@@ -545,7 +455,7 @@ Types::FileReaderPointer mFileReader;
 
 
                         double NewBiomass = (3300 / NumCohortsThisCell) * 100 * 3000 *
-                                pow(0.6, (log10(CohortJuvenileMass))) * (gcl.CellEnvironment["Cell Area"][0]);
+                                pow(0.6, (log10(CohortJuvenileMass))) * (gcl.CellArea());
                         TotalNewBiomass += NewBiomass;
                         double NewAbund = 0.0;
 
@@ -580,7 +490,7 @@ Types::FileReaderPointer mFileReader;
 
             // Initialise the new stock with the relevant properties
             bool success;
-            Stock NewStock(StockFunctionalGroupDefinitions,FunctionalGroup, gcl.CellEnvironment, success);
+            Stock NewStock(StockFunctionalGroupDefinitions,FunctionalGroup, gcl,success);
             // Add the new stock to the list of grid cell stocks
             if (success) {
                 gcl.GridCellStocks[FunctionalGroup].push_back(NewStock);

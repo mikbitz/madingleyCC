@@ -35,15 +35,14 @@ public:
     }
     //----------------------------------------------------------------------------------------------  
     /** \brief    Generate new cohorts from reproductive potential mass
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
-    @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
-    @param cellEnvironment The environment of the current grid cell 
-    @param madingleyCohortDefinitions The definitions of cohort functional groups in the model 
-    @param madingleyStockDefinitions The definitions of stock functional groups in the model 
-    @param currentTimestep The current model time step 
-    @param tracker An instance of ProcessTracker to hold diagnostics for reproduction 
-    @param partial Thread-locked variables */
+    @param gcl The current grid cell
+    @param actingCohort The acting cohort 
+    @param currentTimestep The current model time step
+    @param partial some thread locked variables?
+    @param iteroparous breed mode of the cohort
+    @param currentMonth as it says
+    @param params the parameters 
+ */
     void RunReproduction(GridCell& gcl, Cohort& actingCohort,
             unsigned currentTimestep,ThreadLockedParallelVariables& partial, 
             bool iteroparous, unsigned currentMonth, MadingleyModelInitialisation& params) {
@@ -76,14 +75,9 @@ public:
     }
     //----------------------------------------------------------------------------------------------  
     /** \brief    Assigns biomass from body mass to reproductive potential mass
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
-    @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
-    @param cellEnvironment The environment in the current grid cell 
-    @param madingleyCohortDefinitions The definitions of cohort functional groups in the model 
-    @param madingleyStockDefinitions The definitions of stock functional groups in the model 
-    @param currentTimestep The current model time step 
-    @param tracker An instance of ProcessTracker to hold diagnostics for reproduction */
+    @param gridCell The current cell 
+    @param actingCohort The acting cohort  
+    @param currentTimestep The current model time step  */
     void AssignMassToReproductivePotential(GridCell& gcl,
             Cohort& actingCohort, unsigned currentTimestep) {
         // If this is the first time reproductive potential mass has been assigned for this cohort, 

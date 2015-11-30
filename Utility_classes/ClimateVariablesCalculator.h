@@ -1,6 +1,8 @@
 #ifndef CLIMATEVARIABLESCALCULATOR_H
 #define CLIMATEVARIABLESCALCULATOR_H
 #include <math.h>
+#include <tuple>
+using namespace std;
 /** \file ClimateVariablesCalculator.h
  * \brief the ClimateVariablesCalculator header file
  */
@@ -143,7 +145,7 @@ public:
     @param monthlyTemperature A vector containing average temperatures for each month 
     @param missingValue The missing value used in the the environmental datasets 
     @return The fraction of the year in which temperature drops below zero at some point in the day*/
-    double GetNDF(vector<double>& monthlyFrostDays, vector<double>& monthlyTemperature, double missingValue) {
+    double GetNDF(std::vector<double>& monthlyFrostDays, std::vector<double>& monthlyTemperature, double missingValue) {
         double DataToReturn = 0.0;
 
         if (monthlyFrostDays[0] > missingValue) {

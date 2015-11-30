@@ -61,11 +61,8 @@ public:
         // Calculate dispersal speed for the cohort         
         double DispersalSpeed = CalculateDispersalSpeed(cohortToDisperse.IndividualBodyMass);
 
-        // A double to indicate whether or not the cohort has dispersed, and if it has dispersed, where to
-        double CohortDispersed = 0;
-
         CalculateDispersalProbability(gridForDispersal, cohortToDisperse, DispersalSpeed);
-        if (cohortToDisperse.origin!=cohortToDisperse.destination){
+        if (cohortToDisperse.location!=cohortToDisperse.destination){
             // Update the delta array of cohorts
             dispersers.push_back(cohortToDisperse);
 
@@ -88,8 +85,8 @@ public:
     void CalculateDispersalProbability(ModelGrid& madingleyGrid,Cohort& c, double dispersalSpeed) {
         // Check that the u speed and v speed are not greater than the cell length. If they are, then rescale them; this limits the max velocity
         // so that cohorts cannot be advected more than one grid cell per time step
-        double LatCellLength = madingleyGrid.CellHeightsKm[c.origin->LatIndex()];
-        double LonCellLength = madingleyGrid.CellWidthsKm[c.origin->LatIndex()];
+        double LatCellLength = c.location->CellHeightKm;
+        double LonCellLength = c.location->CellWidthKm;
 
         // Pick a direction at random
         std::uniform_real_distribution<double> randomNumber(0.0, 1.0);
@@ -99,7 +96,7 @@ public:
         // Calculate the u and v components given the dispersal speed
         double uSpeed = dispersalSpeed * cos(RandomDirection);
         double vSpeed = dispersalSpeed * sin(RandomDirection);
-        GridCell* destination=newCell(madingleyGrid,uSpeed,vSpeed,LatCellLength,LonCellLength,c.origin);
+        GridCell* destination=newCell(madingleyGrid,uSpeed,vSpeed,LatCellLength,LonCellLength,c.location);
         c.TryLivingAt(destination);
     }
     //----------------------------------------------------------------------------------------------

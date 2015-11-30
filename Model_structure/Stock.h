@@ -6,6 +6,7 @@
 #include <map>
 #include <vector>
 #include <FunctionalGroupDefinitions.h>
+class GridCell;
 /** \brief  Individual stocks */
 class Stock {
 public:
@@ -31,7 +32,7 @@ public:
     @param Functional Group The functional group index of the stock being generated 
     @param Environment The cell environment 
     @param Success Whether the stock should be present in this cell */
-    Stock(FunctionalGroupDefinitions& , const unsigned , map<string, vector<double>>&, bool& success);
+    Stock(FunctionalGroupDefinitions& , const unsigned , GridCell&, bool& success);
         
      
 };

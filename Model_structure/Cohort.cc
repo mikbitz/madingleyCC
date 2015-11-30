@@ -21,8 +21,8 @@ unsigned Cohort::NextID=0;
         MaximumAchievedBodyMass = juvenileBodyMass;
         Merged = false;
         ProportionTimeActive = proportionTimeActive;
-        origin=&gcl;
-        destination=origin;
+        location=&gcl;
+        destination=location;
         ID=NextID;//MB added to track this object.
         NextID++;
         nextCohortID++;
@@ -42,8 +42,8 @@ unsigned Cohort::NextID=0;
         MaximumAchievedBodyMass = juvenileBodyMass;
         Merged = false;
         ProportionTimeActive = actingCohort.ProportionTimeActive;
-        origin = actingCohort.origin;
-        destination = origin;
+        location = actingCohort.location;
+        destination = location;
         ID=NextID;//MB added to track this object.
         NextID++;
         nextCohortID++;
@@ -82,7 +82,7 @@ unsigned Cohort::NextID=0;
     }
     //----------------------------------------------------------------------------------------------    
     double Cohort::Realm(){
-        return origin->Realm();
+        return location->Realm();
     }
     //----------------------------------------------------------------------------------------------
     void Cohort::TryLivingAt(GridCell* _destination){

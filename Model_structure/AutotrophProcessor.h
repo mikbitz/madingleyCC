@@ -2,8 +2,9 @@
 #define AUTOTROPHPROCESSOR_H
 #include <ProcessTracker.h>
 #include <GlobalProcessTracker.h>
+#include <Environment.h>
+#include <GridCell.h>
 
-#include "GridCell.h"
 /** \file AutotrophProcessor.h
  * \brief the AutotrophProcessor header file
  */
@@ -47,9 +48,9 @@ public:
      unsigned currentTimestep, 
      unsigned currentMonth, MadingleyModelInitialisation& params) {
         // Get NPP from the cell environment
-        double NPP = gcl.CellEnvironment["NPP"][currentMonth];
+        double NPP = Environment::Get("NPP",gcl);
         // If NPP is a missing value then set to zero
-        if (NPP == gcl.CellEnvironment["Missing Value"][0]) NPP = 0.0;
+        if (NPP == Environment::MissingValue) NPP = 0.0;
 
         // Check that this is an ocean cell
         if (gcl.isMarine()) {

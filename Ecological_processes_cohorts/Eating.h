@@ -55,7 +55,6 @@ public:
     /** \brief Run eating 
     @param gcl The current grid cell 
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
-    @param cellEnvironment The environment in the current grid cell 
     @param currentTimestep The current model time step 
     @param partial Thread-locked variables 
     @param currentMonth The current model month

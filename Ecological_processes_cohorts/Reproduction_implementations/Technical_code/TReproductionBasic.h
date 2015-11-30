@@ -56,7 +56,6 @@ public:
     //----------------------------------------------------------------------------------------------       
     /** \brief Generate new cohorts from reproductive potential mass
     @param gridCell The current grid cell 
-    @param cellEnvironment The environment of the current grid cell 
     @param currentTimestep The current model time step 
     @param partial Thread-locked variables 
     @param iteroparous Whether the acting cohort is iteroparous, as opposed to semelparous 
@@ -111,7 +110,7 @@ public:
         CurrentMassRatio = (BodyMassIncludingChangeThisTimeStep + ReproductiveMassIncludingChangeThisTimeStep) / actingCohort.AdultMass;
 
         // Must have enough mass to hit reproduction threshold criterion, and either (1) be in breeding season, or (2) be a marine cell (no breeding season in marine cells)
-        if ((CurrentMassRatio > MassRatioThreshold) && ((gcl.CellEnvironment["Breeding Season"][currentMonth] == 1.0) || (gcl.isMarine()))) {
+        if ((CurrentMassRatio > MassRatioThreshold) && ((Environment::Get("Breeding Season",*(actingCohort.location)) == 1.0) || (gcl.isMarine()))) {
             // Iteroparous and semelparous organisms have different strategies
             if (iteroparous) {
                 // Iteroparous organisms do not allocate any of their current non-reproductive biomass to reproduction

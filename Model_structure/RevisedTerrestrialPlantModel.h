@@ -2,6 +2,7 @@
 #define REVISEDTERRESTRIALPLANTMODEL_H
 #include <math.h>
 #include <Stock.h>
+#include <GridCell.h>
 #include <UtilityFunctions.h>
 
 using namespace std;
@@ -143,22 +144,17 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Estimate the mass of leaves in a specified stock in the specified grid cell at equilibrium, given current environmental conditions
-    @param cellEnvironment The environment in the current grid cell 
+    @param gcl The current grid cell 
     @param deciduous Whether the leaves in the specified stock are deciduous 
     @return The equilibrium mass of leaves in the specified stock*/
-    double CalculateEquilibriumLeafMass(map<string, vector<double>>&cellEnvironment, bool deciduous) {
+    double CalculateEquilibriumLeafMass(GridCell& gcl, bool deciduous) {
         // Calculate annual average temperature
-        double MeanTemp = 0;
-        for (auto M : cellEnvironment["Temperature"])MeanTemp += M;
-        MeanTemp = MeanTemp / cellEnvironment["Temperature"].size();
-        // Calculate total annual precipitation
-        double TotalPrecip = 0;
-        for (auto P : cellEnvironment["Precipitation"])TotalPrecip += P;
+        double MeanTemp = Environment::Get("AnnualTemperature",gcl);
+        //Calculate total annual precipitation
+        double TotalPrecip = Environment::Get("TotalPrecip",gcl);
 
         // Calculate total annual AET
-        double TotalAET = 0;
-        for (auto A : cellEnvironment["AET"])TotalAET += A;
-
+        double TotalAET =Environment::Get("TotalAET",gcl);
         // Calculate NPP using the Miami model
         double NPP = CalculateMiamiNPP(MeanTemp, TotalPrecip);
 
@@ -167,10 +163,10 @@ public:
         double FracStruct = CalculateFracStruct(NPP);
 
         // Calculate the fractional allocation of NPP to evergreen plant matter
-        double FracEvergreen = CalculateFracEvergreen(cellEnvironment["Fraction Year Frost"][0]);
+        double FracEvergreen = CalculateFracEvergreen(Environment::Get("Fraction Year Frost",gcl));
 
         // Calculate the fire mortality rate
-        double FireMortRate = CalculateFireMortalityRate(NPP, cellEnvironment["Fraction Year Fire"][0]);
+        double FireMortRate = CalculateFireMortalityRate(NPP, Environment::Get("Fraction Year Fire",gcl));
 
         // Update NPP depending on whether the acting stock is deciduous or evergreen
         if (deciduous) {
@@ -212,33 +208,28 @@ public:
         double EquilibriumLeafCarbon = LeafCFixation / LeafCMortality;
 
         // Convert to equilibrium leaf wet matter content
-        double LeafWetMatter = ConvertToLeafWetMass(EquilibriumLeafCarbon, cellEnvironment["Cell Area"][0]);
+        double LeafWetMatter = ConvertToLeafWetMass(EquilibriumLeafCarbon, gcl.CellArea());
 
         return LeafWetMatter;
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Update the leaf stock during a time step given the environmental conditions in the grid cell
-    @param cellEnvironment The environment in the current grid cell 
-    @param gridCellStocks The stocks in the current grid cell 
-    @param actingStock The position of the acting stock in the array of grid cell stocks 
+    @param gcl The current grid cell 
+    @param actingStock The acting stock  
     @param currentTimeStep The current model time step 
     @param deciduous Whether the acting stock consists of deciduous leaves 
     @param GlobalModelTimeStepUnit The time step unit used in the model 
-    @param tracker Whether to track properties of the ecological processes 
     @param currentMonth The current model month */
-    void UpdateLeafStock(map<string, vector<double>>&cellEnvironment, Stock& actingStock, 
+    void UpdateLeafStock(GridCell& gcl, Stock& actingStock, 
             unsigned currentTimeStep, bool deciduous, string GlobalModelTimeStepUnit, unsigned currentMonth) {
 
 
         //ESTIMATE ANNUAL LEAF CARBON FIXATION ASSUMING ENVIRONMENT THROUGHOUT THE YEAR IS THE SAME AS IN THIS MONTH
-        //Calculate annual average temperature
-        double MeanTemp = 0;
-        for (auto M : cellEnvironment["Temperature"])MeanTemp += M;
-        MeanTemp = MeanTemp / cellEnvironment["Temperature"].size();
-        //Calculate total annual precipitation
-        double TotalPrecip = 0;
-        for (auto P : cellEnvironment["Precipitation"])TotalPrecip += P;
+        //Get annual average temperature
 
+        double MeanTemp = Environment::Get("AnnualTemperature",gcl);
+        //Calculate total annual precipitation
+        double TotalPrecip = Environment::Get("TotalPrecip",gcl);
         // Calculate annual NPP
         double NPP = CalculateMiamiNPP(MeanTemp, TotalPrecip);
 
@@ -246,7 +237,7 @@ public:
         double FracStruct = CalculateFracStruct(NPP);
 
         // Estimate monthly NPP based on seasonality layer
-        NPP *= cellEnvironment["Seasonality"][currentMonth];
+        NPP *= Environment::Get("Seasonality",gcl);
 
 
         // Calculate leaf mortality rates
@@ -259,16 +250,8 @@ public:
             AnnualLeafMortRate = CalculateDeciduousAnnualLeafMortality(MeanTemp);
 
             // For deciduous plants monthly leaf mortality is weighted by temperature deviance from the average, to capture seasonal patterns
-            vector<double> ExpTempDev(12);
-            double SumExpTempDev = 0.0;
-            vector<double> TempDev(12);
-            double Weight;
-            for (int i = 0; i < 12; i++) {
-                TempDev[i] = cellEnvironment["Temperature"][i] - MeanTemp;
-                ExpTempDev[i] = exp(-TempDev[i] / 3);
-                SumExpTempDev += ExpTempDev[i];
-            }
-            Weight = ExpTempDev[currentMonth] / SumExpTempDev;
+
+            double Weight=Environment::Get("ExpTDevWeight",gcl);
             MonthlyLeafMortRate = AnnualLeafMortRate * Weight;
             TimeStepLeafMortRate = MonthlyLeafMortRate * Utilities.ConvertTimeUnits(GlobalModelTimeStepUnit, "month");
         } else {
@@ -281,13 +264,13 @@ public:
         }
 
         // Calculate fine root mortality rate
-        double AnnualFRootMort = CalculateFineRootMortalityRate(cellEnvironment["Temperature"][currentMonth]);
+        double AnnualFRootMort = CalculateFineRootMortalityRate(Environment::Get("Temperature",gcl));
 
         // Calculate the NPP allocated to non-structural tissues
         double FracNonStruct = (1 - FracStruct);
 
         // Calculate the fractional allocation of NPP to evergreen plant matter
-        double FracEvergreen = CalculateFracEvergreen(cellEnvironment["Fraction Year Frost"][0]);
+        double FracEvergreen = CalculateFracEvergreen(Environment::Get("Fraction Year Frost",gcl));
 
         // Calculate the fractional allocation to leaves
         double FracLeaves = FracNonStruct * CalculateLeafFracAllocation(AnnualLeafMortRate, CalculateDeciduousAnnualLeafMortality(MeanTemp),
@@ -302,16 +285,16 @@ public:
         }
 
         // Calculate the fire mortality rate
-        double FireMortRate = CalculateFireMortalityRate(NPP, cellEnvironment["Fraction Year Fire"][0]);
+        double FireMortRate = CalculateFireMortalityRate(NPP, Environment::Get("Fraction Year Fire",gcl));
 
         // Calculate the structural mortality rate
-        double StMort = CalculateStructuralMortality(cellEnvironment["AET"][currentMonth] * 12);
+        double StMort = CalculateStructuralMortality(Environment::Get("AET",gcl) * 12);
 
         // Calculate leaf C fixation
         double LeafCFixation = NPP * FracLeaves;
 
         // Convert from carbon to leaf wet matter
-        double WetMatterIncrement = ConvertToLeafWetMass(LeafCFixation, cellEnvironment["Cell Area"][0]);
+        double WetMatterIncrement = ConvertToLeafWetMass(LeafCFixation, gcl.CellArea());
 
         // Convert from the monthly time step used for this process to the global model time step unit
         WetMatterIncrement *= Utilities.ConvertTimeUnits(GlobalModelTimeStepUnit, "month");

@@ -14,6 +14,7 @@
 #include <Activity.h>
 #include <ThreadLocked.h>
 #include <fstream>
+#include <Environment.h>
 /// @todo check private versus public variables
 /** \file MadingleyModel.h
  * \brief The main model header file
@@ -116,6 +117,7 @@ public:
             CurrentTimeStep = hh;
             CurrentMonth = Utilities.GetCurrentMonth(hh, params.GlobalModelTimeStepUnit);
             EcologyTimer.Start();
+            Environment::update(CurrentMonth);
 
             RunWithinCells();
 
@@ -206,13 +208,7 @@ public:
         Activity CohortActivity;
         
         // Loop over randomly ordered gridCellCohorts to implement biological functions
-        //if (DrawRandomly) {
-        // Randomly order the cohort indices
-        //    RandomCohortOrder = Utilities.RandomlyOrderedCohorts(TotalCohortNumber);
-        //} else {
-        //    RandomCohortOrder = Utilities.NonRandomlyOrderedCohorts(TotalCohortNumber, CurrentTimeStep);
-        //}
-        //MB need to put back random ordering - NB apply ecology may set bodymass of a cohort to zero!
+
         gcl.ask([&](Cohort& c){
             // Perform all biological functions except dispersal (which is cross grid cell)
             if (gcl.GridCellCohorts[c.FunctionalGroupIndex].size() != 0 && c.CohortAbundance > params.ExtinctionThreshold) {
@@ -221,7 +217,6 @@ public:
 
                 // Run ecology
                 MadingleyEcologyCohort.RunWithinCellEcology(gcl,c,CurrentTimeStep, partial,  CurrentMonth, params);
-                if(Cohort::Deltas["organicpool"]["mortality"]<0) cout<<c.ID<<" "<<Cohort::Deltas["organicpool"]["mortality"]<<endl;
                 // Update the properties of the acting cohort
                 MadingleyEcologyCohort.UpdateEcology(gcl, c, CurrentTimeStep);
                 Cohort::zeroDeltas();
@@ -273,8 +268,9 @@ public:
                 // Add biomass of the extinct cohort to the organic matter pool
 
                 double deadMatter=(c.IndividualBodyMass + c.IndividualReproductivePotentialMass) * c.CohortAbundance;
-                EcosystemModelGrid.AddToEnviroLayer("Organic Pool", 0, deadMatter , c);
-                assert(EcosystemModelGrid.GetEnviroLayer("Organic Pool", 0, c, VarExists) >= 0 && "Organic pool < 0");
+                if (deadMatter<0)cout<<"Dead "<<deadMatter<<endl;
+                Environment::Get("Organic Pool",*(c.location)) +=deadMatter;
+                assert(Environment::Get("Organic Pool",*(c.location)) >= 0 && "Organic pool < 0");
  
                 // Remove the extinct cohort from the list of cohorts
                 EcosystemModelGrid.DeleteGridCellIndividualCohort(c);
@@ -323,8 +319,8 @@ public:
         double organicPool=0,respiratoryPool=0,totalAbundance=0;
         double totalStockBiomass=0,totalCohortBiomass=0;
         EcosystemModelGrid.ask([&](GridCell& gcl){
-            organicPool    +=gcl.CellEnvironment["Organic Pool"][0]/1000.;
-            respiratoryPool+=gcl.CellEnvironment["Respiratory CO2 Pool"][0]/1000.;
+            organicPool    +=Environment::Get("Organic Pool",gcl)/1000.;
+            respiratoryPool+=Environment::Get("Respiratory CO2 Pool",gcl)/1000.;
             gcl.ask([&](Cohort& c){
                 totalAbundance+=c.CohortAbundance;
 

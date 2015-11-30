@@ -103,7 +103,7 @@ public:
                 CalculateDispersalProbability(gridForDispersal, cohortToDisperse, CalculateDispersalSpeed(AdultMass));
 
                 // Update the cell to disperse to, if the cohort moves
-                if (cohortToDisperse.origin != cohortToDisperse.destination) {
+                if (cohortToDisperse.location != cohortToDisperse.destination) {
                     // Update the delta array of cohorts
                     dispersers.push_back(cohortToDisperse);
                 }
@@ -123,7 +123,7 @@ public:
                     CalculateDispersalProbability(gridForDispersal, cohortToDisperse, CalculateDispersalSpeed(AdultMass));
 
                 // Update the cell to disperse to, if the cohort moves
-                if (cohortToDisperse.origin != cohortToDisperse.destination) {
+                if (cohortToDisperse.location != cohortToDisperse.destination) {
                     // Update the delta array of cohorts
                     dispersers.push_back(cohortToDisperse);
                 }
@@ -143,7 +143,7 @@ public:
         double NumberOfIndividuals = cohortToDisperse.CohortAbundance;
 
         // Get the cell area, in kilometres squared
-        double CellArea = cohortToDisperse.origin->CellArea();
+        double CellArea = cohortToDisperse.location->CellArea();
 
         // If below the density threshold
         if ((NumberOfIndividuals / CellArea) < DensityThresholdScaling / cohortToDisperse.AdultMass) {
@@ -155,7 +155,7 @@ public:
             CalculateDispersalProbability(gridForDispersal, cohortToDisperse, DispersalSpeed);
 
             // Update the cell to disperse to, if the cohort moves
-            if (cohortToDisperse.origin != cohortToDisperse.destination) {
+            if (cohortToDisperse.location != cohortToDisperse.destination) {
                 // Update the delta array of cohorts
                 dispersers.push_back(cohortToDisperse);
             }
@@ -170,15 +170,13 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \brief   Calculates the probability of responsive dispersal given average individual dispersal speed and grid cell
-    @param madingleyGrid The model grid 
-    @param latIndex The latitude index of the grid cell to check for dispersal 
-    @param lonIndex The longitude index of the grid cell to check for dispersal 
+    @param madingleyGrid The model grid
+    @param c the dispersing cohort
     @param dispersalSpeed The average dispersal speed of individuals in the acting cohort 
-
-    Note that the second, third, and fourth elements are always positive; thus, they do not indicate 'direction' in terms of dispersal.*/
+*/
     void CalculateDispersalProbability(ModelGrid& madingleyGrid, Cohort& c, double dispersalSpeed) {
-        double LatCellLength = madingleyGrid.CellHeightsKm[c.origin->LatIndex()];
-        double LonCellLength = madingleyGrid.CellWidthsKm[c.origin->LatIndex()];
+        double LatCellLength = c.location->CellHeightKm;
+        double LonCellLength = c.location->CellWidthKm;
 
         // Pick a direction at random
         std::uniform_real_distribution<double> randomNumber(0.0, 1.0);
@@ -195,7 +193,7 @@ public:
 
         //assert(((uSpeed > LonCellLength) || (vSpeed > LatCellLength)) && "Dispersal probability should always be <= 1");
 
-        GridCell* destination=newCell(madingleyGrid,uSpeed,vSpeed,LatCellLength,LonCellLength,c.origin);
+        GridCell* destination=newCell(madingleyGrid,uSpeed,vSpeed,LatCellLength,LonCellLength,c.location);
         c.TryLivingAt(destination);
 
     }

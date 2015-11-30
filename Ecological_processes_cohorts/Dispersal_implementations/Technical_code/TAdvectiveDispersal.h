@@ -6,6 +6,7 @@
 #include <chrono>
 #include <assert.h>
 #include <math.h>
+#include <Environment.h>
 /** \file TAdvectiveDispersal.h
  * \brief the TAdvectiveDispersal header file
  */
@@ -77,7 +78,7 @@ public:
         }
 
         // Update the dispersal for this cohort, if necessary
-        if (cohortToDisperse.origin != cohortToDisperse.destination) {
+        if (cohortToDisperse.location != cohortToDisperse.destination) {
             dispersers.push_back(cohortToDisperse);
             return true;
         }
@@ -126,10 +127,10 @@ public:
         bool varExists;
 
         // Get the u speed and the v speed from the cell data
-        uAdvectiveSpeed = madingleyGrid.GetEnviroLayer("uVel", currentMonth, c.destination->LatIndex(), c.destination->LonIndex(), varExists);
+        uAdvectiveSpeed = Environment::Get("uVel", *(c.destination));
         assert(uAdvectiveSpeed > -9999);
 
-        vAdvectiveSpeed = madingleyGrid.GetEnviroLayer("vVel", currentMonth, c.destination->LatIndex(), c.destination->LonIndex(), varExists);
+        vAdvectiveSpeed = Environment::Get("vVel", *(c.destination));
         assert(vAdvectiveSpeed > -9999);
 
         // Calculate the diffusive movement speed, with a direction chosen at random
@@ -141,12 +142,12 @@ public:
         
         // Check that the u distance travelled and v distance travelled are not greater than the cell length
 
-        LatCellLength = madingleyGrid.CellHeightsKm[c.origin->LatIndex()];
-        LonCellLength = madingleyGrid.CellWidthsKm[c.origin->LatIndex()];
+        LatCellLength = c.location->CellHeightKm;
+        LonCellLength = c.location->CellWidthKm;
         if (abs(uDistanceTravelled) > LonCellLength) cout<<"BIG U "<<uAdvectiveSpeed<<endl;
         assert(abs(uDistanceTravelled) <= LonCellLength && "u velocity greater than cell width");
         assert(abs(vDistanceTravelled) <= LatCellLength && "v velocity greater than cell width");
-        GridCell* destination= newCell(madingleyGrid,uDistanceTravelled,vDistanceTravelled,LatCellLength,LonCellLength,c.origin);
+        GridCell* destination= newCell(madingleyGrid,uDistanceTravelled,vDistanceTravelled,LatCellLength,LonCellLength,c.location);
         c.TryLivingAt(destination);
     }
     //----------------------------------------------------------------------------------------------

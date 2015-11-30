@@ -54,7 +54,7 @@ public:
     //----------------------------------------------------------------------------------------------
     /** \brief Run metabolism
     @param gcl The current grid cell 
-    @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
+    @param actingCohort The acting cohort  
     @param currentTimestep The current model time step 
     @param partial Thread-locked variables 
     @param currentMonth The current model month
@@ -68,9 +68,9 @@ public:
         if (params.CohortFunctionalGroupDefinitions.GetTraitNames("Heterotroph/Autotroph", actingCohort.FunctionalGroupIndex) == "heterotroph") {
             if (params.CohortFunctionalGroupDefinitions.GetTraitNames("Endo/Ectotherm", actingCohort.FunctionalGroupIndex) == "endotherm") {
 
-                Implementations["basic endotherm"]->RunMetabolism(  actingCohort, gcl.CellEnvironment, currentTimestep, currentMonth);
+                Implementations["basic endotherm"]->RunMetabolism(  actingCohort, currentTimestep, currentMonth);
             } else {
-                Implementations["basic ectotherm"]->RunMetabolism(  actingCohort, gcl.CellEnvironment, currentTimestep, currentMonth);
+                Implementations["basic ectotherm"]->RunMetabolism(  actingCohort, currentTimestep, currentMonth);
 
             }
 

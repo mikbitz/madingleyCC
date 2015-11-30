@@ -18,9 +18,8 @@ public:
 
     //----------------------------------------------------------------------------------------------
     /** \brief  Apply all updates from the ecological processes to the properties of the acting cohort and to the environment
-    @param gridCellCohorts The cohorts in the current grid cell 
+    @param gcl The gridCell 
     @param actingCohort The location of the acting cohort in the jagged array of grid cell cohorts 
-    @param cellEnvironment The environment in the current gird cell 
     @param currentTimestep The current model time step 
     @param tracker A process tracker */
     void UpdateAllEcology(GridCell& gcl, Cohort& actingCohort, unsigned currentTimestep) {
@@ -130,7 +129,7 @@ public:
     //----------------------------------------------------------------------------------------------
     /** \brief Update the organic and respiratory biomass pools according to the relevant deltas from the ecological processes
 
-    @param cellEnvironment The environment of the current grid cell */
+    @param gcl The current grid cell */
     void UpdatePools(GridCell& gcl) {
         
                     // Loop over all keys in the organic pool deltas sorted list
@@ -140,7 +139,7 @@ public:
                         if (D.second <0)cout<<"organic pool "<<D.first<<" "<<D.second<<endl;
                         //assert(D.second >= 0.0 && "A delta value for the organic pool is negative " );
                         // Update the organic pool biomass
-                        gcl.CellEnvironment["Organic Pool"][0] += D.second;
+                        Environment::Get("Organic Pool",gcl)+=D.second;
                         //Reset the delta value to zero
                     }
 
@@ -150,7 +149,8 @@ public:
                         // Check that the delta value is not negative
                         assert(D.second >= 0.0 && "A delta value for the respiratory CO2 pool is negative");
                         // Update the respiratory CO2 pool
-                        gcl.CellEnvironment["Respiratory CO2 Pool"][0] += D.second;
+                        Environment::Get("Respiratory CO2 Pool",gcl)+=D.second;
+
                         // Reset the delta value to zero
                     }
     }

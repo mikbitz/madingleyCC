@@ -103,9 +103,7 @@ public:
                     }
                 }
             }
-           // cout<<"dist ";
-           // for (auto opp: SortedDistances)cout<<opp.dist<<" ";
-           // cout<<endl;
+
             auto I = SortedDistances.begin();
             while (MergeCounter < NumberToRemove && I != SortedDistances.end()) {
                 Cohort& CohortToMergeFrom = *(I->a);

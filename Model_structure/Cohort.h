@@ -43,7 +43,7 @@ public:
     /** \brief The optimal prey body size for individuals in this cohort */
     double LogOptimalPreyBodySizeRatio;
     long long ID;
-    GridCell* origin, *destination;
+    GridCell* location, *destination;
     static map<string, map<string, double>> Deltas;
     static vector<Cohort> newCohorts;
     static unsigned NextID;

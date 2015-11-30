@@ -427,7 +427,6 @@ public:
     /** \brief Apply the changes from predation to prey cohorts, and update deltas for the predator cohort
     @param gridCell The current grid cell 
     @param actingCohort The acting cohort 
-    @param cellEnvironment The environment in the current grid cell 
     @param currentTimestep The current model time step */
     void RunEating(GridCell& gcl,Cohort& actingCohort, unsigned currentTimestep,
             MadingleyModelInitialisation& params) {

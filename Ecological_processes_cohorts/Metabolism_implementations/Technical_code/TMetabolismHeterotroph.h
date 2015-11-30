@@ -53,15 +53,12 @@ class MetabolismHeterotroph : public IMetabolismImplementation {
     //----------------------------------------------------------------------------------------------
     /** \brief Run metabolism for the acting cohort
     @param actingCohort The position of the acting cohort in the jagged array of grid cell cohorts 
-    @param cellEnvironment The environment in the current grid cell 
     @param currentTimestep The current model time step
     @param currentMonth the current month as an integer */
-    void RunMetabolism( 
-            Cohort& actingCohort, map<string, vector<double> >& cellEnvironment, 
-            unsigned currentTimestep, unsigned currentMonth) {
+    void RunMetabolism(Cohort& actingCohort, unsigned currentTimestep, unsigned currentMonth) {
         // Calculate metabolic loss for an individual and add the value to the delta biomass for metabolism
         Cohort::Deltas["biomass"]["metabolism"] = -CalculateIndividualMetabolicRate(actingCohort.IndividualBodyMass,
-                cellEnvironment["Temperature"][currentMonth] + TemperatureUnitsConvert) * DeltaT;
+                Environment::Get("Temperature",*(actingCohort.location)) + TemperatureUnitsConvert) * DeltaT;
 
         // If metabolic loss is greater than individual body mass after herbivory and predation, then set equal to individual body mass
         Cohort::Deltas["biomass"]["metabolism"] = max(Cohort::Deltas["biomass"]["metabolism"], -(actingCohort.IndividualBodyMass + Cohort::Deltas["biomass"]["predation"] + Cohort::Deltas["biomass"]["herbivory"]));

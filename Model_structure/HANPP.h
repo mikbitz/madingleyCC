@@ -18,7 +18,7 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Remove human appropriated matter from the grid cell autotroph stocks
-    @param cellEnvironment The environment in the current grid cell 
+    @param gcl The current grid cell 
     @param humanNPPExtraction The type of NPP extraction to apply: 'no' = no removal; 'hanpp' = appropriated NPP estimate from input map; or proportion of total NPP 
     @param gridCellStocks The stocks in the current grid cell 
     @param actingStock The position of the acting stock in the jagged array of grid cell stocks 
@@ -39,10 +39,10 @@ public:
             }
 
             // Get the total amount of NPP appropriated by humans from this cell
-            double HANPP = gcl.CellEnvironment["HANPP"][0] * gcl.CellEnvironment["Seasonality"][currentMonth];
+            double HANPP = Environment::Get("HANPP",gcl) * Environment::Get("Seasonality",gcl);
 
             // If HANPP value is missing, then assume zero
-            if (HANPP == gcl.CellEnvironment["Missing Value"][0]) HANPP = 0.0;
+            if (HANPP == Environment::MissingValue) HANPP = 0.0;
 
             // Allocate HANPP for this stock according to the proportion of total autotroph biomass that the stock represents
             if (TotalAutotrophBiomass == 0.0) {
@@ -56,7 +56,7 @@ public:
             HANPP *= m2Tokm2Conversion;
 
             // Multiply by cell area (in km2) to get g/cell/day
-            HANPP *= gcl.CellEnvironment["Cell Area"][0];
+            HANPP *= gcl.CellArea();
 
             // Convert from gC to g dry matter
             double DryMatterAppropriated = HANPP * 2;

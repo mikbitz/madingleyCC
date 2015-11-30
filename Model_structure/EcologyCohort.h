@@ -43,7 +43,7 @@ public:
         string globalModelTimeStepUnit= params.GlobalModelTimeStepUnit;
         bool drawRandomly= params.DrawRandomly;
         // Declare and attach eating formulations
-        Eating *EatingFormulation = new Eating(gcl.CellEnvironment["Cell Area"][0], globalModelTimeStepUnit);
+        Eating *EatingFormulation = new Eating(gcl.CellArea(), globalModelTimeStepUnit);
         EatingFormulations["Basic eating"] = EatingFormulation;
         // Declare and attach metabolism formulations
         Metabolism *MetabolismFormulation = new Metabolism(globalModelTimeStepUnit);

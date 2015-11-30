@@ -51,7 +51,7 @@ public:
                     currentTimeStep, currentMonth,params);
         } else {
             // Run the dynamic plant model to update the leaf stock for this time step
-            DynamicPlantModel.UpdateLeafStock(gcl.CellEnvironment,  actingStock, currentTimeStep, madingleyStockDefinitions.GetTraitNames("leaf strategy", actingStock.FunctionalGroupIndex) == "deciduous", params.GlobalModelTimeStepUnit, currentMonth);
+            DynamicPlantModel.UpdateLeafStock(gcl,  actingStock, currentTimeStep, madingleyStockDefinitions.GetTraitNames("leaf strategy", actingStock.FunctionalGroupIndex) == "deciduous", params.GlobalModelTimeStepUnit, currentMonth);
             // Apply human appropriation of NPP
             HANPP.RemoveHumanAppropriatedMatter(gcl, humanNPPExtraction, actingStock, currentTimeStep, currentMonth);
 
