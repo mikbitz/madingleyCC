@@ -39,22 +39,24 @@ public:
 
     //----------------------------------------------------------------------------------------------
     /** \brief Initalise the ecological processes */
-    EcologyCohort(GridCell& gcl, MadingleyModelInitialisation& params) {
-        string globalModelTimeStepUnit= params.GlobalModelTimeStepUnit;
-        bool drawRandomly= params.DrawRandomly;
+    EcologyCohort(){;}
+    void setup(MadingleyModelInitialisation& params) {
         // Declare and attach eating formulations
-        Eating *EatingFormulation = new Eating(gcl.CellArea(), globalModelTimeStepUnit);
+        Eating *EatingFormulation = new Eating(params.GlobalModelTimeStepUnit);
         EatingFormulations["Basic eating"] = EatingFormulation;
         // Declare and attach metabolism formulations
-        Metabolism *MetabolismFormulation = new Metabolism(globalModelTimeStepUnit);
+        Metabolism *MetabolismFormulation = new Metabolism(params.GlobalModelTimeStepUnit);
         MetabolismFormulations["Basic metabolism"] = MetabolismFormulation;
         // Declare and attach mortality formulations
-        Mortality *MortalityFormulation = new Mortality(globalModelTimeStepUnit);
+        Mortality *MortalityFormulation = new Mortality(params.GlobalModelTimeStepUnit);
         MortalityFormulations["Basic mortality"] = MortalityFormulation;
         // Declare and attach mortality formulations
-        Reproduction *ReproductionFormulation = new Reproduction(globalModelTimeStepUnit, drawRandomly);
+        Reproduction *ReproductionFormulation = new Reproduction(params.GlobalModelTimeStepUnit, params.DrawRandomly);
         ReproductionFormulations["Basic reproduction"] = ReproductionFormulation;
-         // Initialise eating formulations - has to be redone every step?
+    }
+    void initialiseEating(GridCell& gcl, MadingleyModelInitialisation& params){
+        // Initialise eating formulations - has to be redone every step?
+
         EatingFormulations["Basic eating"]->InitializeEcologicalProcess(gcl,params, "revised predation");
 
         EatingFormulations["Basic eating"]->InitializeEcologicalProcess(gcl,params, "revised herbivory");

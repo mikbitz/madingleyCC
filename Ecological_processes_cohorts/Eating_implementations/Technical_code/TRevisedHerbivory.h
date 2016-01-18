@@ -69,15 +69,15 @@ public:
     /** \brief Constructor for herbivory: assigns all parameter values
     @param cellArea The area (in square km) of the grid cell 
     @param globalModelTimeStepUnit The time step unit used in the model */
-    RevisedHerbivory(double cellArea, string globalModelTimeStepUnit) {
+    RevisedHerbivory(string globalModelTimeStepUnit) {
 
         // Calculate the scalar to convert from the time step units used by this implementation of herbivory to the global model time step units
         DeltaT = Utilities.ConvertTimeUnits(globalModelTimeStepUnit, TimeUnitImplementation);
 
-        // Store the specified cell area in this instance of this herbivory implementation
-        CellArea = cellArea;
-        CellAreaHectares = cellArea * 100;
-
+    }
+    ~RevisedHerbivory() {
+            for (auto& B: BiomassesEaten)B.clear();
+            for (auto& P:PotentialBiomassesEaten)P.clear(); 
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Initialises herbivory implementation each time step
@@ -86,6 +86,9 @@ public:
     \remark This only works if: a) herbivory is initialised in every grid cell; and b) if parallelisation is done by latitudinal strips
     It is critical to run this every time step */
     void InitializeEatingPerTimeStep(GridCell& gcl, MadingleyModelInitialisation& params) {
+        // Store the specified cell area in this instance of this herbivory implementation
+        CellArea = gcl.CellArea();
+        CellAreaHectares = CellArea * 100;
         // Get the functional group indices of all autotroph stocks
         FunctionalGroupIndicesToEat = params.StockFunctionalGroupDefinitions.GetFunctionalGroupIndex("Heterotroph/Autotroph", "Autotroph", false);
     }
@@ -162,7 +165,7 @@ public:
             // Loop over stocks within the functional group
             for (int i = 0; i < gcl.GridCellStocks[FunctionalGroup].size(); i++) {
                 // Get the mass from this stock that is available for eating (assumes all marine autotrophic organisms are edible)
-                //EdibleMass = gridCellStocks[FunctionalGroup][i].TotalBiomass * 0.1;
+                //EdibleMass = gridCellStocks[FunctionalGroup][i].TotalBiomass * 0.1; //MB weird line
                 EdibleMass = gcl.GridCellStocks[FunctionalGroup][i].TotalBiomass;
 
                 // Calculate the potential biomass eaten from this stock by the acting cohort

@@ -80,7 +80,7 @@ public:
 
         // Calculate metabolic loss for an individual and add the value to the delta biomass for metabolism
         Cohort::Deltas["biomass"]["metabolism"] = -CalculateIndividualMetabolicRate(actingCohort.IndividualBodyMass,
-                Environment::Get("Temperature",*(actingCohort.location)) + TemperatureUnitsConvert, actingCohort.ProportionTimeActive) * DeltaT;
+                Environment::Get("Temperature",actingCohort.Here()) + TemperatureUnitsConvert, actingCohort.ProportionTimeActive) * DeltaT;
 
 
         // If metabolic loss is greater than individual body mass after herbivory and predation, then set equal to individual body mass

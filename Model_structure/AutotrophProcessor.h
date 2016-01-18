@@ -40,7 +40,7 @@ public:
     //----------------------------------------------------------------------------------------------
     /** \brief Convert NPP estimate into biomass of an autotroph stock
     @param gcl The current grid cell 
-    @param actingStock The location of the stock to add biomass to 
+    @param actingStock The stock to add biomass to 
     @param currentTimestep The current model time step
     @param currentMonth Month as an integer 
     @param params Current parameters */

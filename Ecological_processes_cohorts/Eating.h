@@ -27,12 +27,12 @@ public:
 
     //----------------------------------------------------------------------------------------------
     /** \brief Constructor for Eating: fills the list of available implementations of eating */
-    Eating(double cellArea, string globalModelTimeStepUnit) {
+    Eating(string globalModelTimeStepUnit) {
         // Add the revised herbivory implementation to the list of implementations
-        RevisedHerbivory *RevisedHerbivoryImplementation = new RevisedHerbivory(cellArea, globalModelTimeStepUnit);
+        RevisedHerbivory *RevisedHerbivoryImplementation = new RevisedHerbivory(globalModelTimeStepUnit);
         Implementations["revised herbivory"] = RevisedHerbivoryImplementation;
         //Add the revised predation implementation to the list of implementations
-        RevisedPredation *RevisedPredationImplementation = new RevisedPredation(cellArea, globalModelTimeStepUnit);
+        RevisedPredation *RevisedPredationImplementation = new RevisedPredation(globalModelTimeStepUnit);
         Implementations["revised predation"] = RevisedPredationImplementation;
     }
     //----------------------------------------------------------------------------------------------

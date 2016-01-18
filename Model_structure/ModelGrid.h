@@ -5,7 +5,7 @@ using namespace std;
 #include <map>
 #include <limits>
 #include <string>
-class MadingleyModelInitialisation;
+//class MadingleyModelInitialisation;
 /** \brief A class containing the model grid (composed of individual grid cells) along with grid attributes.
            The model grid is referenced by [Lat index, Lon index]
  */
@@ -38,17 +38,16 @@ public:
     /** \brief The left (western-most) longitude of each column of grid cells */
     vector<float> Lons;
     /** \brief Array of grid cells */
-    vector< vector <GridCell> > InternalGrid;
+    map<long, GridCell > Cells;
 
     //----------------------------------------------------------------------------------------------
     //Methods
     //----------------------------------------------------------------------------------------------
      //empty placeholder constructor just to get started.
 
-    ModelGrid(){    ;
-    }
+    ModelGrid(){ ;}
     //----------------------------------------------------------------------------------------------
-    /** \brief Constructor for model grid to construct the grid for specific locations
+    /** \brief Constructor for model grid to construct the grid for the globe
     @param minLat Minimum grid latitude (degrees) 
     @param minLon Minimum grid longitude (degrees, currently -180 to 180) 
     @param maxLat Maximum grid latitude (degrees) 
@@ -70,7 +69,6 @@ public:
         LatCellSize = latCellSize;
         LonCellSize = lonCellSize;
 
-
         // Check to see if the number of grid cells is an integer
         double u = (MaxLatitude - MinLatitude) / LatCellSize - floor((MaxLatitude - MinLatitude) / LatCellSize);
         assert((u <= 1.e-15) && "Error: number of grid cells is non-integer: check cell size");
@@ -80,7 +78,7 @@ public:
         Lats.resize(NumLatCells);
         Lons.resize(NumLonCells);
 
-        // Set up latitude and longitude vectors - lower left
+        // Set up latitude and longitude vectors 
         for (int ii = 0; ii < NumLatCells; ii++) {
             Lats[ii] = MinLatitude + ii * LatCellSize;
         }
@@ -89,63 +87,26 @@ public:
         }
 
         // Instantiate a grid of grid cells
-        InternalGrid.resize(NumLatCells);
-        for (auto &g : InternalGrid)g.resize(NumLonCells);
 
+        // Loop over cells to set up the model grid
+        for (unsigned jj = 0; jj < NumLonCells; jj++) {
+            for (unsigned ii = 0; ii < NumLatCells; ii++) {
+                // Create the grid cell at the specified position
+                Cells[ii + NumLatCells * jj].setCellCoords(Lats[ii], ii,
+                        Lons[jj], jj, LatCellSize, LonCellSize);
+            }
+        }
 
-        setCellCoords();
         cout << "\n" << endl;
 
     }
     //----------------------------------------------------------------------------------------------
-    void setCellCoords() {
-        // Loop over cells to set up the model grid
-        for (unsigned ii = 0; ii < InternalGrid.size(); ii++) {
-            for (unsigned jj = 0; jj < InternalGrid[ii].size(); jj++) {
-                // Create the grid cell at the specified position
-                InternalGrid[ii][jj].setCellCoords(Lats[ii], ii,
-                        Lons[jj], jj, LatCellSize, LonCellSize, Environment::MissingValue);
-            }
-        }
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Remove an individual cohort from a functional group; necessary due to dispersal moving cohorts from one cell to another
-     * NB work on a copy here not a reference as the latter would store the next cell ref. into c in the calling function
-    @param functionalGroup Cohort functional group 
-     */
-    void DeleteGridCellIndividualCohort(Cohort c) {
-        vector<Cohort>& z=c.location->GridCellCohorts[c.FunctionalGroupIndex];
-        auto h=find_if(z.begin(),z.end(),[c](Cohort& k){return c.ID==k.ID;});
-        if (c.ID != (*h).ID)cout<<"Strange things happening in grid delete? "<<c.ID<<" "<< (*h).ID<<endl;
-        z.erase(h);
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Add a new cohort to an existing list of cohorts in the grid cell
-    @param c The cohort object to add 
-     */
-    void AddNewCohortToGridCell(Cohort c) {
-        c.location=c.destination;
-        c.destination->GridCellCohorts[c.FunctionalGroupIndex].push_back(c);
-    }
-    //----------------------------------------------------------------------------------------------
-    /** \brief Move a new cohort to another grid cell
-    @param c The cohort object to move 
-     */
-    void Move(Cohort c) {
-        vector<Cohort>& z=c.location->GridCellCohorts[c.FunctionalGroupIndex];
-        auto h=find_if(z.begin(),z.end(),[c](Cohort& k){return c.ID==k.ID;});
-        if (c.ID != (*h).ID)cout<<"Strange things happening in grid move? "<<c.ID<<" "<< (*h).ID<<endl;
-        z.erase(h);
-        c.location=c.destination;
-        c.destination->GridCellCohorts[c.FunctionalGroupIndex].push_back(c);
-    }
-     //----------------------------------------------------------------------------------------------
 /** \brief  Get pointer to a viable cell to move to
     @param  gcl Pointer to the focal grid cell
     @param  v latitudinal displacement
     @param  u longitudinal displacement
     @return Pointer to cell that lies at displacement u,v from the current cell
-    @remark Currently assumes wrapping in longitude
+    @remark Currently assumes wrapping in longitude, and a hard upper and lower boundary in latitude
      */
     GridCell* getNewCell(GridCell* gcl, const int& v, const int& u) {
         GridCell* Cell = 0;
@@ -154,19 +115,20 @@ public:
             int lnc = lonCell + u;
             while (lnc < 0)lnc += NumLonCells;
             while (lnc >= NumLonCells)lnc -= NumLonCells;
-                Cell=&(InternalGrid[latCell + v][lnc]);
+            long idx=(latCell + v)+NumLatCells*lnc;
+            if(Cells.count(idx!=0))Cell=&(Cells[idx]);
         }
         return Cell;
     }
     //----------------------------------------------------------------------------------------------
-    //Apply any function that operates on a grid cell to all cells in the grid
+    //Apply any function that operates on a cell to all cells in the collection
+
     template <typename F>
     void ask(F f) {
-        for (int j = 0; j < NumLonCells; j++) {
-            for (int i = 0; i < NumLatCells; i++) {
-                f(InternalGrid[i][j]);
-            }
+        for (auto& j : Cells) {
+            f(j.second);
         }
+
     }
 };
 #endif

@@ -164,7 +164,7 @@ public:
         cout << "Time required: " << InitializationTimer.GetElapsedTimeSecs() << endl;
     }
     //----------------------------------------------------------------------------------------------
-    /** \brief Reads in all initialisation files and copies them to the output directory for future reference 
+    /** \brief Reads in all initialisation files  
      @ param* initialisationFile The name of the initialization file with information on the simulations to be run
      @param outputPath The path to folder in which outputs will be stored
      //        /// <todo>Need to adjust this file to deal with incorrect inputs, extra columns etc by throwing an error</todo>

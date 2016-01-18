@@ -72,7 +72,7 @@ public:
     //----------------------------------------------------------------------------------------------
     IEatingImplementation(){;}
     //----------------------------------------------------------------------------------------------
-    IEatingImplementation(double cellArea, string globalModelTimeStepUnit){cout<<"Virtual IEatingImplementation constructor called:This is probably a mistake"<<endl;}
+    IEatingImplementation(string globalModelTimeStepUnit){cout<<"Virtual IEatingImplementation constructor called:This is probably a mistake"<<endl;}
     //----------------------------------------------------------------------------------------------
     virtual ~IEatingImplementation(){;}
 };

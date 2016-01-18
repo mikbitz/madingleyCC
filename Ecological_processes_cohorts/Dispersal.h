@@ -19,12 +19,10 @@ class Dispersal  {
     //----------------------------------------------------------------------------------------------
     vector<Cohort>dispersers;
     /** \brief The available implementations of the dispersal process */
-    AdvectiveDispersal* AdvectiveDispersalImplementation;
-    DiffusiveDispersal* DiffusiveDispersalImplementation;
-    ResponsiveDispersal* ResponsiveDispersalImplementation;
-    /** \brief Threshold (g) below which a marine individual is considered to be planktonic (i.e. cannot swim against the currents). Currently set to 10mg. */
-    double PlanktonThreshold;
+    map<string,IDispersalImplementation*>choose;
+
     public:
+
     //----------------------------------------------------------------------------------------------
     //Methods
     //----------------------------------------------------------------------------------------------
@@ -33,24 +31,17 @@ class Dispersal  {
     /** \brief Setup for dispersal assigns pointers to current possible dispersal methods*/
     void setup(MadingleyModelInitialisation& params) {
 
-        // Assign advective dispersal implementation
-        AdvectiveDispersalImplementation = new AdvectiveDispersal(params.GlobalModelTimeStepUnit, params.DrawRandomly);
-
-        // Assign diffusive dispersal implementation 
-        DiffusiveDispersalImplementation = new DiffusiveDispersal(params.GlobalModelTimeStepUnit, params.DrawRandomly);
-
-        // Assign responsive dispersal implementation 
-        ResponsiveDispersalImplementation = new ResponsiveDispersal(params.GlobalModelTimeStepUnit, params.DrawRandomly);
-
-        // Get the weight threshold below which organisms are dispersed planktonically
-        PlanktonThreshold = params.PlanktonDispersalThreshold;
+        // Assign dispersal implementations
+        choose["advective"] =new AdvectiveDispersal(params.GlobalModelTimeStepUnit, params.DrawRandomly);
+        choose["diffusive"] =new DiffusiveDispersal(params.GlobalModelTimeStepUnit, params.DrawRandomly);
+        choose["responsive"]=new ResponsiveDispersal(params.GlobalModelTimeStepUnit, params.DrawRandomly);
     }
     //----------------------------------------------------------------------------------------------
     /** \brief tidy up pointers */
     ~Dispersal() {
-    delete AdvectiveDispersalImplementation;
-    delete DiffusiveDispersalImplementation;
-    delete ResponsiveDispersalImplementation;
+    delete choose["advective"];
+    delete choose["diffusive"];
+    delete choose["responsive"];
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Run dispersal 
@@ -63,34 +54,20 @@ class Dispersal  {
     void RunCrossGridCellEcologicalProcess(GridCell& gcl, ModelGrid& gridForDispersal,  MadingleyModelInitialisation& params,  unsigned currentMonth) {
 
         gcl.ask([&](Cohort& c){
-                // Check to see if the cell is marine and the cohort type is planktonic
-                bool dispersed=false;
-                
-                if (gcl.isMarine() &&
-                        ((params.CohortFunctionalGroupDefinitions.GetTraitNames("Mobility", c.FunctionalGroupIndex) == "planktonic") || (c.IndividualBodyMass <= PlanktonThreshold))) {
-                   // Run advective dispersal
-                    AdvectiveDispersalImplementation->RunDispersal(dispersers, gridForDispersal, c, currentMonth);
-                }   // Otherwise, if mature do responsive dispersal
-                else if (c.isMature()) {
-                    //Run responsive dispersal
-                    ResponsiveDispersalImplementation->RunDispersal(dispersers, gridForDispersal, c, currentMonth);
-                }    // If the cohort is immature, run diffusive dispersal
-                else {
-                    DiffusiveDispersalImplementation->RunDispersal(dispersers, gridForDispersal, c,  currentMonth);
-                }
-            
+            if (choose.count(c.dispersalType(params))!=0){
+            choose[c.dispersalType(params)]->RunDispersal(gridForDispersal, c,  currentMonth);}
+            if (c.isMoving())dispersers.push_back(c);
+
         });
 
-        // IF THE CELL IS MARINE, RUN ADVECTIVE DISPERSAL FOR THE PHYTOPLANKTON STOCK AS WELL IN v1
     }
     //----------------------------------------------------------------------------------------------
-    void UpdateCrossGridCellEcology(ModelGrid& gridForDispersal, unsigned& dispersalCounter){
+    void UpdateCrossGridCellEcology(unsigned& dispersalCounter){
         dispersalCounter = dispersers.size();
 
         for (auto& c: dispersers){
-            gridForDispersal.Move(c);
+            c.Move();
         }
-
         dispersers.clear();
     }
 };

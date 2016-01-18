@@ -64,24 +64,22 @@ public:
     @param actingCohortNumber The position of the acting cohort within the functional group in the array of grid cell cohorts 
     @param currentMonth The current model month 
      */
-    bool RunDispersal(vector<Cohort>& dispersers, ModelGrid& gridForDispersal, Cohort& cohortToDisperse,
-              const unsigned& currentMonth) {
+    void RunDispersal(ModelGrid& gridForDispersal, Cohort& cohortToDisperse, const unsigned& currentMonth) {
         // Starvation driven dispersal takes precedence over density driven dispersal (i.e. a cohort can't do both). Also, the delta 
         // arrays only allow each cohort to perform one type of dispersal each time step
         bool CohortDispersed = false;
 
         // Check for starvation-driven dispersal
-        CohortDispersed = CheckStarvationDispersal(dispersers,gridForDispersal, cohortToDisperse);
+        CohortDispersed = CheckStarvationDispersal(gridForDispersal, cohortToDisperse);
 
         if (!CohortDispersed) {
             // Check for density driven dispersal
-            CheckDensityDrivenDispersal(dispersers,gridForDispersal, cohortToDisperse);
+            CheckDensityDrivenDispersal(gridForDispersal, cohortToDisperse);
         }
-        return false;
-    }
+     }
 
     //----------------------------------------------------------------------------------------------
-    bool CheckStarvationDispersal(vector<Cohort>& dispersers,ModelGrid& gridForDispersal, Cohort& cohortToDisperse) {
+    bool CheckStarvationDispersal(ModelGrid& gridForDispersal, Cohort& cohortToDisperse) {
         // A boolean to check whether a cohort has dispersed
         bool CohortHasDispersed = false;
 
@@ -102,12 +100,6 @@ public:
 
                 CalculateDispersalProbability(gridForDispersal, cohortToDisperse, CalculateDispersalSpeed(AdultMass));
 
-                // Update the cell to disperse to, if the cohort moves
-                if (cohortToDisperse.location != cohortToDisperse.destination) {
-                    // Update the delta array of cohorts
-                    dispersers.push_back(cohortToDisperse);
-                }
-
                 // Note that regardless of whether or not it succeeds, if a cohort tries to disperse, it is counted as having dispersed for the purposes of not then allowing it to disperse
                 // based on its density.
                 CohortHasDispersed = true;
@@ -122,13 +114,6 @@ public:
 
                     CalculateDispersalProbability(gridForDispersal, cohortToDisperse, CalculateDispersalSpeed(AdultMass));
 
-                // Update the cell to disperse to, if the cohort moves
-                if (cohortToDisperse.location != cohortToDisperse.destination) {
-                    // Update the delta array of cohorts
-                    dispersers.push_back(cohortToDisperse);
-                }
-
-
                     CohortHasDispersed = true;
                 }
             }
@@ -138,7 +123,7 @@ public:
     }
     //----------------------------------------------------------------------------------------------
 
-    void CheckDensityDrivenDispersal(vector<Cohort>& dispersers, ModelGrid& gridForDispersal, Cohort& cohortToDisperse) {
+    void CheckDensityDrivenDispersal(ModelGrid& gridForDispersal, Cohort& cohortToDisperse) {
         // Check the population density
         double NumberOfIndividuals = cohortToDisperse.CohortAbundance;
 
@@ -154,11 +139,6 @@ public:
             // Cohort tries to disperse
             CalculateDispersalProbability(gridForDispersal, cohortToDisperse, DispersalSpeed);
 
-            // Update the cell to disperse to, if the cohort moves
-            if (cohortToDisperse.location != cohortToDisperse.destination) {
-                // Update the delta array of cohorts
-                dispersers.push_back(cohortToDisperse);
-            }
         }
     }
     //----------------------------------------------------------------------------------------------
@@ -191,10 +171,9 @@ public:
         if (uSpeed > LonCellLength)cout<<"Dispersal Big U "<< uSpeed<<endl;
         if (vSpeed > LatCellLength)cout<<"Dispersal Big V "<< vSpeed<<endl;
 
-        //assert(((uSpeed > LonCellLength) || (vSpeed > LatCellLength)) && "Dispersal probability should always be <= 1");
+        assert(((uSpeed < LonCellLength) && (vSpeed < LatCellLength)) && "Dispersal probability should always be <= 1");
 
-        GridCell* destination=newCell(madingleyGrid,uSpeed,vSpeed,LatCellLength,LonCellLength,c.location);
-        c.TryLivingAt(destination);
+        c.TryLivingAt(newCell(madingleyGrid,uSpeed,vSpeed,LatCellLength,LonCellLength,c.location));
 
     }
     

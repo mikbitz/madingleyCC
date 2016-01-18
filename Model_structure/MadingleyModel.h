@@ -203,8 +203,9 @@ public:
         // Local instances of classes
         // Initialize ecology for stocks and cohorts - needed fresh every timestep?
 
-        EcologyCohort MadingleyEcologyCohort(gcl,params);
-
+        EcologyCohort mEcologyCohort;
+        mEcologyCohort.setup(params);
+        mEcologyCohort.initialiseEating(gcl,params);
         Activity CohortActivity;
         
         // Loop over randomly ordered gridCellCohorts to implement biological functions
@@ -216,9 +217,9 @@ public:
                 CohortActivity.AssignProportionTimeActive(gcl,c, CurrentTimeStep, CurrentMonth, params);
 
                 // Run ecology
-                MadingleyEcologyCohort.RunWithinCellEcology(gcl,c,CurrentTimeStep, partial,  CurrentMonth, params);
+                mEcologyCohort.RunWithinCellEcology(gcl,c,CurrentTimeStep, partial,  CurrentMonth, params);
                 // Update the properties of the acting cohort
-                MadingleyEcologyCohort.UpdateEcology(gcl, c, CurrentTimeStep);
+                mEcologyCohort.UpdateEcology(gcl, c, CurrentTimeStep);
                 Cohort::zeroDeltas();
                 
                 // Check that the mass of individuals in this cohort is still >= 0 after running ecology
@@ -231,7 +232,7 @@ public:
         
 
         for (auto& c: Cohort::newCohorts){
-            EcosystemModelGrid.AddNewCohortToGridCell(c);
+            gcl.insert(c);
             if (c.destination != &gcl)cout<<"whut? wrong cell?"<<endl;
         }
         partial.Productions+=Cohort::newCohorts.size();
@@ -269,11 +270,11 @@ public:
 
                 double deadMatter=(c.IndividualBodyMass + c.IndividualReproductivePotentialMass) * c.CohortAbundance;
                 if (deadMatter<0)cout<<"Dead "<<deadMatter<<endl;
-                Environment::Get("Organic Pool",*(c.location)) +=deadMatter;
-                assert(Environment::Get("Organic Pool",*(c.location)) >= 0 && "Organic pool < 0");
+                Environment::Get("Organic Pool",c.Here()) +=deadMatter;
+                assert(Environment::Get("Organic Pool",c.Here()) >= 0 && "Organic pool < 0");
  
                 // Remove the extinct cohort from the list of cohorts
-                EcosystemModelGrid.DeleteGridCellIndividualCohort(c);
+                gcl.remove(c);
 
             }
 
@@ -291,7 +292,7 @@ public:
         });
         
         // Apply the changes from dispersal
-        disperser.UpdateCrossGridCellEcology(EcosystemModelGrid, dispersals);
+        disperser.UpdateCrossGridCellEcology( dispersals);
     }
     //----------------------------------------------------------------------------------------------
     /** \brief   Sets up the list of global diagnostic variables

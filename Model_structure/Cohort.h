@@ -3,6 +3,7 @@
 #include <vector>
 #include <map>
 #include <string>
+class MadingleyModelInitialisation;
 using namespace std;
 class GridCell;
 
@@ -11,6 +12,7 @@ class GridCell;
  */
 
 /** \brief Class to hold properties of a single cohort */
+typedef GridCell Location;
 class Cohort {
 public:
     //----------------------------------------------------------------------------------------------
@@ -43,7 +45,7 @@ public:
     /** \brief The optimal prey body size for individuals in this cohort */
     double LogOptimalPreyBodySizeRatio;
     long long ID;
-    GridCell* location, *destination;
+    Location* location, *destination;
     static map<string, map<string, double>> Deltas;
     static vector<Cohort> newCohorts;
     static unsigned NextID;
@@ -77,9 +79,15 @@ public:
      * */
     Cohort(Cohort& , double , double , double , double , unsigned , long long& ) ;
     //----------------------------------------------------------------------------------------------
+    Location& Here();
+    bool isMoving();
     bool isMature();
+    bool isMarine();
+    bool isPlanktonic(MadingleyModelInitialisation&);
+    string dispersalType(MadingleyModelInitialisation&);
     double Realm();
-    void TryLivingAt(GridCell* );
+    void TryLivingAt(Location* );
+    void Move();
     static void zeroDeltas();
 };
 

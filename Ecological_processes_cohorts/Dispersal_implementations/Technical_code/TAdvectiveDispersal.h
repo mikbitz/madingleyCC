@@ -69,20 +69,13 @@ public:
     @param actingCohortNumber The position of the acting cohort within the functional group in the array of grid cell cohorts 
     @param currentMonth The current model month 
      */
-    bool RunDispersal(vector<Cohort>& dispersers,  ModelGrid& gridForDispersal, Cohort& cohortToDisperse , const unsigned& currentMonth) {
+    void RunDispersal(ModelGrid& gridForDispersal, Cohort& cohortToDisperse , const unsigned& currentMonth) {
 
         // Loop through a number of times proportional to the rescaled dispersal
         for (int mm = 0; mm < AdvectionTimeStepsPerModelTimeStep; mm++) {
             // Get the probability of dispersal and return a candidate cell
             CalculateDispersalProbability(gridForDispersal, cohortToDisperse, currentMonth);
         }
-
-        // Update the dispersal for this cohort, if necessary
-        if (cohortToDisperse.location != cohortToDisperse.destination) {
-            dispersers.push_back(cohortToDisperse);
-            return true;
-        }
-        return false;
     }
     //----------------------------------------------------------------------------------------------
     /** \brief    Convert dispersal speed from m per second to km per dispersal time step (currently 18h)
@@ -142,13 +135,12 @@ public:
         
         // Check that the u distance travelled and v distance travelled are not greater than the cell length
 
-        LatCellLength = c.location->CellHeightKm;
-        LonCellLength = c.location->CellWidthKm;
+        LatCellLength = c.Here().CellHeightKm;
+        LonCellLength = c.Here().CellWidthKm;
         if (abs(uDistanceTravelled) > LonCellLength) cout<<"BIG U "<<uAdvectiveSpeed<<endl;
         assert(abs(uDistanceTravelled) <= LonCellLength && "u velocity greater than cell width");
         assert(abs(vDistanceTravelled) <= LatCellLength && "v velocity greater than cell width");
-        GridCell* destination= newCell(madingleyGrid,uDistanceTravelled,vDistanceTravelled,LatCellLength,LonCellLength,c.location);
-        c.TryLivingAt(destination);
+        c.TryLivingAt(newCell(madingleyGrid,uDistanceTravelled,vDistanceTravelled,LatCellLength,LonCellLength,c.location));
     }
     //----------------------------------------------------------------------------------------------
     /** \brief    Get a randomly directed diffusion vector. This is derived from the LTRANS model formulation, which itself is derived from Visser 1997 (MEPS)

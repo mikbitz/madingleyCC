@@ -19,7 +19,7 @@ public:
     //----------------------------------------------------------------------------------------------
     /** \brief  Apply all updates from the ecological processes to the properties of the acting cohort and to the environment
     @param gcl The gridCell 
-    @param actingCohort The location of the acting cohort in the jagged array of grid cell cohorts 
+    @param actingCohort The acting cohort 
     @param currentTimestep The current model time step 
     @param tracker A process tracker */
     void UpdateAllEcology(GridCell& gcl, Cohort& actingCohort, unsigned currentTimestep) {
@@ -32,8 +32,8 @@ public:
     }
     //----------------------------------------------------------------------------------------------
     /** \brief  Update the abundance of the acting cohort according to the delta abundances from the ecological processes
-    @param gridCellCohorts The cohorts in the current grid cell 
-    @param actingCohort The location of the acting cohort in the jagged array of grid cell cohorts 
+    @param gcl The current grid cell 
+    @param actingCohort The acting cohort 
     */
     void UpdateAbundance(GridCell& gcl, Cohort& actingCohort) {
 

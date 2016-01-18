@@ -110,7 +110,7 @@ public:
         CurrentMassRatio = (BodyMassIncludingChangeThisTimeStep + ReproductiveMassIncludingChangeThisTimeStep) / actingCohort.AdultMass;
 
         // Must have enough mass to hit reproduction threshold criterion, and either (1) be in breeding season, or (2) be a marine cell (no breeding season in marine cells)
-        if ((CurrentMassRatio > MassRatioThreshold) && ((Environment::Get("Breeding Season",*(actingCohort.location)) == 1.0) || (gcl.isMarine()))) {
+        if ((CurrentMassRatio > MassRatioThreshold) && ((Environment::Get("Breeding Season",actingCohort.Here()) == 1.0) || (gcl.isMarine()))) {
             // Iteroparous and semelparous organisms have different strategies
             if (iteroparous) {
                 // Iteroparous organisms do not allocate any of their current non-reproductive biomass to reproduction

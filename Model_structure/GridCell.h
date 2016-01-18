@@ -41,12 +41,11 @@ public:
     //default constructor - just to get grid set up initially
     GridCell() {;}
     //----------------------------------------------------------------------------------------------
-    void setCellCoords(float _latitude, unsigned _latIndex, float _longitude, unsigned _lonIndex, float latCellSize, float lonCellSize,
-             double missingValue){
+    void setCellCoords(float _latitude, unsigned _latIndex, float _longitude, unsigned _lonIndex, float latCellSize, float lonCellSize){
         // set values for this grid cell
         // Also standardise missing values
     
-            // Set the grid cell values of latitude, longitude and missing value as specified
+        // Set the grid cell values of latitude, longitude and missing value as specified
         latitude = _latitude;
         longitude = _longitude;
 
@@ -61,6 +60,26 @@ public:
         //Add the latitude and longitude indices
         latIndex=_latIndex;
         lonIndex=_lonIndex;
+    }
+    //----------------------------------------------------------------------------------------------
+    void insert(Cohort& c){
+        GridCellCohorts[c.FunctionalGroupIndex].push_back(c);
+    }
+    //----------------------------------------------------------------------------------------------
+    void remove(Cohort& c){
+        vector<Cohort>& z=GridCellCohorts[c.FunctionalGroupIndex];
+        auto h=find_if(z.begin(),z.end(),[c](Cohort& k){return c.ID==k.ID;});
+        if (c.ID != (*h).ID)cout<<"Strange things happening in grid delete? "<<c.ID<<" "<< (*h).ID<<endl;
+        z.erase(h);
+    }
+    //----------------------------------------------------------------------------------------------
+    /** \brief Move a new cohort to another grid cell
+    @param c The cohort object to move 
+     */
+    void Move(Cohort& c) {
+        c.Here().remove(c);
+        c.location=c.destination;
+        c.Here().insert(c);
     }
     //----------------------------------------------------------------------------------------------
     //Apply any function to all cohorts in the cell

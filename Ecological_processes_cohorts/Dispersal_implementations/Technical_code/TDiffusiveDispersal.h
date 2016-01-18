@@ -57,17 +57,12 @@ public:
     @param actingCohortFunctionalGroup The functional group index of the acting cohort 
     @param actingCohortNumber The position of the cohort within the functional group in the array of grid cell cohorts 
     @param currentMonth The current model month */
-    bool RunDispersal(vector<Cohort>& dispersers, ModelGrid& gridForDispersal, Cohort& cohortToDisperse,unsigned currentMonth) {
+    void RunDispersal(ModelGrid& gridForDispersal, Cohort& cohortToDisperse,const unsigned& currentMonth) {
         // Calculate dispersal speed for the cohort         
         double DispersalSpeed = CalculateDispersalSpeed(cohortToDisperse.IndividualBodyMass);
 
         CalculateDispersalProbability(gridForDispersal, cohortToDisperse, DispersalSpeed);
-        if (cohortToDisperse.location!=cohortToDisperse.destination){
-            // Update the delta array of cohorts
-            dispersers.push_back(cohortToDisperse);
 
-            }
-        return false;
     }
     //----------------------------------------------------------------------------------------------
     /** \brief Calculates the average diffusive dispersal speed of individuals in a cohort given their body mass
@@ -96,8 +91,7 @@ public:
         // Calculate the u and v components given the dispersal speed
         double uSpeed = dispersalSpeed * cos(RandomDirection);
         double vSpeed = dispersalSpeed * sin(RandomDirection);
-        GridCell* destination=newCell(madingleyGrid,uSpeed,vSpeed,LatCellLength,LonCellLength,c.location);
-        c.TryLivingAt(destination);
+        c.TryLivingAt(newCell(madingleyGrid,uSpeed,vSpeed,LatCellLength,LonCellLength,c.location));
     }
     //----------------------------------------------------------------------------------------------
 };

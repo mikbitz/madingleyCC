@@ -24,7 +24,7 @@ public:
 
     //----------------------------------------------------------------------------------------------
      /** \brief Run the dispersal implementation */
-    virtual bool RunDispersal(vector<Cohort>& dispersers, ModelGrid& gridForDispersal, Cohort& cohortToDisperse,unsigned currentMonth) {
+    virtual void RunDispersal(ModelGrid& gridForDispersal, Cohort& cohortToDisperse,const unsigned& currentMonth) {
         cout<<"Called virtual dispersal runner: probably not what you want"<<endl;
     }
     //----------------------------------------------------------------------------------------------

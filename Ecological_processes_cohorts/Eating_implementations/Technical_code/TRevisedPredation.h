@@ -121,13 +121,10 @@ public:
     /** \brief Constructor for predation: assigns all parameter values
     @param cellArea The area (in square km) of the grid cell 
     @param globalModelTimeStepUnit The time step unit used in the model */
-    RevisedPredation(double cellArea, string globalModelTimeStepUnit) {
+    RevisedPredation(string globalModelTimeStepUnit) {
         // Calculate the scalar to convert from the time step units used by this implementation of predation to the global model time step units
         DeltaT = Utilities.ConvertTimeUnits(globalModelTimeStepUnit, TimeUnitImplementation);
 
-        // Store the specified cell area in this instance of this predation implementation
-        CellArea = cellArea;
-        CellAreaHectares = cellArea * 100;
     }
     ~RevisedPredation(){
             for (auto& A: AbundancesEaten)A.clear();
@@ -141,6 +138,9 @@ public:
     @remark This only works if: a) predation is initialised in every grid cell; and b) if parallelisation is done by latitudinal strips
     It is critical to run this every time step */
     void InitializeEatingPerTimeStep(GridCell& gcl, MadingleyModelInitialisation& params) {
+        // Store the specified cell area in this instance of this herbivory implementation
+        CellArea = gcl.CellArea();
+        CellAreaHectares = CellArea * 100;
         //Get the functional group indices of all heterotroph cohorts (i.e. potential prey)
         FunctionalGroupIndicesToEat = params.CohortFunctionalGroupDefinitions.GetFunctionalGroupIndex("Heterotroph/Autotroph", "heterotroph", false);
         // Initialise the vector to hold the number of cohorts in each functional group at the start of the time step
